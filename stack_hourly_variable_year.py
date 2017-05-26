@@ -14,20 +14,6 @@ def open_ds( fn, variable ):
 	out = ds[ variable ].copy()
 	ds.close()
 	return out.data
-# def stack_files( input_dir, year, variable ):
-# 	'''
-# 	'''
-# 	import os
-# 	files_df = pd.DataFrame([ get_month_day( os.path.join(r, fn)) for r,s,files in os.walk( input_dir ) 
-# 		for fn in files if fn.endswith( '.nc' ) and len(r.split(os.path.sep)) >=5 
-# 		and '-*.nc' not in fn and 'WRFDS_d01.' in fn ])
-
-# 	files_df = files_df.sort_values( ['year', 'month', 'day'] )
-# 	sub_df = files_df[ (files_df.year == str(year)) & (files_df.folder_year == str(year)) ]
-
-# 	stacked_arr = np.array([ open_ds(fn, variable) for fn in sub_df.fn.tolist() ])
-# 	new_dates = pd.date_range('-'.join(sub_df[['month', 'day', 'year']].iloc[0]), periods=stacked_arr.shape[0], freq='1H' )
-# 	return stacked_arr, new_dates
 
 if __name__ == '__main__':
 	import os, glob, itertools
@@ -36,15 +22,14 @@ if __name__ == '__main__':
 	import numpy as np
 	from collections import OrderedDict
 
-	# change to a temp dir -- so we dont eff up his stuff
-	output_path = '/workspace/UA/malindgren/temporary'
-	os.chdir( output_path )
 
 	# setup vars
+	output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/hourly'
+	os.chdir( output_path )
 	variables = ['PCPT']
 	years = range( 1979, 2015+1 )
 	input_dir = '/storage01/pbieniek/erain/hourly'
-	monthly_template_fn = '/storage01/pbieniek/erain/monthly/monthly_TMAX-erai.nc' # DangerTown
+	monthly_template_fn = '/storage01/pbieniek/erain/monthly/monthly_TMAX-erai.nc' # [Hardwired]
 
 	# list / sort the netcdf files
 	files_df = pd.DataFrame([ get_month_day( os.path.join(r, fn)) for r,s,files in os.walk( input_dir ) 
@@ -62,8 +47,6 @@ if __name__ == '__main__':
 		stacked_arr = np.array([ open_ds(fn, variable) for fn in sub_df.fn.tolist() ])
 		new_dates = pd.date_range( '-'.join(sub_df[['month', 'day', 'year']].iloc[0]), periods=stacked_arr.shape[0], freq='1H' )
 
-		# stacked_arr, new_dates = stack_files( os.path.join(input_dir, str(year)), str(year), variable )
-
 		# get some template data to get some vars from... -- HARDWIRED...
 		mon_tmp_ds = xr.open_dataset( monthly_template_fn, decode_times=False )
 		tmp_ds = xr.open_dataset( sub_df.fn.tolist()[0] )
@@ -72,10 +55,10 @@ if __name__ == '__main__':
 		global_attrs[ 'proj_parameters' ] = "+proj=stere +lat_0=90 +lat_ts=90 +lon_0=-150 +k=0.994 +x_0=2000000 +y_0=2000000 +datum=WGS84 +units=m +no_defs"
 		local_attrs = tmp_ds[ variable ].attrs.copy()
 		xy_attrs = mon_tmp_ds.lon.attrs.copy()
+
 		# this is the way that you should add the attr to the file with a proj4string
 		# // global attributes:
 		#      :proj_parameters = "+proj=merc +lon_0=90W" ;
-
 
 		# build a new Dataset with the stacked timesteps and some we extracted from the input Dataset
 		ds = xr.Dataset( {variable:(['time','x', 'y'], stacked_arr)},
@@ -83,7 +66,6 @@ if __name__ == '__main__':
 								'lat': (['x', 'y'], tmp_ds.g5_lat_0.data),
 								'time': new_dates},
 						attrs=global_attrs )
-
 
 		# set the local attrs for the given variable we are stacking
 		ds[ variable ].attrs = local_attrs
