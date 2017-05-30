@@ -33,7 +33,7 @@ ds_min_comp = ds_min.compute()
 
 # setup the output dataset with proper varname and attrs
 new_varname = 'TMIN'
-ds_min_comp[ variable.upper ].to_dataset( name=new_varname )
+ds_min_comp = ds_min_comp[ variable.upper() ].to_dataset( name=new_varname )
 ds_min_comp.attrs = global_attrs
 ds_min_comp[ new_varname ].attrs = local_attrs
 ds_min_comp[ 'lon' ].attrs = xy_attrs
@@ -68,7 +68,7 @@ ds_max_comp = ds_max.compute()
 
 # setup the output dataset with proper varname and attrs
 new_varname = 'TMAX'
-ds_max_comp[ variable.upper ].to_dataset( name=new_varname )
+ds_max_comp = ds_max_comp[ variable.upper() ].to_dataset( name=new_varname )
 ds_max_comp.attrs = global_attrs
 ds_max_comp[ new_varname ].attrs = local_attrs
 ds_max_comp[ 'lon' ].attrs = xy_attrs
