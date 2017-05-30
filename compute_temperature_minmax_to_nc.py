@@ -14,28 +14,43 @@ ds = xr.open_mfdataset( os.path.join( input_path, variable, '*'.join(['', variab
 # convert to Daily Averages
 output_path = os.path.join( input_path.replace( 'hourly', 'daily' ) )
 
-# temp min
+# temp min -- daily
 ds_min = ds.resample( 'D', dim='time', how='min' )
 ds_min_comp = ds_min.compute()
 ds_min.to_netcdf( os.path.join( output_path, 'T2_min_wrf_day.nc' ), mode='w', format='NETCDF4_CLASSIC' )
 
-# temp max
+# temp min -- monthly
+ds_min_mon = ds_min_comp.resample( 'M', dim='time', how='mean' )
+ds_min_mon_comp = ds_min_mon.compute()
+ds_min_mon_comp.to_netcdf( os.path.join( output_path, 'T2_max_wrf_month.nc' ), mode='w', format='NETCDF4_CLASSIC' )
+
+# cleanup...
+ds_min.close(); 
+ds_min = None
+ds_min_comp.close(); 
+ds_min_comp = None
+ds_min_mon_comp = None
+
+# temp max -- daily
 ds_max = ds.resample( 'D', dim='time', how='max' )
 ds_max_comp = ds_min.compute()
 ds_max.to_netcdf( os.path.join( output_path, 'T2_max_wrf_day.nc' ), mode='w', format='NETCDF4_CLASSIC' )
 
-# cleanup...
-del ds
-
-# convert Dailies to Monthlies
-
-# temp min
-ds_min_mon = ds_min.resample( 'M', dim='time', how='mean' )
-ds_min_mon_comp = ds_min_mon.compute()
-ds_min_mon_comp.to_netcdf( os.path.join( output_path, 'T2_max_wrf_month.nc' ), mode='w', format='NETCDF4_CLASSIC' )
-
-# temp max
-ds_max_mon = ds_max.resample( 'M', dim='time', how='mean' )
+# temp max -- monthly
+ds_max_mon = ds_max_comp.resample( 'M', dim='time', how='mean' )
 ds_max_mon_comp = ds_max_mon.compute()
 ds_min_mon_comp.to_netcdf( os.path.join( output_path, 'T2_max_wrf_month.nc' ), mode='w', format='NETCDF4_CLASSIC' )
+
+# cleanup...
+ds_max.close(); 
+ds_max = None
+ds_max_comp.close(); 
+ds_max_comp = None
+ds_max_mon_comp.close(); 
+ds_max_mon_comp = None
+
+# close master
+ds.close()
+
+
 
