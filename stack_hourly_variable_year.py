@@ -52,7 +52,7 @@ if __name__ == '__main__':
 		global_attrs = tmp_ds.attrs.copy()
 		global_attrs[ 'reference_time' ] = str(new_dates[0]) # 1979 hourly does NOT start at day 01...  rather day 02....
 		global_attrs[ 'proj_parameters' ] = "+proj=stere +lat_0=90 +lat_ts=90 +lon_0=-150 +k=0.994 +x_0=2000000 +y_0=2000000 +datum=WGS84 +units=m +no_defs"
-		global_attrs.pop()
+		# global_attrs.pop()
 		local_attrs = tmp_ds[ variable ].attrs.copy()
 		xy_attrs = mon_tmp_ds.lon.attrs.copy()
 
@@ -76,11 +76,11 @@ if __name__ == '__main__':
 		# write the new file to disk
 		print( 'writing to disk' )
 		try:
-			final_path = os.path.join( output_path, variable )
+			final_path = os.path.join( output_path, variable.lower() )
 			if not os.path.exists( final_path ):
 				os.makedirs( final_path )
 		except:
 			pass
 
-		output_filename = os.path.join( final_path, variable.lower(), '{}_wrf_hour_{}.nc'.format(variable, year) )
+		output_filename = os.path.join( final_path, '{}_wrf_hour_{}.nc'.format(variable, year) )
 		ds.to_netcdf( output_filename, mode='w', format='NETCDF4_CLASSIC' )
