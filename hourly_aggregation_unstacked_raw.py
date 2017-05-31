@@ -14,7 +14,7 @@ import numpy as np
 
 year = 1979
 hourly_dir = '/storage01/pbieniek/erain/hourly'
-# files = glob.glob( os.path.join( hourly_dir, str(year), 'WRFDS_d01.{}*.nc'.format(str(year)) ) )
+files = glob.glob( os.path.join( hourly_dir, str(year), 'WRFDS_d01.{}*.nc'.format(str(year)) ) )
 
 def get_month_day( fn ):
 	dirname, basename = os.path.split( fn )

@@ -25,21 +25,26 @@ if __name__ == '__main__':
 	# setup vars
 	output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/hourly'
 	os.chdir( output_path )
-	variables = ['T2'] # 'PCPT',
-	years = range( 1979, 2015+1 )
-	input_dir = '/storage01/pbieniek/erain/hourly'
-	monthly_template_fn = '/storage01/pbieniek/erain/monthly/monthly_TMAX-erai.nc' # [Hardwired]
+	variables = ['T2', 'PCPT']
+	# years = range( 1979, 2015+1 )
+	years = range( 1970, 2005+1 )
+	# input_dir = '/storage01/pbieniek/erain/hourly'
+	input_dir = '/storage01/pbieniek/gfdl/hist/hourly'
+	# monthly_template_fn = '/storage01/pbieniek/erain/monthly/monthly_TMAX-erai.nc' # [Hardwired]
+	monthly_template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_PCPT-gfdlh.nc' # [Hardwired GFDL]
+	# group = 'erain'
+	group = 'gfdl'
 
 	# list / sort the netcdf files
 	files_df = pd.DataFrame([ get_month_day( os.path.join(r, fn)) for r,s,files in os.walk( input_dir ) 
 							for fn in files if fn.endswith( '.nc' ) and len(r.split(os.path.sep)) >=5 
-							and '-*.nc' not in fn and 'WRFDS_d01.' in fn ])
+							and '-*.nc' not in fn and 'WRFDS_d01.' in fn and '/oldstuff' not in r ])
 
 	files_df = files_df.sort_values( ['year', 'month', 'day'] )
 
 	for variable, year in itertools.product( variables, years ):
 		print( 'working on {} - {}'.format(year, variable) )
-		# subset and stack the data 
+		# subset and stack the data
 		sub_df = files_df[ (files_df.year == str(year)) & (files_df.folder_year == str(year)) ]
 
 		print( 'stacking files' )
@@ -82,5 +87,5 @@ if __name__ == '__main__':
 		except:
 			pass
 
-		output_filename = os.path.join( final_path, '{}_wrf_hour_{}.nc'.format(variable, year) )
+		output_filename = os.path.join( final_path, '{}_wrf_hour_{}_{}.nc'.format(variable, group, year) )
 		ds.to_netcdf( output_filename, mode='w', format='NETCDF4_CLASSIC' )
