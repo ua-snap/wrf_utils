@@ -30,12 +30,12 @@ for fn in files:
 	ds_mon = ds.resample( '3H', dim='time', how=metric[ variable ] )
 	ds_mon_comp = ds_mon.compute() # watch this one
 
-	ds_mon_comp = ds_mon_comp.to_dataset( name=variable )
+	# ds_mon_comp = ds_mon_comp.to_dataset( name=variable )
 	ds_mon_comp.attrs = global_attrs
-	ds_mon_comp[ variable ] = local_attrs
-	ds_mon_comp[ 'lon' ] = xy_attrs
-	ds_mon_comp[ 'lat' ] = xy_attrs
-	ds_mon_comp[ 'time' ] = time_attrs
+	ds_mon_comp[ variable ].attrs = local_attrs
+	ds_mon_comp[ 'lon' ].attrs = xy_attrs
+	ds_mon_comp[ 'lat' ].attrs = xy_attrs
+	ds_mon_comp[ 'time' ].attrs = time_attrs
 
 	# dump to disk
 	dirname, basename = os.path.split( fn )
