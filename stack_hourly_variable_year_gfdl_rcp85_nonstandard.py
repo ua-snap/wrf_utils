@@ -41,10 +41,10 @@ for variable in variables:
 	output_filename = os.path.join( output_path, 'daily', '{}_wrf_day_{}.nc'.format(variable, group) )]
 	var_ds.to_netcdf( output_filename, mode='w', format='NETCDF4_CLASSIC' )
 
-	# now resample to monthlies
+	# resample to monthlies
 	metric = {'PCPT':'sum', 'TMAX':'mean', 'TMIN':'mean'}
-	var_ds_mon = var_ds.resample( 'D', dim='time', how=metric[ variable ] )
-	var_ds_mon_comp = var_ds_mon.compute()
+	var_ds_mon = var_ds.resample( 'M', dim='time', how=metric[ variable ] )
+	var_ds_mon_comp = var_ds_mon.compute() # watch this one
 
 	# to dataset
 	var_ds_mon_comp = var_ds_mon_comp.to_dataset( name=variable )
@@ -56,6 +56,13 @@ for variable in variables:
 
 	# output the file to disk
 	output_filename = os.path.join( output_path, 'monthly', '{}_wrf_month_{}.nc'.format(variable, group) )]
-	var_ds.to_netcdf( output_filename, mode='w', format='NETCDF4_CLASSIC' )
+	var_ds_mon_comp.to_netcdf( output_filename, mode='w', format='NETCDF4_CLASSIC' )
 
-	
+	# cleanup files cleanly
+	var_ds.close()
+	var_ds = None
+	var_ds_mon.close()
+	var_ds_mon = None
+	var_ds_mon_comp.close()
+	var_ds_mon_comp = None
+
