@@ -2,7 +2,7 @@
 
 SNAP scripts for working with the wrf output downscaled data products from the CSC
 
-#####RAW OUTPUTS:
+##### RAW OUTPUTS:
 
 | GROUP | LOCATION | H | D | M |
 | ----- | -------- | --| --| --|
@@ -10,7 +10,7 @@ SNAP scripts for working with the wrf output downscaled data products from the C
 | GFDL-HIST | /storage01/pbieniek/gfdl | Y | Y | Y |
 | GFDL-RCP85 | /storage01/rtladerjr | Y | Y | N |
 
-#####SNAP MODIFIED OUTPUTS:
+##### SNAP MODIFIED OUTPUTS:
 
 | GROUP | LOCATION | H | D | M |
 | ----- | -------- | --| --| --|
