@@ -11,6 +11,7 @@ SNAP scripts for working with the wrf output downscaled data products from the C
 | GFDL-RCP85 | /storage01/rtladerjr | Y | Y | N |
 
 #####SNAP MODIFIED OUTPUTS:
+
 | GROUP | LOCATION | H | D | M |
 | ----- | -------- | --| --| --|
 | ERAIN | /workspace/Shared/Tech_Projects/wrf_data/project_data/wrf | Y | ... | ... |
