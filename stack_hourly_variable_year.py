@@ -27,13 +27,17 @@ if __name__ == '__main__':
 	os.chdir( output_path )
 	variables = ['T2', 'PCPT']
 	# years = range( 1979, 2015+1 )
-	years = range( 1970, 2005+1 )
+	# years = range( 1970, 2005+1 )
+	years = range( 2006, 2100+1 )
 	# input_dir = '/storage01/pbieniek/erain/hourly'
-	input_dir = '/storage01/pbieniek/gfdl/hist/hourly'
+	# input_dir = '/storage01/pbieniek/gfdl/hist/hourly'
+	input_dir = '/storage01/rtladerjr/hourly'
 	# monthly_template_fn = '/storage01/pbieniek/erain/monthly/monthly_TMAX-erai.nc' # [Hardwired]
-	monthly_template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_PCPT-gfdlh.nc' # [Hardwired GFDL]
+	# monthly_template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_PCPT-gfdlh.nc' # [Hardwired GFDL]
+	monthly_template_fn = '/storage01/rtladerjr/daily/2006/WRFDS_d01_2006-01-03.nc' # its a daily... 
 	# group = 'erain'
-	group = 'gfdl'
+	# group = 'gfdl'
+	group = 'gfdl_rcp85'
 
 	# list / sort the netcdf files
 	files_df = pd.DataFrame([ get_month_day( os.path.join(r, fn)) for r,s,files in os.walk( input_dir ) 

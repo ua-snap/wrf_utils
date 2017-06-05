@@ -7,9 +7,10 @@ import os
 input_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/hourly'
 
 variable = 'pcpt'
+group = 'erain'
 
 # read in mfdataset
-ds = xr.open_mfdataset( os.path.join( input_path, variable, '*'.join(['', variable.upper(), '.nc']) ) )
+ds = xr.open_mfdataset( os.path.join( input_path, variable, '*'.join(['', variable.upper(), group, '.nc']) ) )
 
 # get the attrs from the input dset
 global_attrs = ds.attrs
@@ -38,7 +39,7 @@ ds_total_comp[ variable.upper() ].attrs = local_attrs
 ds_total_comp[ 'lon' ].attrs = xy_attrs
 ds_total_comp[ 'lat' ].attrs = xy_attrs
 
-ds_total_comp.to_netcdf( os.path.join( output_path_day, '{}_total_wrf_day.nc'.format(variable) ), mode='w', format='NETCDF4_CLASSIC' )
+ds_total_comp.to_netcdf( os.path.join( output_path_day, '{}_total_wrf_day_{}.nc'.format(variable, group) ), mode='w', format='NETCDF4_CLASSIC' )
 
 # precip total -- monthly
 ds_total_mon = ds_total_comp.resample( 'M', dim='time', how='sum' )
@@ -51,7 +52,7 @@ ds_total_mon_comp[ variable.upper() ].attrs = local_attrs
 ds_total_mon_comp[ 'lon' ].attrs = xy_attrs
 ds_total_mon_comp[ 'lat' ].attrs = xy_attrs
 
-ds_total_mon_comp.to_netcdf( os.path.join( output_path_mon, '{}_total_wrf_month.nc'.format(variable) ), mode='w', format='NETCDF4_CLASSIC' )
+ds_total_mon_comp.to_netcdf( os.path.join( output_path_mon, '{}_total_wrf_month_{}.nc'.format(variable, group) ), mode='w', format='NETCDF4_CLASSIC' )
 
 # cleanup...
 ds_total.close()
