@@ -54,6 +54,20 @@ def interp_file_grouper( df, reinit_day_value=6 ):
 def stack_year( df, variable ):
 	''' open and stack a single level dataset '''
 	return np.array([ open_ds( fn, variable ) for fn in df.fn ])
+def _interpolate_hour( x ):
+	''' interpolate over a missing hour using hours on each side '''
+	# open arrays
+	arr = np.array([open_ds(fn, variable) for fn in x ])
+	# fill second array with nan
+	arr[1,...] = np.nan
+	# interpolate
+	out = np.apply_along_axis( 
+		interp_1d_along_axis, axis=0, arr=arr.copy() )
+	return out
+def _update_arr( arr, key, value ):
+	''' helper to update an array in a listcomp '''
+	arr[ key, ... ] = value
+	return arr
 def run_year( df, variable ):
 	import numpy as np
 	DIFF_VARS = ['PCPT']
@@ -71,18 +85,15 @@ def run_year( df, variable ):
 		del diff_arr
 	
 	# make the data needing interpolation all NaN
-	nas = arr[0,...].copy()
-	nas[:] = np.nan
-	arr[ ind ] = nas
-
-	# interpolate the needed values in the year
-	out = np.apply_along_axis( 
-			interp_1d_along_axis, axis=0, arr=arr.copy() )
+	interpolated = {count:interpolate_hour(i) for i, count in enumerate(df.interp_files) if len(i) == 3}
+	# put the data back into the arr
+	_ = [ update_arr( arr, key, value ) for key, value in interpolated.items() ]
 	
-	# Make sure we don't have any negative precip and set it to 0 if so (it happens) 
-	out[ (out < 0) | (out == np.nan) ] = 0
+	if variable in DIFF_VARS:
+		# Make sure we don't have any negative precip and set it to 0 if so (it happens) 
+		arr[ (arr < 0) | (arr == np.nan) ] = 0
 
-	return out
+	return arr
 
 if __name__ == '__main__':
 	import os
