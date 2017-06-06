@@ -12,8 +12,12 @@ def get_forecast_time( fn ):
 	ds.close() # keep it clean with lotsa i/o
 	return forecast_time
 def get_file_attrs( fn ):
-	fn_args = get_month_day( fn )
-	fn_args.update( forecast_time=get_forecast_time( fn ) )
+	try:
+		fn_args = get_month_day( fn )
+		fn_args.update( forecast_time=get_forecast_time( fn ) )
+	except:
+		# if there is an issue... dont fail, do this...
+		fn_args = {'fn':-9999, 'year':-9999, 'folder_year':-9999,'month':-9999, 'day':-9999, 'hour':-9999, 'forecast_time':-9999}
 	return fn_args
 
 if __name__ == '__main__':
@@ -24,14 +28,14 @@ if __name__ == '__main__':
 	
 	# setup args
 	# base_path = '/storage01/pbieniek/gfdl/hist/hourly'
-	# base_path = '/storage01/pbieniek/erain/hourly'
-	base_path = '/storage01/rtladerjr/hourly'
+	base_path = '/storage01/pbieniek/erain/hourly'
+	# base_path = '/storage01/rtladerjr/hourly'
 	fn_list = [ os.path.join(r, fn) for r,s,files in os.walk(base_path) if 'oldstuff' not in r for fn in files if fn.endswith('.nc') and 'test' not in fn ]
 	ncpus = 32
 	output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs'
 	# group = 'gfdl_hist'
-	# group = 'erain'
-	group = 'gfdl_rcp85'
+	group = 'erain'
+	# group = 'gfdl_rcp85'
 
 	pool = mp.Pool( ncpus )
 	out = pool.map( get_file_attrs, fn_list )
