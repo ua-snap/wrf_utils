@@ -89,8 +89,8 @@ def run_year( df, variable ):
 	# put the data back into the arr
 	_ = [ update_arr( arr, key, value ) for key, value in interpolated.items() ]
 	
+	# Make sure we don't have any negative precip and set it to 0 if so (it happens) 
 	if variable in DIFF_VARS:
-		# Make sure we don't have any negative precip and set it to 0 if so (it happens) 
 		arr[ (arr < 0) | (arr == np.nan) ] = 0
 
 	return arr
@@ -114,10 +114,40 @@ if __name__ == '__main__':
 	df.iloc[ ind, np.where(df.columns == 'interp_files')[0] ] = interp_list
 
 	# run year:
+	year = 1980
 	sub_df = df.loc[ df['year'] == year, ] 
 	arr = run_year( df, variable )
 
-	# build the output NetCDF Dataset
+	# build the output NetCDF Dataset -- FUNCTIONALIZE THIS
+	new_dates = pd.date_range( '-'.join(sub_df[['month', 'day', 'year']].iloc[0]), periods=stacked_arr.shape[0], freq='1H' )
+
+	# get some template data to get some vars from... -- HARDWIRED...
+	mon_tmp_ds = xr.open_dataset( monthly_template_fn, decode_times=False )
+	tmp_ds = xr.open_dataset( sub_df.fn.tolist()[0] )
+	global_attrs = tmp_ds.attrs.copy()
+	global_attrs[ 'reference_time' ] = str(new_dates[0]) # 1979 hourly does NOT start at day 01...  rather day 02....
+	global_attrs[ 'proj_parameters' ] = "+proj=stere +lat_0=90 +lat_ts=90 +lon_0=-150 +k=0.994 +x_0=2000000 +y_0=2000000 +datum=WGS84 +units=m +no_defs"
+	# global_attrs.pop()
+	local_attrs = tmp_ds[ variable ].attrs.copy()
+	xy_attrs = mon_tmp_ds.lon.attrs.copy()
+
+	# this is the way that you should add the attr to the file with a proj4string
+	# // global attributes:
+	#      :proj_parameters = "+proj=merc +lon_0=90W" ;
+
+	# build a new Dataset with the stacked timesteps and some we extracted from the input Dataset
+	ds = xr.Dataset( {variable:(['time','x', 'y'], stacked_arr)},
+					coords={'lon': (['x', 'y'], tmp_ds.g5_lon_1.data),
+							'lat': (['x', 'y'], tmp_ds.g5_lat_0.data),
+							'time': new_dates},
+					attrs=global_attrs )
+
+	# set the local attrs for the given variable we are stacking
+	ds[ variable ].attrs = local_attrs
+
+	# set the lon/lat vars attrs with the existing attrs from the monthly dataset now...
+	ds[ variable ].attrs = xy_attrs
+
 
 	# write to disk
 	
