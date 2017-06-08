@@ -1,4 +1,4 @@
-#! v3/bin/python3
+#! ~/v3/bin/python3
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 #
@@ -229,5 +229,5 @@ if __name__ == '__main__':
 # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
 
 # os.chdir( '/workspace/UA/malindgren/repos/wrf_utils' )
-# _ = subprocess.call(['stack_hourly_variable_year_with_interpfix.py', '--', '-i', 'input_path', '-y', 'group', '-f', 'variable', '-v', 'files_df_fn', '-o', 'output_path', '-t', 'template_fn'])
+# _ = subprocess.call(['python3','stack_hourly_variable_year_with_interpfix.py', '--', '-i', 'input_path', '-y', 'group', '-f', 'variable', '-v', 'files_df_fn', '-o', 'output_path', '-t', 'template_fn'])
 
