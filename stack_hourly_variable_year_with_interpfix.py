@@ -20,6 +20,8 @@ def nan_helper( y ):
         >>> # linear interpolation of NaNs
         >>> nans, x= nan_helper(y)
         >>> y[nans]= np.interp(x(nans), x(~nans), y[~nans])
+
+        https://stackoverflow.com/questions/6518811/interpolate-nan-values-in-a-numpy-array
     '''
     return np.isnan( y ), lambda z: z.nonzero()[0]
 
@@ -47,7 +49,9 @@ def open_ds( fn, variable ):
 
 def interp_file_grouper( df, reinit_day_value=6 ):
     ''' return filenames for linear interpolation. format:(t-1, t, t+1) '''
+    ind1 = df[ df['year'] > df['year'].min() ].groupby( 'year' ).apply( lambda x: x.index[0] )
     ind, = np.where( df.forecast_time == reinit_day_value )
+    ind = np.concatenate([ind, ind1])
     interp_list = [ df.iloc[[i-1,i,i+1]].fn.tolist() if i-1 > 0 
                     else df.iloc[[i,i+1]].fn.tolist() for i in ind ]
     return interp_list
@@ -73,7 +77,6 @@ def _interpolate_hour( x ):
     '''
     x, variable = x
     arr = np.array([ open_ds(fn, variable) for fn in x ])
-    # arr = np.diff( arr, axis=0 ) # diff it
     arr[ 1 ] = np.nan
     out = np.apply_along_axis( 
         interp_1d_along_axis, axis=0, arr=arr.copy() )
@@ -94,18 +97,21 @@ def run_year( df, variable ):
     from functools import partial
     DIFF_VARS = ['PCPT']
 
-    ind, = np.where( df.interp == True )
-    # stack the years hourly data
+    # stack the data along time axis
     arr = stack_year( df, variable )
-    
-    # do special stuff to the accumulation vars
+
+    # interpolate accumulation vars at `ind`
     if variable in DIFF_VARS:
+        # index layers requiring interpolation
+        ind, = np.where( df.interp == True )
+        # NOTE AND FIX NEEDED: 
+        # it will be necessary to either add the index that is lost in the diff'ing
+        # to the list of files to be interpolated OR we needto just add back some
+        # layer we already have. Currently we are using a copy of missing_layer+1
         print( 'interpolating missing hours --> {}'.format( variable ) )
-        # diff it (T - (T-1)) and add back that lost timeste
+        # diff it (T - (T-1)) [reverse array along time axis before and after diff]
         diff_arr = np.diff( arr[::-1,...], axis=0 )[::-1,...] # double flip!
-        # add the missing file back? to the beginning.
-        # # if we need to reverse the series pre-diff we should do that first...
-        # arr_rev = arr[::-1,...] # make sure to reverse BACK! if you use this.
+        # add the missing file back to the beginning
         # replicate the first timestep -- hour2 to return hour1 lost in diffing
         diff_arr = np.concatenate( [arr[0,...][np.newaxis, ...], diff_arr], axis=0 )
         arr = diff_arr.copy()
@@ -233,5 +239,5 @@ if __name__ == '__main__':
 # output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
 
 # os.chdir( '/workspace/UA/malindgren/repos/wrf_utils' )
-# _ = subprocess.call(['python3','stack_hourly_variable_year_with_interpfix.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_path, '-t', template_fn])
+# _ = subprocess.call(['python3','stack_hourly_variable_year_with_interpfix.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
 
