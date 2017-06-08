@@ -139,7 +139,7 @@ if __name__ == '__main__':
     parser.add_argument( "-y", "--year", action='store', dest='year', type=int, help="year to process" )
     parser.add_argument( "-f", "--files_df_fn", action='store', dest='files_df_fn', type=str, help="path to the .csv file containing parsed filename and forecast_time already precomputed " )
     parser.add_argument( "-v", "--variable", action='store', dest='variable', type=str, help="variable name (exact)" )
-    parser.add_argument( "-o", "--output_path", action='store', dest='output_filename', type=str, help="output filename for the new NetCDF hourly data for the input year" )
+    parser.add_argument( "-o", "--output_filename", action='store', dest='output_filename', type=str, help="output filename for the new NetCDF hourly data for the input year" )
     parser.add_argument( "-t", "--template_fn", action='store', dest='template_fn', type=str, help="monthly template file that is used for passing global metadata to output NC files." )
     
     # parse the args and unpack
@@ -148,7 +148,7 @@ if __name__ == '__main__':
     year = args.year
     files_df_fn = args.files_df_fn
     variable = args.variable
-    output_path = args.output_path
+    output_filename = args.output_filename
     template_fn = args.template_fn
 
     # # FOR TESTING
@@ -158,6 +158,8 @@ if __name__ == '__main__':
     # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
     # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2'
     # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
+    # year = 1990
+    # # END TESTING
 
     # wrf output standard vars -- [hardwired] for now
     lon_variable = 'g5_lon_1'
@@ -175,7 +177,6 @@ if __name__ == '__main__':
     df.iloc[ ind, np.where(df.columns == 'interp_files')[0] ] = interp_list
 
     # run year:
-    year = 1990
     sub_df = df[ (df.year == year) & (df.folder_year == year) ].reset_index()
     arr = run_year( sub_df, variable )
 
@@ -204,16 +205,17 @@ if __name__ == '__main__':
     # set the lon/lat vars attrs with the existing attrs from the monthly dataset now...
     ds[ variable ].attrs = xy_attrs
 
+    dirname, basename = os.path.split( output_filename )
     # write to disk
     print( 'writing to disk' )
     try:
-        final_path = os.path.join( output_path, variable.lower() )
-        if not os.path.exists( final_path ):
-            os.makedirs( final_path )
+        # final_path = os.path.join( dirname, variable.lower() )
+        if not os.path.exists( dirname ):
+            os.makedirs( dirname )
     except:
         pass
 
-    output_filename = os.path.join( final_path, '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
+    # output_filename = os.path.join( final_path, '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
     ds.to_netcdf( output_filename, mode='w', format='NETCDF4_CLASSIC' )
 
 
@@ -227,7 +229,9 @@ if __name__ == '__main__':
 # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
 # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2'
 # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
+# year = 1990
+# output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
 
 # os.chdir( '/workspace/UA/malindgren/repos/wrf_utils' )
-# _ = subprocess.call(['python3','stack_hourly_variable_year_with_interpfix.py', '--', '-i', 'input_path', '-y', 'group', '-f', 'variable', '-v', 'files_df_fn', '-o', 'output_path', '-t', 'template_fn'])
+# _ = subprocess.call(['python3','stack_hourly_variable_year_with_interpfix.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_path, '-t', template_fn])
 
