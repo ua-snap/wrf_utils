@@ -1,4 +1,10 @@
-def nan_helper(y):
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#
+# stack the hourly data and diff/interpolate the accumulation variables
+#
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+def nan_helper( y ):
     '''
     Helper to handle indices and logical indices of NaNs.
 
@@ -13,157 +19,184 @@ def nan_helper(y):
         >>> nans, x= nan_helper(y)
         >>> y[nans]= np.interp(x(nans), x(~nans), y[~nans])
     '''
-    return np.isnan(y), lambda z: z.nonzero()[0]
+    return np.isnan( y ), lambda z: z.nonzero()[0]
+
 def interp_1d_along_axis( y ):
-	''' interpolate across 1D timeslices of a 3D array. '''
-	nans, x = nan_helper( y )
-	y[nans] = np.interp( x(nans), x(~nans), y[~nans] )
-	return y
+    ''' interpolate across 1D timeslices of a 3D array. '''
+    nans, x = nan_helper( y )
+    y[nans] = np.interp( x(nans), x(~nans), y[~nans] )
+    return y
+
 def get_month_day( fn ):
-	''' split WRF output filenames from UAF group and split to descriptor parts '''
-	dirname, basename = os.path.split( fn )
-	year, month, day_hour = basename.split('.')[-2].split('-')
-	day, hour = day_hour.split( '_' )
-	folder_year = dirname.split('/')[-1]
-	return {'fn':fn, 'year':year, 'folder_year':folder_year,'month':month, 'day':day, 'hour':hour}
+    ''' split WRF output filenames from UAF group and split to descriptor parts '''
+    dirname, basename = os.path.split( fn )
+    year, month, day_hour = basename.split('.')[-2].split('-')
+    day, hour = day_hour.split( '_' )
+    folder_year = dirname.split('/')[-1]
+    return {'fn':fn, 'year':year, 'folder_year':folder_year,'month':month, 'day':day, 'hour':hour}
+
 def open_ds( fn, variable ):
-	''' cleanly read variable/close a single hourly netcdf '''
-	import xarray as xr
-	ds = xr.open_dataset( fn )
-	out = ds[ variable ].copy()
-	ds.close()
-	return out.data
-def list_files( dirname ):
-	'''
-	list the files and split the filenames into their descriptor parts and 
-	return dataframe of elements and filename sorted by:['year', 'month', 'day', 'hour']
-	'''
-	import os
-	import pandas as pd
+    ''' cleanly read variable/close a single hourly netcdf '''
+    import xarray as xr
+    ds = xr.open_dataset( fn, autoclose=True )
+    out = ds[ variable ].copy()
+    ds.close()
+    return out.data
 
-	files = [ get_month_day( os.path.join(r, fn)) for r,s,files in os.walk( dirname ) 
-						for fn in files if os.path.split(r)[-1].isdigit() and fn.endswith( '.nc' ) and '-*.nc' not in fn]
-	files_df = pd.DataFrame( files )
-	return files_df.sort_values( ['year', 'month', 'day','hour'] ).reset_index()
 def interp_file_grouper( df, reinit_day_value=6 ):
-	''' return filenames for linear interpolation. format:(t-1, t, t+1) '''
-	ind, = np.where( df.forecast_time == reinit_day_value )
-	interp_list = [ df.iloc[[i-1,i,i+1]].fn.tolist() if i-1 > 0 
-					else df.iloc[[i,i+1]].fn.tolist() for i in ind ]
-	return interp_list
+    ''' return filenames for linear interpolation. format:(t-1, t, t+1) '''
+    ind, = np.where( df.forecast_time == reinit_day_value )
+    interp_list = [ df.iloc[[i-1,i,i+1]].fn.tolist() if i-1 > 0 
+                    else df.iloc[[i,i+1]].fn.tolist() for i in ind ]
+    return interp_list
+
 def stack_year( df, variable ):
-	''' open and stack a single level dataset '''
-	return np.array([ open_ds( fn, variable ) for fn in df.fn ])
+    ''' open and stack a single level dataset '''
+    import multiprocessing as mp
+    from functools import partial
+    
+    pool = mp.Pool( 32 )
+    f = partial(open_ds, variable=variable)
+    out = np.array(pool.map( f, df.fn.tolist() ))
+    pool.close()
+    pool.join()
+    return out
+
 def _interpolate_hour( x ):
-	''' interpolate over a missing hour using hours on each side '''
-	# open arrays
-	arr = np.array([open_ds(fn, variable) for fn in x ])
-	# fill second array with nan
-	arr[1,...] = np.nan
-	# interpolate
-	out = np.apply_along_axis( 
-		interp_1d_along_axis, axis=0, arr=arr.copy() )
-	return out
+    ''' 
+    interpolate over a missing hour using hours on each side 
+    this is only applicable for the accumulation (precip) vars
+    x is a list of 3 adjacent filenames where the middle one will 
+    be filled linearly with the 2 ends.
+    '''
+    x, variable = x
+    arr = np.array([ open_ds(fn, variable) for fn in x ])
+    # arr = np.diff( arr, axis=0 ) # diff it
+    arr[ 1 ] = np.nan
+    out = np.apply_along_axis( 
+        interp_1d_along_axis, axis=0, arr=arr.copy() )
+    return out
+
 def _update_arr( arr, key, value ):
-	''' helper to update an array in a listcomp '''
-	arr[ key, ... ] = value
-	return arr
+    ''' helper to update an array in a listcomp '''
+    arr[ key, ... ] = value
+    return 1
+
+def _run_interp( x, variable ):
+    i, j = x
+    return i, _interpolate_hour((j, variable))[1,...].copy()
+
 def run_year( df, variable ):
-	import numpy as np
-	DIFF_VARS = ['PCPT']
+    import numpy as np
+    import multiprocessing as mp
+    from functools import partial
+    DIFF_VARS = ['PCPT']
 
-	ind, = np.where( df.interp == True )
-	# stack the years hourly data
-	arr = stack_year( df, variable )
-	
-	# do special stuff to the accumulation vars
-	if variable in DIFF_VARS:
-		# diff it and add back that lost timestep -- with a copy?
-		diff_arr = np.diff( arr.copy() )
-		diff_arr = np.append( diff_arr, arr[-1,...].copy(), axis=0 )
-		arr = diff_arr.copy()
-		del diff_arr
-	
-	# make the data needing interpolation all NaN
-	interpolated = {count:interpolate_hour(i) for i, count in enumerate(df.interp_files) if len(i) == 3}
-	# put the data back into the arr
-	_ = [ update_arr( arr, key, value ) for key, value in interpolated.items() ]
-	
-	# Make sure we don't have any negative precip and set it to 0 if so (it happens) 
-	if variable in DIFF_VARS:
-		arr[ (arr < 0) | (arr == np.nan) ] = 0
+    ind, = np.where( df.interp == True )
+    # stack the years hourly data
+    arr = stack_year( df, variable )
+    
+    # do special stuff to the accumulation vars
+    if variable in DIFF_VARS:
+        print( 'interpolating missing hours --> {}'.format( variable ) )
+        # diff it (T - (T-1)) and add back that lost timestep -- with a copy?
+        diff_arr = np.diff( arr[::-1,...], axis=0 )[::-1,...] # double flip!
+        # add the missing file back? to the beginning.
+        # # if we need to reverse the series pre-diff we should do that first...
+        # arr_rev = arr[::-1,...] # make sure to reverse BACK! if you use this.
+        # replicate the first timestep -- hour2 to return hour1 lost in diffing
+        diff_arr = np.concatenate( [arr[0,...][np.newaxis, ...], diff_arr], axis=0 )
+        arr = diff_arr.copy()
+        del diff_arr
+    
+        # multiprocess interpolation
+        f = partial( _run_interp, variable=variable )
+        col_ind, = np.where( df.columns == 'interp_files' )
+        pool = mp.Pool( 32 )
+        interpolated = pool.map( f, zip(ind, df.iloc[ind, col_ind]['interp_files'].tolist()) )
+        pool.close()
+        pool.join()
 
-	return arr
+        # put the data back into the arr
+        _ = [ _update_arr( arr, key, value ) for key, value in interpolated ]
+
+        # Make sure we don't have any negative precip and set it to 0 if so (it happens) 
+        arr[ (arr < 0) | (arr == np.nan) ] = 0
+    return arr
 
 if __name__ == '__main__':
-	import os
-	import xarray as xr
-	import numpy as np
-	import pandas as pd
+    import os
+    import xarray as xr
+    import numpy as np
+    import pandas as pd
 
-	# list files
-	input_path = ''
-	df = list_files( input_path )
-	
-	# set vars based on whether to interp
-	ind, = np.where( df.forecast_time == 6 )
-	df[ 'interp' ] = False
-	df.iloc[ ind, np.where(df.columns == 'interp')[0] ] = True
-	interp_list = interp_file_grouper( df )
-	df[ 'interp_files' ] = [ [i] for i in df.fn ]
-	df.iloc[ ind, np.where(df.columns == 'interp_files')[0] ] = interp_list
+    # list files
+    input_path = '/storage01/pbieniek/gfdl/hist/hourly'
+    group = 'gfdl_hist'
+    variable = 'PCPT'
+    files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
+    output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2'
+    monthly_template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
 
-	# run year:
-	year = 1980
-	sub_df = df.loc[ df['year'] == year, ] 
-	arr = run_year( df, variable )
+    # wrf output standard vars
+    lon_variable = 'g5_lon_1'
+    lat_variable = 'g5_lat_0'
 
-	# build the output NetCDF Dataset -- FUNCTIONALIZE THIS
-	new_dates = pd.date_range( '-'.join(sub_df[['month', 'day', 'year']].iloc[0]), periods=stacked_arr.shape[0], freq='1H' )
+    # # list files to a df
+    # df = list_files( input_path )
 
-	# get some template data to get some vars from... -- HARDWIRED...
-	mon_tmp_ds = xr.open_dataset( monthly_template_fn, decode_times=False )
-	tmp_ds = xr.open_dataset( sub_df.fn.tolist()[0] )
-	global_attrs = tmp_ds.attrs.copy()
-	global_attrs[ 'reference_time' ] = str(new_dates[0]) # 1979 hourly does NOT start at day 01...  rather day 02....
-	global_attrs[ 'proj_parameters' ] = "+proj=stere +lat_0=90 +lat_ts=90 +lon_0=-150 +k=0.994 +x_0=2000000 +y_0=2000000 +datum=WGS84 +units=m +no_defs"
-	# global_attrs.pop()
-	local_attrs = tmp_ds[ variable ].attrs.copy()
-	xy_attrs = mon_tmp_ds.lon.attrs.copy()
+    # read in pre-built dataframe with forecast_time as a field
+    df = pd.read_csv( files_df_fn, sep=',', index_col=0 )
 
-	# this is the way that you should add the attr to the file with a proj4string
-	# // global attributes:
-	#      :proj_parameters = "+proj=merc +lon_0=90W" ;
+    # set vars based on whether to interp
+    ind, = np.where( df.forecast_time == 6 )
+    df[ 'interp' ] = False
+    df.iloc[ ind, np.where(df.columns == 'interp')[0] ] = True
+    interp_list = interp_file_grouper( df )
+    df[ 'interp_files' ] = [ [i] for i in df.fn ]
+    df.iloc[ ind, np.where(df.columns == 'interp_files')[0] ] = interp_list
 
-	# build a new Dataset with the stacked timesteps and some we extracted from the input Dataset
-	ds = xr.Dataset( {variable:(['time','x', 'y'], stacked_arr)},
-					coords={'lon': (['x', 'y'], tmp_ds.g5_lon_1.data),
-							'lat': (['x', 'y'], tmp_ds.g5_lat_0.data),
-							'time': new_dates},
-					attrs=global_attrs )
-
-	# set the local attrs for the given variable we are stacking
-	ds[ variable ].attrs = local_attrs
-
-	# set the lon/lat vars attrs with the existing attrs from the monthly dataset now...
-	ds[ variable ].attrs = xy_attrs
+    # run year:
+    year = 1990
+    sub_df = df[ (df.year == year) & (df.folder_year == year) ].reset_index()
+    arr = run_year( sub_df, variable )
+    
+    # RUNNING ABOVE
 
 
-	# write to disk
-	
+    # build the output NetCDF Dataset
+    new_dates = pd.date_range( '-'.join(sub_df.loc[sub_df.index[0],['month','day','year']].astype(str)), periods=arr.shape[0], freq='1H' )
 
+    # get some template data to get some vars from... -- HARDWIRED...
+    mon_tmp_ds = xr.open_dataset( monthly_template_fn, decode_times=False )
+    tmp_ds = xr.open_dataset( sub_df.fn.tolist()[0] )
+    global_attrs = tmp_ds.attrs.copy()
+    global_attrs[ 'reference_time' ] = str(new_dates[0]) # 1979 hourly does NOT start at day 01...  rather day 02....
+    global_attrs[ 'proj_parameters' ] = "+proj=stere +lat_0=90 +lat_ts=90 +lon_0=-150 +k=0.994 +x_0=2000000 +y_0=2000000 +datum=WGS84 +units=m +no_defs"
+    local_attrs = tmp_ds[ variable ].attrs.copy()
+    xy_attrs = mon_tmp_ds.lon.attrs.copy()
 
+    # build a new Dataset with the stacked timesteps and some we extracted from the input Dataset
+    ds = xr.Dataset( {variable:(['time','x', 'y'], arr)},
+                    coords={'lon': (['x', 'y'], tmp_ds[lon_variable].data),
+                            'lat': (['x', 'y'], tmp_ds[lat_variable].data),
+                            'time': new_dates},
+                    attrs=global_attrs )
 
-	
+    # set the local attrs for the given variable we are stacking
+    ds[ variable ].attrs = local_attrs
 
+    # set the lon/lat vars attrs with the existing attrs from the monthly dataset now...
+    ds[ variable ].attrs = xy_attrs
 
+    # write to disk
+    print( 'writing to disk' )
+    try:
+        final_path = os.path.join( output_path, variable.lower() )
+        if not os.path.exists( final_path ):
+            os.makedirs( final_path )
+    except:
+        pass
 
-# ORDER OF OPERATIONS:
-# -------------------
-# - STACK YEAR
-
-
-# - DIFF <-- PRECIP VARS only!
-# - INTERP >> reading in adjacent years files if needed.
-# - BUILD NETCDF
-
+    output_filename = os.path.join( final_path, '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
+    ds.to_netcdf( output_filename, mode='w', format='NETCDF4_CLASSIC' )

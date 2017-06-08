@@ -1,57 +1,79 @@
 # get forecast_time attrs from dset to use in interpolation
+def open_ds( fn, variable ):
+    ''' cleanly read variable/close a single hourly netcdf '''
+    import xarray as xr
+    ds = xr.open_dataset( fn, autoclose=True )
+    out = ds[ variable ].copy()
+    ds.close()
+    return out
+def list_files( dirname ):
+    '''
+    list the files and split the filenames into their descriptor parts and 
+    return dataframe of elements and filename sorted by:['year', 'month', 'day', 'hour']
+    '''
+    import os
+    import pandas as pd
 
+    files = [ get_month_day( os.path.join(r, fn)) for r,s,files in os.walk( dirname ) 
+                        for fn in files if os.path.split(r)[-1].isdigit() and fn.endswith( '.nc' )
+                         and '-*.nc' not in fn and 'old' not in r and 'test' not in r ]
+
+    files_df = pd.DataFrame( files )
+    return files_df.sort_values( ['year', 'month', 'day', 'hour'] ).reset_index()
 def get_month_day( fn ):
-	dirname, basename = os.path.split( fn )
-	year, month, day_hour = basename.split('.')[-2].split('-')
-	day, hour = day_hour.split( '_' )
-	folder_year = dirname.split('/')[-1]
-	return {'fn':fn, 'year':year, 'folder_year':folder_year,'month':month, 'day':day, 'hour':hour}
+    dirname, basename = os.path.split( fn )
+    year, month, day_hour = basename.split('.')[-2].split('-')
+    day, hour = day_hour.split( '_' )
+    folder_year = dirname.split('/')[-1]
+    return {'fn':fn, 'year':year, 'folder_year':folder_year,'month':month, 'day':day, 'hour':hour}
 def get_forecast_time( fn ):
-	ds = xr.open_dataset( fn, decode_times=False, autoclose=True )
-	forecast_time = ds[ 'PCPT' ].attrs[ 'forecast_time' ]
-	ds.close() # keep it clean with lotsa i/o
-	return forecast_time
+    return open_ds( fn, variable='PCPT' ).attrs['forecast_time']
 def get_file_attrs( fn ):
-	try:
-		fn_args = get_month_day( fn )
-		fn_args.update( forecast_time=get_forecast_time( fn ) )
-	except:
-		# if there is an issue... dont fail, do this...
-		fn_args = {'fn':-9999, 'year':-9999, 'folder_year':-9999,'month':-9999, 'day':-9999, 'hour':-9999, 'forecast_time':-9999}
-	return fn_args
+    try:
+        fn_args = get_month_day( fn )
+        fn_args.update( forecast_time=get_forecast_time( fn ) )
+    except:
+        # if there is an issue... dont fail, do this...
+        nodata = -9999
+        fn_args = {'fn':fn, 'year':nodata, 'folder_year':nodata,'month':nodata, 'day':nodata, 'hour':nodata, 'forecast_time':nodata}
+    return fn_args
 
 if __name__ == '__main__':
-	import xarray as xr
-	import pandas as pd
-	import multiprocessing as mp
-	import os
-	
-	# setup args
-	# base_path = '/storage01/pbieniek/gfdl/hist/hourly'
-	base_path = '/storage01/pbieniek/erain/hourly'
-	# base_path = '/storage01/rtladerjr/hourly'
-	fn_list = [ os.path.join(r, fn) for r,s,files in os.walk(base_path) if 'oldstuff' not in r for fn in files if fn.endswith('.nc') and 'test' not in fn ]
-	ncpus = 32
-	output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs'
-	# group = 'gfdl_hist'
-	group = 'erain'
-	# group = 'gfdl_rcp85'
+    import xarray as xr
+    import pandas as pd
+    import multiprocessing as mp
+    import os
+    
+    # setup args
+    base_path = '/storage01/pbieniek/gfdl/hist/hourly'
+    # base_path = '/storage01/pbieniek/erain/hourly'
+    # base_path = '/storage01/rtladerjr/hourly'
+  
+    # fn_list = [ os.path.join( r, fn ) for r,s,files in os.walk( base_path ) 
+    #           if 'oldstuff' not in r for fn in files if fn.endswith( '.nc' ) 
+    #               and 'test' not in fn and '-*.nc' not in fn ]
+    
+    fn_list = list_files( base_path )
+    # drop unneeded duplicates
+    fn_list = fn_list[ fn_list.folder_year == fn_list.year ]
+    print( 'number of files: {}'.format(len( fn_list )) )
 
-	pool = mp.Pool( ncpus )
-	out = pool.map( get_file_attrs, fn_list )
-	pool.close()
-	pool.join()
+    ncpus = 32
+    output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs'
+    group = 'gfdl_hist'
+    # group = 'erain'
+    # group = 'gfdl_rcp85'
 
-	df = pd.DataFrame( out )
-	output_filename = os.path.join( output_path, 'WRFDS_forecast_time_attr_{}.csv'.format( group ) )
-	df.to_csv( output_filename, sep=',' )
+    pool = mp.Pool( ncpus )
+    print( 'start multiprocessing' )
+    out = [ pool.map( get_file_attrs, fnl['fn'] ) for group, fnl in fn_list.groupby( 'year' ) ]
+    out = [ j for i in out for j in i ]
+    print( 'multiprocessing complete' )
+    pool.close()
+    pool.join()
 
-# # NOTES:
-# # # CODE FROM PETERS NC Generate Run: in relation to that time var.
-# if (ftime == 6) THEN
-#    call check( NF90_PUT_ATT(ncid,NF90_GLOBAL,'reinit_day','yes') )
-# else   
-#    call check( NF90_PUT_ATT(ncid,NF90_GLOBAL,'reinit_day','no') )
-# endif
-
-# varname = forecast_time
+    print( 'df' )
+    df = pd.DataFrame( out )
+    output_filename = os.path.join( output_path, 'WRFDS_forecast_time_attr_{}.csv'.format( group ) )
+    print( 'writing to disk' )
+    df.to_csv( output_filename, sep=',' )
