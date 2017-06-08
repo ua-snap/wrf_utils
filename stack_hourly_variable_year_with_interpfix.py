@@ -49,12 +49,24 @@ def open_ds( fn, variable ):
 
 def interp_file_grouper( df, reinit_day_value=6 ):
     ''' return filenames for linear interpolation. format:(t-1, t, t+1) '''
-    ind1 = df[ df['year'] > df['year'].min() ].groupby( 'year' ).apply( lambda x: x.index[0] )
     ind, = np.where( df.forecast_time == reinit_day_value )
-    ind = np.concatenate([ind, ind1])
     interp_list = [ df.iloc[[i-1,i,i+1]].fn.tolist() if i-1 > 0 
                     else df.iloc[[i,i+1]].fn.tolist() for i in ind ]
     return interp_list
+
+def get_first_row_grouper( df ):
+    ''' 
+    after a diff (T - (T-1)) we lose the first hour. in this i grab
+    all the first layer in all the series, its adjacent files and will use 
+    these with the other interpolation values of forecast time. for 
+    accumulation variables (precip) only 
+    '''
+    years = df[ df['year'] > df['year'].min() ]['year'].unique()
+    years = np.sort( years[years != min(years)] )
+    ind = [ df[df['year'] == year ].index[0] for year in years ]
+    interp_list = [ df.iloc[[i-1,i,i+1]].fn.tolist() if i-1 > 0 
+                else df.iloc[[i,i+1]].fn.tolist() for i in ind ]
+    return ind, interp_list
 
 def stack_year( df, variable ):
     ''' open and stack a single level dataset '''
@@ -174,6 +186,9 @@ if __name__ == '__main__':
     # read in pre-built dataframe with forecast_time as a field
     df = pd.read_csv( files_df_fn, sep=',', index_col=0 )
 
+    # sort it
+    df = df.sort_values( ['year', 'month', 'day', 'hour'] ).reset_index()
+
     # set vars based on whether to interp
     ind, = np.where( df.forecast_time == 6 )
     df[ 'interp' ] = False
@@ -181,7 +196,11 @@ if __name__ == '__main__':
     interp_list = interp_file_grouper( df )
     df[ 'interp_files' ] = [ [i] for i in df.fn ]
     df.iloc[ ind, np.where(df.columns == 'interp_files')[0] ] = interp_list
-
+    # lost first layer interp from np.diff of reverse array
+    ind1, interp_list1 = get_first_row_grouper( df )
+    df.iloc[ ind1, np.where(df.columns == 'interp')[0] ] = True
+    df.iloc[ ind1, np.where(df.columns == 'interp_files')[0] ] = interp_list1
+    
     # run year:
     sub_df = df[ (df.year == year) & (df.folder_year == year) ].reset_index()
     arr = run_year( sub_df, variable )
@@ -231,13 +250,12 @@ if __name__ == '__main__':
 
 # input_path = '/storage01/pbieniek/gfdl/hist/hourly'
 # group = 'gfdl_hist'
-# variable = 'PCPT'
+# variable = 'T2' #'PCPT'
 # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
 # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2'
 # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
-# year = 1990
+# years = list(range(1970,2005+1))
 # output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
 
 # os.chdir( '/workspace/UA/malindgren/repos/wrf_utils' )
-# _ = subprocess.call(['python3','stack_hourly_variable_year_with_interpfix.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
-
+# _ = [ subprocess.call(['python3','stack_hourly_variable_year_with_interpfix.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn]) for year in years ]
