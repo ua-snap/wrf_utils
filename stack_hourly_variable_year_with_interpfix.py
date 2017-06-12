@@ -122,7 +122,9 @@ def run_year( df, variable ):
         # layer we already have. Currently we are using a copy of missing_layer+1
         print( 'interpolating missing hours --> {}'.format( variable ) )
         # diff it (T - (T-1)) [reverse array along time axis before and after diff]
-        diff_arr = np.diff( arr[::-1,...], axis=0 )[::-1,...] # double flip!
+        # diff_arr = np.diff( arr[::-1,...], axis=0 )[::-1,...] # double flip!
+        # NO REVERSING!!! THE np.diff does it that way too...
+        diff_arr = np.diff( arr, axis=0 ) # NO FLIP!
         # add the missing file back to the beginning
         # replicate the first timestep -- hour2 to return hour1 lost in diffing
         diff_arr = np.concatenate( [arr[0,...][np.newaxis, ...], diff_arr], axis=0 )
@@ -172,7 +174,7 @@ if __name__ == '__main__':
     # # FOR TESTING
     # input_path = '/storage01/pbieniek/gfdl/hist/hourly'
     # group = 'gfdl_hist'
-    # variable = 'PCPT'
+    # variable = 'PCPT' #'T2'
     # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
     # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2'
     # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
@@ -186,8 +188,8 @@ if __name__ == '__main__':
     # read in pre-built dataframe with forecast_time as a field
     df = pd.read_csv( files_df_fn, sep=',', index_col=0 )
 
-    # sort it
-    df = df.sort_values( ['year', 'month', 'day', 'hour'] ).reset_index()
+    # # sort it
+    # df = df.sort_values( ['year', 'month', 'day', 'hour'] ).reset_index()
 
     # set vars based on whether to interp
     ind, = np.where( df.forecast_time == 6 )
@@ -196,13 +198,18 @@ if __name__ == '__main__':
     interp_list = interp_file_grouper( df )
     df[ 'interp_files' ] = [ [i] for i in df.fn ]
     df.iloc[ ind, np.where(df.columns == 'interp_files')[0] ] = interp_list
-    # lost first layer interp from np.diff of reverse array
-    ind1, interp_list1 = get_first_row_grouper( df )
-    df.iloc[ ind1, np.where(df.columns == 'interp')[0] ] = True
-    df.iloc[ ind1, np.where(df.columns == 'interp_files')[0] ] = interp_list1
-    
-    # run year:
+
+    # # grab data for the requeseted year
     sub_df = df[ (df.year == year) & (df.folder_year == year) ].reset_index()
+    # fill an interp files for T1 if not the first year
+    if year > df.year.min():
+        sub_df.iloc[0, np.where(sub_df.columns == 'interp')[0]] = True
+        ii, = df[ df.fn == sub_df.iloc[0].fn ].index
+        interp_list1 = df.iloc[[ii-1, ii, ii+1]].fn.tolist()
+        # set the list the hard way...
+        sub_df = sub_df.set_value( 0, 'interp_files', interp_list1 )
+
+    # run the stacking
     arr = run_year( sub_df, variable )
 
     # build the output NetCDF Dataset
@@ -240,12 +247,12 @@ if __name__ == '__main__':
     except:
         pass
 
-    # output_filename = os.path.join( final_path, '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
+    output_filename = os.path.join( dirname, '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
     ds.to_netcdf( output_filename, mode='w', format='NETCDF4_CLASSIC' )
 
 
 # # # # # EXAMPLE # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# # FOR TESTING
+# # # FOR TESTING
 # import os, subprocess
 
 # input_path = '/storage01/pbieniek/gfdl/hist/hourly'
@@ -255,7 +262,8 @@ if __name__ == '__main__':
 # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2'
 # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
 # years = list(range(1970,2005+1))
-# output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
 
 # os.chdir( '/workspace/UA/malindgren/repos/wrf_utils' )
-# _ = [ subprocess.call(['python3','stack_hourly_variable_year_with_interpfix.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn]) for year in years ]
+# for year in years:
+#     output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
+#     _ = subprocess.call(['python3','stack_hourly_variable_year_with_interpfix.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
