@@ -247,7 +247,7 @@ if __name__ == '__main__':
     except:
         pass
 
-    output_filename = os.path.join( dirname, '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
+    # output_filename = os.path.join( dirname, '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
     ds.to_netcdf( output_filename, mode='w', format='NETCDF4_CLASSIC' )
 
 
@@ -257,7 +257,7 @@ if __name__ == '__main__':
 
 # input_path = '/storage01/pbieniek/gfdl/hist/hourly'
 # group = 'gfdl_hist'
-# variable = 'T2' #'PCPT'
+# variable = 'PCPT' #'T2'
 # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
 # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2'
 # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
