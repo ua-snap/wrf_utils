@@ -107,6 +107,8 @@ def run_year( df, variable ):
     import numpy as np
     import multiprocessing as mp
     from functools import partial
+    
+    # THE ACCUMULATION VARIABLE...
     DIFF_VARS = ['PCPT']
 
     # stack the data along time axis
@@ -174,10 +176,11 @@ if __name__ == '__main__':
     # # FOR TESTING
     # input_path = '/storage01/pbieniek/gfdl/hist/hourly'
     # group = 'gfdl_hist'
-    # variable = 'PCPT' #'T2'
+    # variable = 'QVAPOR' #'T2'
     # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
     # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2'
-    # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
+    # # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
+    # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
     # year = 1990
     # # END TESTING
 
@@ -191,7 +194,7 @@ if __name__ == '__main__':
     # # sort it
     # df = df.sort_values( ['year', 'month', 'day', 'hour'] ).reset_index()
 
-    # set vars based on whether to interp
+    # set vars based on whether to interp accumulation vars
     ind, = np.where( df.forecast_time == 6 )
     df[ 'interp' ] = False
     df.iloc[ ind, np.where(df.columns == 'interp')[0] ] = True
@@ -224,12 +227,25 @@ if __name__ == '__main__':
     local_attrs = tmp_ds[ variable ].attrs.copy()
     xy_attrs = mon_tmp_ds.lon.attrs.copy()
 
-    # build a new Dataset with the stacked timesteps and some we extracted from the input Dataset
-    ds = xr.Dataset( {variable:(['time','x', 'y'], arr)},
+    if len( arr.shape ) == 3:
+        # build a new Dataset with the stacked timesteps and some we extracted from the input Dataset
+        ds = xr.Dataset( {variable:(['time','x', 'y'], arr)},
+                        coords={'lon': (['x', 'y'], tmp_ds[lon_variable].data),
+                                'lat': (['x', 'y'], tmp_ds[lat_variable].data),
+                                'time': new_dates},
+                        attrs=global_attrs )
+        
+    elif len( arr.shape ) == 4: #(time,levels, x, y )
+        # build dataset with levels at each timestep
+        sub_ds = xr.open_dataset( sub_df.iloc[0].fn )
+        ds = xr.Dataset( {variable:(['time','lv_ISBL2','x', 'y'], arr)},
                     coords={'lon': (['x', 'y'], tmp_ds[lon_variable].data),
                             'lat': (['x', 'y'], tmp_ds[lat_variable].data),
-                            'time': new_dates},
+                            'time': new_dates,
+                            'lv_ISBL2':sub_ds[ 'lv_ISBL2' ]},
                     attrs=global_attrs )
+    else:
+        raise BaseException( 'incorrect number of dimensions in arr. Must be 3 or 4 (as currently implemented)' )
 
     # set the local attrs for the given variable we are stacking
     ds[ variable ].attrs = local_attrs
