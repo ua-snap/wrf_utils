@@ -109,7 +109,7 @@ def run_year( df, variable ):
     from functools import partial
     
     # THE ACCUMULATION VARIABLE...
-    DIFF_VARS = ['PCPT']
+    DIFF_VARS = ['PCPT', 'SNOW']
 
     # stack the data along time axis
     arr = stack_year( df, variable )
@@ -173,16 +173,16 @@ if __name__ == '__main__':
     output_filename = args.output_filename
     template_fn = args.template_fn
 
-    # # FOR TESTING
+    # # # # FOR TESTING
     # input_path = '/storage01/pbieniek/gfdl/hist/hourly'
     # group = 'gfdl_hist'
-    # variable = 'QVAPOR' #'T2'
+    # variable = 'TSLB' #'T2'
     # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
     # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2'
     # # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
     # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
     # year = 1990
-    # # END TESTING
+    # # # # END TESTING
 
     # wrf output standard vars -- [hardwired] for now
     lon_variable = 'g5_lon_1'
@@ -236,13 +236,19 @@ if __name__ == '__main__':
                         attrs=global_attrs )
         
     elif len( arr.shape ) == 4: #(time,levels, x, y )
+        # levelname to use if 4D
+        if variable in ['TSLB']:
+            levelname = 'lv_DBLY3'
+        else:
+            levelname = 'lv_ISBL2'
+
         # build dataset with levels at each timestep
         sub_ds = xr.open_dataset( sub_df.iloc[0].fn )
-        ds = xr.Dataset( {variable:(['time','lv_ISBL2','x', 'y'], arr)},
+        ds = xr.Dataset( {variable:(['time',levelname,'x', 'y'], arr)},
                     coords={'lon': (['x', 'y'], tmp_ds[lon_variable].data),
                             'lat': (['x', 'y'], tmp_ds[lat_variable].data),
                             'time': new_dates,
-                            'lv_ISBL2':sub_ds[ 'lv_ISBL2' ]},
+                            levelname:sub_ds[ levelname ]},
                     attrs=global_attrs )
     else:
         raise BaseException( 'incorrect number of dimensions in arr. Must be 3 or 4 (as currently implemented)' )
