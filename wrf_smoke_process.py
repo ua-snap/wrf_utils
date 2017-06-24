@@ -128,7 +128,7 @@ if __name__ == '__main__':
     output_path = args.output_path
     variable = args.variable
     level = args.level
-    quiet = args.quiet
+    # quiet = args.quiet
 
     ds = restructure_wrf_variable( fn, variable=variable )
 
