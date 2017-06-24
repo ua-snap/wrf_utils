@@ -119,8 +119,8 @@ if __name__ == '__main__':
     parser.add_argument( "-fn", "--filename", action='store', dest='fn', type=str, help="path to the wrf-chem output file (.nc)" )
     parser.add_argument( "-o", "--output_path", action='store', dest='output_path', type=str, help="path to the directory where the 24 hourly geotiffs will be stored" )
     parser.add_argument( "-v", "--variable", action='store', dest='variable', type=str, const='PM2_5_DRY', help="name of variable to reproject from the input file. Only tested on PM2_5_DRY" )
-    parser.add_argument( "-l", "--level", action='store', dest='level', type=int, const=0, help="level integer of altitude to reproject. default and reccommended is 0. closest to ground-level." )
-    parser.add_argument( "-q", "--quiet", action='store', dest='quiet', type=bool, const=False, help="if True print nothing to screen, if False (default) print to screen" )
+    parser.add_argument( "-l", "--level", action='store', dest='level', type=int, nargs='?',const=0, help="level integer of altitude to reproject. default and reccommended is 0. closest to ground-level." )
+    parser.add_argument( "-q", "--quiet", action='store', dest='quiet', type=bool, nargs='?',const=False, help="if True print nothing to screen, if False (default) print to screen" )
 
     # parse the CLI args
     args = parser.parse_args()
