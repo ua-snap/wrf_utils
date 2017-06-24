@@ -120,7 +120,7 @@ if __name__ == '__main__':
     parser.add_argument( "-o", "--output_path", action='store', dest='output_path', type=str, help="path to the directory where the 24 hourly geotiffs will be stored" )
     parser.add_argument( "-v", "--variable", action='store', dest='variable', type=str, default='PM2_5_DRY', help="name of variable to reproject from the input file. Only tested on PM2_5_DRY" )
     parser.add_argument( "-l", "--level", action='store', dest='level', type=int, default=0, help="level integer of altitude to reproject. default and reccommended is 0. closest to ground-level." )
-    parser.add_argument( "-q", "--quiet", action='store', dest='quiet', type=bool, default=False, help="if True print nothing to screen, if False (default) print to screen" )
+    # parser.add_argument( "-q", "--quiet", action='store', dest='quiet', type=bool, default=False, help="if True print nothing to screen, if False (default) print to screen" )
 
     # parse the CLI args
     args = parser.parse_args()
@@ -176,8 +176,8 @@ if __name__ == '__main__':
 
     # reproject and output to new GeoTiff
     for band in range( time ):
-        if args.quiet == False:
-            print( 'reprojecting band: {}'.format(band+1) )
+        # if args.quiet == False:
+        print( 'reprojecting band: {}'.format(band+1) )
         
         dirname, basename = os.path.split( fn )
         basename = os.path.splitext( basename )[0]
@@ -197,5 +197,5 @@ if __name__ == '__main__':
 # output_path = '/workspace/Shared/Users/malindgren/wrf_smoke' # adds subdirs 'netcdf' and 'geotiff'
 # variable = 'PM2_5_DRY'
 
-# os.system( 'python3 wrf_smoke_process.py -- -fn {} -o {} -v {}'.format( fn, output_path, variable ) )
+# os.system( 'python3 wrf_smoke_process.py -fn {} -o {} -v {}'.format( fn, output_path, variable ) )
 
