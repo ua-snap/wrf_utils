@@ -109,7 +109,7 @@ def run_year( df, variable ):
     from functools import partial
     
     # THE ACCUMULATION VARIABLE...
-    DIFF_VARS = ['PCPT', 'SNOW']
+    DIFF_VARS = [ 'PCPT', 'ACSNOW', 'PCPT', 'PCPC', 'PCPNC', 'POTEVP' ]
 
     # stack the data along time axis
     arr = stack_year( df, variable )

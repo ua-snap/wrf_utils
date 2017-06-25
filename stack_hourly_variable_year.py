@@ -15,6 +15,7 @@ def open_ds( fn, variable ):
 	ds.close()
 	return out.data
 
+
 if __name__ == '__main__':
 	import os, glob, itertools
 	import xarray as xr
@@ -50,9 +51,9 @@ if __name__ == '__main__':
 		print( 'working on {} - {}'.format(year, variable) )
 		# subset and stack the data
 		sub_df = files_df[ (files_df.year == str(year)) & (files_df.folder_year == str(year)) ]
-
 		print( 'stacking files' )
 		stacked_arr = np.array([ open_ds(fn, variable) for fn in sub_df.fn.tolist() ])
+		break
 		new_dates = pd.date_range( '-'.join(sub_df[['month', 'day', 'year']].iloc[0]), periods=stacked_arr.shape[0], freq='1H' )
 
 		# get some template data to get some vars from... -- HARDWIRED...
