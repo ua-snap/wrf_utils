@@ -83,6 +83,32 @@ def open_raster( fn, band=1 ):
         arr = rst.read( band )
     return arr
 
+def classify_aqi( arr ):
+    '''
+    pass a PM2_5_DRY arr averaged across all hours for the day and 
+    return an estimate AQI Map.
+
+    has built in break_values for the current classification 
+    of AQI from PM2.5 units:'ug m^-3'
+    '''
+    # break_values = {'Good': {'begin': 0.0, 'end': 12.0},
+    #  'Hazardous': {'begin': 350.5, 'end': 500.0},
+    #  'Moderate': {'begin': 12.1, 'end': 35.399999999999999},
+    #  'Unhealthy': {'begin': 55.5, 'end': 150.40000000000001},
+    #  'Unhealthy for Sensitive Groups': {'begin': 35.5,'end': 55.399999999999999},
+    #  'Very Unhealthy': {'begin': 150.5, 'end': 250.40000000000001}}
+    break_values = {1: {'begin': 0.0, 'end': 12.0},
+                    2: {'begin': 350.5, 'end': 500.0},
+                    3: {'begin': 12.1, 'end': 35.399999999999999},
+                    4: {'begin': 55.5, 'end': 150.40000000000001},
+                    5: {'begin': 35.5,'end': 55.399999999999999},
+                    6: {'begin': 150.5, 'end': 250.40000000000001}}
+
+    new_arr = arr.copy()
+    for key, value in break_values.items():
+        new_arr[ np.where( (arr < value[0]) & (arr >= value[1]) ) ] = key
+
+    return new_arr
 
 if __name__ == '__main__':
     import rasterio, os
@@ -137,6 +163,7 @@ if __name__ == '__main__':
     # quiet = args.quiet
 
     aggregate = True # we can wire this up as a CLI arg if we want... but for now just dump it out.
+    aqi = True # dump  out the aqi raster all the time too...  just for kicks
     ds = restructure_wrf_variable( fn, variable=variable )
 
     # # write new NetCDF file to disk
@@ -202,7 +229,7 @@ if __name__ == '__main__':
         print( 'generating daily mean smoke raster' )
         dirname, basename = os.path.split( fn )
         basename = os.path.splitext( basename )[0]
-        output_filename = os.path.join( output_path, 'geotiff', basename.replace(':','_') + '_{}_level{}_daily_mean.tif'.format( variable, level, str(band+1) ) )
+        output_filename = os.path.join( output_path, 'geotiff', basename.replace(':','_') + '_{}_level{}_daily_mean.tif'.format( variable, level ) )
         mean_arr = np.mean( [ open_raster( fn, band=1 ) for fn in output_filenames ], axis=0 )
         meta = rasterio.open( output_filenames[0] ).meta
         meta.update( compress='lzw' )
@@ -210,12 +237,23 @@ if __name__ == '__main__':
         with rasterio.open( output_filename, mode='w', **meta ) as out:
             out.write( mean_arr, 1 )
 
+    if aqi:
+        print( 'generating daily AQI Classified raster' )
+        dirname, basename = os.path.split( fn )
+        basename = os.path.splitext( basename )[0]
+        output_filename = os.path.join( output_path, 'geotiff', basename.replace(':','_') + '_{}_level{}_daily_aqi.tif'.format( variable, level) )
+        mean_arr = np.mean( [ open_raster( fn, band=1 ) for fn in output_filenames ], axis=0 )
+        meta = rasterio.open( output_filenames[0] ).meta
+        meta.update( compress='lzw', dtype='uint8' )
+
+        with rasterio.open( output_filename, mode='w', **meta ) as out:
+            out.write( classify_aqi( mean_arr ).astype( np.uint8 ), 1 )
 
 # # # # # EXAMPLE RUN
 # import os
 
-# fn = '/workspace/Shared/Users/malindgren/wrf_smoke/raw/wrfout_d01_2017-06-15_00:00:00'
-# output_path = '/workspace/Shared/Users/malindgren/wrf_smoke' # adds subdirs 'netcdf' and 'geotiff'
+# fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf-smoke/wrfout-d01-july262017.nc'
+# output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf-smoke' # adds subdirs 'netcdf' and 'geotiff'
 # variable = 'PM2_5_DRY'
 
 # os.system( 'python3 wrf_smoke_process.py -fn {} -o {} -v {}'.format( fn, output_path, variable ) )
