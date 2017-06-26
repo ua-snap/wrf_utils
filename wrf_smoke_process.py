@@ -102,7 +102,7 @@ def classify_aqi( arr ):
                     3: {'begin': 12.1, 'end': 35.399999999999999},
                     4: {'begin': 55.5, 'end': 150.40000000000001},
                     5: {'begin': 35.5,'end': 55.399999999999999},
-                    6: {'begin': 150.5, 'end': 250.40000000000001}}
+                    6: {'begin': 150.5, 'end': 500.0}}
 
     new_arr = arr.copy()
     for key, value in break_values.items():
