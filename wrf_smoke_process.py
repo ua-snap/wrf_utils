@@ -78,6 +78,12 @@ def reproject_band( arr, src_transform, src_crs, src_nodata, dst_transform, dst_
 
     return output_filename
 
+def open_raster( fn, band=1 ):
+    with rasterio.open( fn ) as rst:
+        arr = rst.read( band )
+    return arr
+
+
 if __name__ == '__main__':
     import rasterio, os
     from rasterio.warp import calculate_default_transform, Resampling, reproject
@@ -130,6 +136,7 @@ if __name__ == '__main__':
     level = args.level
     # quiet = args.quiet
 
+    aggregate = True # we can wire this up as a CLI arg if we want... but for now just dump it out.
     ds = restructure_wrf_variable( fn, variable=variable )
 
     # # write new NetCDF file to disk
@@ -175,6 +182,7 @@ if __name__ == '__main__':
             'dst_crs':dst_crs, 'dst_nodata':-9999 }
 
     # reproject and output to new GeoTiff
+    output_filenames = []
     for band in range( time ):
         # if args.quiet == False:
         print( 'reprojecting band: {}'.format(band+1) )
@@ -188,7 +196,18 @@ if __name__ == '__main__':
 
         args.update( arr=np.flipud( ds_level[ band, ... ].data ), output_filename=output_filename )
         
-        reproject_band( **args )
+        output_filenames = output_filenames + [ reproject_band( **args ) ]
+
+    if aggregate:
+        print( 'generating daily mean smoke raster' )
+        output_filename = os.path.join( output_path, 'geotiff', basename.replace(':','_') + '_{}_level{}_daily_mean.tif'.format( variable, level, str(band+1) ) )
+        mean_arr = np.mean( [ open_raster( fn, band=1 ) for fn in output_filenames ], axis=0 )
+        meta = rasterio.open( output_filenames[0] ).meta
+        meta.update( compress='lzw' )
+
+        with rasterio.open( output_filename, mode='w', **meta ) as out:
+            out.write( mean_arr, 1 )
+
 
 # # # # # EXAMPLE RUN
 # import os
