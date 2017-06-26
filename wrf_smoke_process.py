@@ -200,6 +200,8 @@ if __name__ == '__main__':
 
     if aggregate:
         print( 'generating daily mean smoke raster' )
+        dirname, basename = os.path.split( fn )
+        basename = os.path.splitext( basename )[0]
         output_filename = os.path.join( output_path, 'geotiff', basename.replace(':','_') + '_{}_level{}_daily_mean.tif'.format( variable, level, str(band+1) ) )
         mean_arr = np.mean( [ open_raster( fn, band=1 ) for fn in output_filenames ], axis=0 )
         meta = rasterio.open( output_filenames[0] ).meta
