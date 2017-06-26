@@ -106,8 +106,7 @@ def classify_aqi( arr ):
 
     new_arr = arr.copy()
     for key, value in break_values.items():
-        new_arr[ np.where( (arr < value[0]) & (arr >= value[1]) ) ] = key
-
+        new_arr[ np.where( (arr >= value['begin']) & (arr >= value['end']) ) ] = key
     return new_arr
 
 if __name__ == '__main__':
