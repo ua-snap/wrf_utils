@@ -244,10 +244,10 @@ if __name__ == '__main__':
         output_filename = os.path.join( output_path, 'geotiff', basename.replace(':','_') + '_{}_level{}_daily_aqi.tif'.format( variable, level) )
         mean_arr = np.mean( [ open_raster( fn, band=1 ) for fn in output_filenames ], axis=0 )
         meta = rasterio.open( output_filenames[0] ).meta
-        meta.update( compress='lzw', dtype='int' )
+        meta.update( compress='lzw', dtype='uint16' )
 
         with rasterio.open( output_filename, mode='w', **meta ) as out:
-            out.write( classify_aqi( mean_arr ).astype( np.int ), 1 )
+            out.write( classify_aqi( mean_arr ).astype( np.int16 ), 1 )
 
 # # # # # EXAMPLE RUN
 # import os
