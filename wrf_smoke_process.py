@@ -187,7 +187,7 @@ if __name__ == '__main__':
     crs = rasterio.crs.CRS.from_string( sds.proj.srs )
     xmin, xmax, ymin, ymax = sds.extent
     # affine = rasterio.transform.from_origin( xmin, ymax, sds.dx, sds.dy )
-    affine = rasterio.transform.from_origin( xmin+2500, ymax-2500, sds.dx, sds.dy ) # shift it half a pixel... [TEST]
+    affine = rasterio.transform.from_origin( xmin+2500, ymax+2500, sds.dx, sds.dy ) # shift it half a pixel... [TEST]
     time, levels, height, width = ds[ variable ].shape
     meta = {'res':(sds.dx, sds.dy), 'transform':affine, 'height':height, 'width':width, 'count':1, 'dtype':'float32', 'driver':'GTiff', 'compress':'lzw', 'crs':crs }
 
@@ -229,7 +229,7 @@ if __name__ == '__main__':
         print( 'generating daily mean smoke raster' )
         dirname, basename = os.path.split( fn )
         basename = os.path.splitext( basename )[0]
-        output_filename = os.path.join( output_path, 'geotiff', basename.replace(':','_') + '_{}_level{}_daily_mean.tif'.format( variable, level ) )
+        output_filename = os.path.join( output_path, 'geotiff_offset', basename.replace(':','_') + '_{}_level{}_daily_mean.tif'.format( variable, level ) )
         mean_arr = np.mean( [ open_raster( fn, band=1 ) for fn in output_filenames ], axis=0 )
         meta = rasterio.open( output_filenames[0] ).meta
         meta.update( compress='lzw' )
