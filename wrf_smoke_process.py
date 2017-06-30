@@ -186,7 +186,8 @@ if __name__ == '__main__':
     # set-up input and output file metadata
     crs = rasterio.crs.CRS.from_string( sds.proj.srs )
     xmin, xmax, ymin, ymax = sds.extent
-    affine = rasterio.transform.from_origin( xmin, ymax, sds.dx, sds.dy )
+    # affine = rasterio.transform.from_origin( xmin, ymax, sds.dx, sds.dy )
+    affine = rasterio.transform.from_origin( xmin-2500, ymax+2500, sds.dx, sds.dy ) # shift it half a pixel... [TEST]
     time, levels, height, width = ds[ variable ].shape
     meta = {'res':(sds.dx, sds.dy), 'transform':affine, 'height':height, 'width':width, 'count':1, 'dtype':'float32', 'driver':'GTiff', 'compress':'lzw', 'crs':crs }
 
