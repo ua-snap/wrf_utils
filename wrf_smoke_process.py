@@ -137,7 +137,6 @@ if __name__ == '__main__':
 
 
     '''
-
     # # easy way to get a dict of libraries and versions
     # {'rasterio':rasterio.__version__,
     # 'xarray':xr.__version__,
