@@ -241,7 +241,7 @@ if __name__ == '__main__':
         print( 'generating daily AQI Classified raster' )
         dirname, basename = os.path.split( fn )
         basename = os.path.splitext( basename )[0]
-        output_filename = os.path.join( output_path, 'geotiff', basename.replace(':','_') + '_{}_level{}_daily_aqi.tif'.format( variable, level) )
+        output_filename = os.path.join( output_path, 'geotiff_offset', basename.replace(':','_') + '_{}_level{}_daily_aqi.tif'.format( variable, level) )
         mean_arr = np.mean( [ open_raster( fn, band=1 ) for fn in output_filenames ], axis=0 )
         meta = rasterio.open( output_filenames[0] ).meta
         meta.update( compress='lzw', dtype='int16' )
