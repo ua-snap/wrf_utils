@@ -11,9 +11,10 @@ def run_model( fn, command ):
             '#SBATCH -p main\n'
     
     with open( fn, 'w' ) as f:
-        f.writelines( head + '\n' + command + '\n' )
-    dirname, basename = os.path.split( fn )
-    os.chdir( dirname ) 
+        f.write( head + '\n' + commands + '\n' )
+    
+    slurm_path, basename = os.path.split( fn )
+    os.chdir( slurm_path )
     subprocess.call([ 'sbatch', fn ])
     return 1
 
@@ -29,22 +30,26 @@ if __name__ == '__main__':
 
     for variable in variables:
         print( variable )
+        template_fn = '/storage01/pbieniek/erain/monthly/monthly_{}-erai.nc'.format( variable )
+        try:
+            _ = xr.open_dataset( template_fn, decode_times=False, autoclose=True )  
+        except:
+            template_fn = '/storage01/pbieniek/erain/monthly/monthly_{}-erai.nc'.format( 'PCPT' )
+            pass
+
+        commands = []
         for year in years:
-            template_fn = '/storage01/pbieniek/erain/monthly/monthly_{}-erai.nc'.format( variable )
-            try:
-                _ = xr.open_dataset( template_fn, decode_times=False, autoclose=True )  
-            except:
-                template_fn = '/storage01/pbieniek/erain/monthly/monthly_{}-erai.nc'.format( 'PCPT' )
-                pass
-
-            for year in years:
-                output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
-                command = ' '.join['python3','/workspace/UA/malindgren/repos/wrf_utils/stack_hourly_variable_year.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
-            
-                slurm_path = os.path.join( output_path, 'slurm_log' )
-                if not os.path.exists( slurm_path ):
-                    os.makedirs( slurm_path )
-
-                fn = os.path.join( slurm_path, 'run_{}_wrf_hourly_{}_{}.slurm'.format( variable, group, year ) )
-                done = run_model( fn, command )
+            output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
+            commands = commands + [' '.join(['python3','/workspace/UA/malindgren/repos/wrf_utils/stack_hourly_variable_year.py', 
+                                            '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, 
+                                            '-o', output_filename, '-t', template_fn])]
         
+        commands = '\n'.join( commands )
+        
+        slurm_path = os.path.join( output_path, 'slurm_log' )
+        if not os.path.exists( slurm_path ):
+            os.makedirs( slurm_path )
+
+        fn = os.path.join( slurm_path, 'run_{}_wrf_hourly_{}.slurm'.format( variable, group ) )
+
+        done = run_model( fn, commands )

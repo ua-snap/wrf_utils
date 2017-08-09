@@ -162,7 +162,7 @@ def run_year( df, year, variable ):
     if variable in ACCUM_VARS:
         arr = stack_year_accum( df, year, variable )
     else:
-        arr = stack_year( sub_df, year, variable )
+        arr = stack_year( df, year, variable )
     return arr
 
 if __name__ == '__main__':
