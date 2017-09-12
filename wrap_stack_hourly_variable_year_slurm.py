@@ -21,10 +21,23 @@ def run_model( fn, command ):
 if __name__ == '__main__':
     import os, subprocess
 
-    input_path = '/storage01/pbieniek/erain/hourly'
-    years = range(1979, 2015+1)
-    group = 'erain'
-    variables = ['PCPT', 'QBOT', 'QVAPOR', 'SNOW', 'SNOWC', 'T2', 'TSLB', 'VEGFRA']
+    # input_path = '/storage01/pbieniek/erain/hourly'
+    # input_path = '/storage01/pbieniek/gfdl/hist/hourly'
+    input_path = '/storage01/rtladerjr/hourly'
+    # years = range(1979, 2015+1)
+    # years = range(1979, 2006+1)
+    years = list(range(2006,2100+1))
+    # group = 'erain'
+    # group = 'gfdl_hist'
+    group = 'gfdl_rcp85'
+    # variables = ['PCPT', 'QBOT', 'QVAPOR', 'SNOW', 'SNOWC', 'T2', 'TSLB', 'VEGFRA'] # COMPLETE
+    variables = ['PSFC','GHT','TSK','T','TBOT','Q2']
+
+                # MUST RUN: #,'PCPNC','PCPC','ACSNOW','SNOWH'
+                # 'CLDFRA','CLDFRA_LOW','CLDFRA_MID','CLDFRA_HIGH','ALBEDO','SEAICE',
+                # 'SLP','SMOIS','SWUPBC','SWDNBC','LWUPBC','LWDNBC','SWDNB','LWDNB',
+                # 'SWUPB','LWUPB','CANWAT','POTEVP','SH2O']
+    
     files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
     output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/hourly'
 
@@ -32,7 +45,7 @@ if __name__ == '__main__':
         print( variable )
         template_fn = '/storage01/pbieniek/erain/monthly/monthly_{}-erai.nc'.format( variable )
         try:
-            _ = xr.open_dataset( template_fn, decode_times=False, autoclose=True )  
+            _ = xr.open_dataset( template_fn, decode_times=False, autoclose=True )
         except:
             template_fn = '/storage01/pbieniek/erain/monthly/monthly_{}-erai.nc'.format( 'PCPT' )
             pass

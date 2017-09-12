@@ -172,37 +172,37 @@ if __name__ == '__main__':
     import pandas as pd
     from pathos.mp_map import mp_map
     from functools import partial
-    import argparse
+    # import argparse
 
-    # parse some args
-    parser = argparse.ArgumentParser( description='stack the hourly outputs from raw WRF outputs to NetCDF files of hourlies broken up by year.' )
-    parser.add_argument( "-i", "--input_path", action='store', dest='input_path', type=str, help="input hourly directory with annual sub-dirs containing raw WRF NetCDF outputs" )
-    parser.add_argument( "-y", "--year", action='store', dest='year', type=int, help="year to process" )
-    parser.add_argument( "-f", "--files_df_fn", action='store', dest='files_df_fn', type=str, help="path to the .csv file containing parsed filename and forecast_time already precomputed " )
-    parser.add_argument( "-v", "--variable", action='store', dest='variable', type=str, help="variable name (exact)" )
-    parser.add_argument( "-o", "--output_filename", action='store', dest='output_filename', type=str, help="output filename for the new NetCDF hourly data for the input year" )
-    parser.add_argument( "-t", "--template_fn", action='store', dest='template_fn', type=str, help="monthly template file that is used for passing global metadata to output NC files." )
+    # # parse some args
+    # parser = argparse.ArgumentParser( description='stack the hourly outputs from raw WRF outputs to NetCDF files of hourlies broken up by year.' )
+    # parser.add_argument( "-i", "--input_path", action='store', dest='input_path', type=str, help="input hourly directory with annual sub-dirs containing raw WRF NetCDF outputs" )
+    # parser.add_argument( "-y", "--year", action='store', dest='year', type=int, help="year to process" )
+    # parser.add_argument( "-f", "--files_df_fn", action='store', dest='files_df_fn', type=str, help="path to the .csv file containing parsed filename and forecast_time already precomputed " )
+    # parser.add_argument( "-v", "--variable", action='store', dest='variable', type=str, help="variable name (exact)" )
+    # parser.add_argument( "-o", "--output_filename", action='store', dest='output_filename', type=str, help="output filename for the new NetCDF hourly data for the input year" )
+    # parser.add_argument( "-t", "--template_fn", action='store', dest='template_fn', type=str, help="monthly template file that is used for passing global metadata to output NC files." )
     
-    # parse the args and unpack
-    args = parser.parse_args()
-    input_path = args.input_path
-    year = args.year
-    files_df_fn = args.files_df_fn
-    variable = args.variable
-    output_filename = args.output_filename
-    template_fn = args.template_fn
+    # # parse the args and unpack
+    # args = parser.parse_args()
+    # input_path = args.input_path
+    # year = args.year
+    # files_df_fn = args.files_df_fn
+    # variable = args.variable
+    # output_filename = args.output_filename
+    # template_fn = args.template_fn
 
-    # # # # # FOR TESTING
-    # input_path = '/storage01/pbieniek/gfdl/hist/hourly'
-    # group = 'gfdl_hist'
-    # variable = 'T2' #'T2'
-    # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
-    # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2'
-    # # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
-    # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
-    # output_filename = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2/T2_wrf_hourly_gfdl_hist_1990_FULLTEST_FINAL.nc'
-    # year = 1990
-    # # # # # END TESTING
+    # # # # FOR TESTING
+    input_path = '/storage01/rtladerjr/hourly'
+    group = 'gfdl_rcp85'
+    variable = 'T2' #'T2'
+    files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
+    output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2'
+    # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
+    template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
+    output_filename = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2/T2_wrf_hourly_gfdl_rcp85_1990_FULLTEST_FINAL.nc'
+    year = 2007
+    # # # # END TESTING
 
     # wrf output standard vars -- [hardwired] for now
     lon_variable = 'g5_lon_1'
