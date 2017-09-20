@@ -1,3 +1,4 @@
+# # # THIS IS AN OLDER TESTING SCRIPT KEPT FOR LEGACY REASONS AND INFOs
 # quick-and-dirty method to do the precip interpolation and 
 # conversion to hourly amounts.
 
@@ -32,21 +33,23 @@ if __name__ == '__main__':
 	# get some data to play with
 	os.chdir( '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/daily' )
 	ds = xr.open_dataset( 'pcpt_total_wrf_day.nc' )
-	attr_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/'
+	attr_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_gfdl_hist.csv'
 	variable = 'PCPT'
 
 	# # read in the associated csv doc file with info on `forecast_time`
-	# df = pd.read_csv( attr_fn, index_col=0 )
-	# ft = df[ (df['variable'] == variable) ]
-	# ft = ft.sort_values( )
-	# ft = ft.forecast_time
-	# ind = np.where( ft == 6 )
+	df = pd.read_csv( attr_fn, index_col=0 )
+	# # sort rows chronologically
+	df = df.sort_values( ['year', 'month', 'day', 'hour'] )
+	# # which indexes in that series are equal to the reinit_day
+	# # --> these will need to be linearly interpolated.
+	ind = np.where( df.forecast_time == 6 )
 
-	# make a dummy set
-	ft = [ i for i in range( 24 ) ] # dummy
-	ft = pd.Series( ft ) # dummy
-	ft[ [0,6,12] ] = 6 # dummy
-	ind = np.where( ft == 6 ) # dummy
+
+	# # make a dummy set
+	# ft = [ i for i in range( 24 ) ] # dummy
+	# ft = pd.Series( ft ) # dummy
+	# ft[ [0,6,12] ] = 6 # dummy
+	# ind = np.where( ft == 6 ) # dummy
 
 	# ***** BUILD A SMALL DUMMY DATASET ************************************
 	# grab a small subset as some dummy data

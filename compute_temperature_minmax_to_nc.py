@@ -1,15 +1,16 @@
 import xarray as xr
 import numpy as np
 import pandas as pd
-import os
+import os, glob
 
 # setup pathing, etc.
 input_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/hourly'
 
 variable = 't2'
+group = 'erain'
 
 # read in mfdataset
-ds = xr.open_mfdataset( os.path.join( input_path, variable, '*'.join(['', variable.upper(), '.nc']) ) )
+ds = xr.open_mfdataset( glob.glob( os.path.join( input_path, variable, '*'.join(['', variable.upper(), group,'.nc']) )) )
 
 # get the attrs from the input dset
 global_attrs = ds.attrs
@@ -39,7 +40,7 @@ ds_min_comp[ new_varname ].attrs = local_attrs
 ds_min_comp[ 'lon' ].attrs = xy_attrs
 ds_min_comp[ 'lat' ].attrs = xy_attrs
 
-ds_min_comp.to_netcdf( os.path.join( output_path_day, '{}_wrf_day.nc'.format( new_varname.lower() ) ), mode='w', format='NETCDF4_CLASSIC' )
+ds_min_comp.to_netcdf( os.path.join( output_path_day, '{}_wrf_day_{}.nc'.format( new_varname.lower(), group ) ), mode='w', format='NETCDF4_CLASSIC' )
 
 # temp min -- monthly
 ds_min_mon = ds_min_comp.resample( 'M', dim='time', how='mean' )
@@ -52,7 +53,7 @@ ds_min_mon_comp[ new_varname ].attrs = local_attrs
 ds_min_mon_comp[ 'lon' ].attrs = xy_attrs
 ds_min_mon_comp[ 'lat' ].attrs = xy_attrs
 
-ds_min_mon_comp.to_netcdf( os.path.join( output_path_mon, '{}_wrf_month.nc'.format( new_varname.lower() ) ), mode='w', format='NETCDF4_CLASSIC' )
+ds_min_mon_comp.to_netcdf( os.path.join( output_path_mon, '{}_wrf_month_{}.nc'.format( new_varname.lower(), group ) ), mode='w', format='NETCDF4_CLASSIC' )
 
 # cleanup...
 ds_min.close()
@@ -74,7 +75,7 @@ ds_max_comp[ new_varname ].attrs = local_attrs
 ds_max_comp[ 'lon' ].attrs = xy_attrs
 ds_max_comp[ 'lat' ].attrs = xy_attrs
 
-ds_max_comp.to_netcdf( os.path.join( output_path_day, '{}_wrf_day.nc'.format( new_varname.lower() ) ), mode='w', format='NETCDF4_CLASSIC' )
+ds_max_comp.to_netcdf( os.path.join( output_path_day, '{}_wrf_day_{}.nc'.format( new_varname.lower(), group ) ), mode='w', format='NETCDF4_CLASSIC' )
 
 # temp max -- monthly
 ds_max_mon = ds_max_comp.resample( 'M', dim='time', how='mean' )
@@ -87,7 +88,7 @@ ds_max_mon_comp[ new_varname ].attrs = local_attrs
 ds_max_mon_comp[ 'lon' ].attrs = xy_attrs
 ds_max_mon_comp[ 'lat' ].attrs = xy_attrs
 
-ds_max_mon_comp.to_netcdf( os.path.join( output_path_mon, '{}_wrf_month.nc'.format( new_varname.lower() ) ), mode='w', format='NETCDF4_CLASSIC' )
+ds_max_mon_comp.to_netcdf( os.path.join( output_path_mon, '{}_wrf_month_{}.nc'.format( new_varname.lower(), group ) ), mode='w', format='NETCDF4_CLASSIC' )
 
 # cleanup...
 ds_max.close()

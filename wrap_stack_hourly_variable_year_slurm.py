@@ -22,22 +22,22 @@ if __name__ == '__main__':
     import os, subprocess
 
     # input_path = '/storage01/pbieniek/erain/hourly'
-    # input_path = '/storage01/pbieniek/gfdl/hist/hourly'
-    input_path = '/storage01/rtladerjr/hourly'
+    input_path = '/storage01/pbieniek/gfdl/hist/hourly'
+    # input_path = '/storage01/rtladerjr/hourly'
     # years = range(1979, 2015+1)
-    # years = range(1979, 2006+1)
-    years = list(range(2006,2100+1))
+    years = range(1970, 2006+1) 
+    # years = list(range(2006,2100+1))
     # group = 'erain'
-    # group = 'gfdl_hist'
-    group = 'gfdl_rcp85'
-    # variables = ['PCPT', 'QBOT', 'QVAPOR', 'SNOW', 'SNOWC', 'T2', 'TSLB', 'VEGFRA'] # COMPLETE
-    variables = ['PSFC','GHT','TSK','T','TBOT','Q2']
+    group = 'gfdl_hist'
+    # group = 'gfdl_rcp85'
+    variables = ['PCPT', 'QBOT', 'QVAPOR', 'SNOW', 'SNOWC', 'T2', 'TSLB', 'VEGFRA'] # COMPLETE: []
+    # variables = ['PSFC','GHT','TSK','T','TBOT','Q2'] ::rerun me::
 
-                # MUST RUN: #,'PCPNC','PCPC','ACSNOW','SNOWH'
-                # 'CLDFRA','CLDFRA_LOW','CLDFRA_MID','CLDFRA_HIGH','ALBEDO','SEAICE',
-                # 'SLP','SMOIS','SWUPBC','SWDNBC','LWUPBC','LWDNBC','SWDNB','LWDNB',
-                # 'SWUPB','LWUPB','CANWAT','POTEVP','SH2O']
-    
+    # MUST RUN: #,'PCPNC','PCPC','ACSNOW','SNOWH'
+    # 'CLDFRA','CLDFRA_LOW','CLDFRA_MID','CLDFRA_HIGH','ALBEDO','SEAICE',
+    # 'SLP','SMOIS','SWUPBC','SWDNBC','LWUPBC','LWDNBC','SWDNB','LWDNB',
+    # 'SWUPB','LWUPB','CANWAT','POTEVP','SH2O']
+
     files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
     output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/hourly'
 
