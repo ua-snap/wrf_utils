@@ -232,7 +232,7 @@ if __name__ == '__main__':
 
     if len( arr.shape ) == 3:
         # build a new Dataset with the stacked timesteps and some we extracted from the input Dataset
-        ds = xr.Dataset( {variable:(['time','x', 'y'], arr)},
+        ds = xr.Dataset( {variable:(['time','x', 'y'], arr.astype(np.float32))},
                         coords={'lon': (['x', 'y'], tmp_ds[lon_variable].data),
                                 'lat': (['x', 'y'], tmp_ds[lat_variable].data),
                                 'time': new_dates},
@@ -247,7 +247,7 @@ if __name__ == '__main__':
 
         # build dataset with levels at each timestep
         sub_ds = xr.open_dataset( sub_df.iloc[0].fn )
-        ds = xr.Dataset( {variable:(['time',levelname,'x', 'y'], arr)},
+        ds = xr.Dataset( {variable:(['time',levelname,'x', 'y'], arr.astype(np.float32))},
                     coords={'lon': (['x', 'y'], tmp_ds[lon_variable].data),
                             'lat': (['x', 'y'], tmp_ds[lat_variable].data),
                             'time': new_dates,
@@ -263,16 +263,20 @@ if __name__ == '__main__':
     ds[ variable ].attrs = xy_attrs
 
     dirname, basename = os.path.split( output_filename )
+
+    # set output compression and encoding for serialization
+    encoding = ds[ variable ].encoding
+    encoding.update( zlib=True, complevel=5, contiguous=False, chunksizes=None, dtype='float32' )
+    ds[ variable ].encoding = encoding
+
     # write to disk
     print( 'writing to disk' )
     try:
-        # final_path = os.path.join( dirname, variable.lower() )
         if not os.path.exists( dirname ):
             os.makedirs( dirname )
     except:
         pass
 
-    # output_filename = os.path.join( dirname, '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
     ds.to_netcdf( output_filename, mode='w', format='NETCDF4_CLASSIC' )
 
 

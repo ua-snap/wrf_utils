@@ -29,7 +29,7 @@ if __name__ == '__main__':
 	import multiprocessing as mp
 	from functools import partial
 
-	base_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf'
+	base_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_compressed'
 	wildcards = [('GFDL-CM3_historical','*_hist*.nc'), ('GFDL-CM3_rcp85', '*rcp85*'), ('ERA_Interim', '*erain*')]
 	variables = [ os.path.basename(i).upper() for i in glob.glob( os.path.join(base_path, 'hourly', '*' ) ) if os.path.isdir( i ) and 'slurm' not in i ]
 	# variables = ['SNOW']  # RE-DO OF THIS VAR FOR PETER AS A MEAN not TOTAL
