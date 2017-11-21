@@ -37,10 +37,11 @@ def open_ds( fn, variable ):
     ''' cleanly read variable/close a single hourly netcdf '''
     import xarray as xr
     # ds = xr.open_dataset( fn, autoclose=True )
-    out = xr.open_dataset( fn, autoclose=True )[ variable ].load().copy()
+    out = xr.open_dataset( fn, autoclose=True ).load()[ variable ]
+    out_arr = out.data.copy()
     out.close()
     out = None
-    return out.data
+    return out_arr
 
 def rolling_window( a, window ):
     ''' simple 1-D rolling window function '''
