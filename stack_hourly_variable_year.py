@@ -36,9 +36,10 @@ def interp_1d_along_axis( y ):
 def open_ds( fn, variable ):
     ''' cleanly read variable/close a single hourly netcdf '''
     import xarray as xr
-    ds = xr.open_dataset( fn, autoclose=True )
-    out = ds[ variable ].copy()
-    ds.close()
+    # ds = xr.open_dataset( fn, autoclose=True )
+    out = xr.open_dataset( fn, autoclose=True )[ variable ].load().copy()
+    out.close()
+    out = None
     return out.data
 
 def rolling_window( a, window ):
