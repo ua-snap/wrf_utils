@@ -4,10 +4,10 @@ import numpy as np
 import pandas as pd
 import os, glob, itertools
 
-base_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_compressed'
+base_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_compress'
 wildcard = '*.nc'
-# variable = 'T2' # 'PCPT', 
-variables = [ os.path.basename(i).upper() for i in glob.glob( os.path.join(base_path, 'hourly', '*' ) ) if os.path.isdir( i ) and 'slurm' not in i ]
+variables = [ os.path.basename(i).upper() for i in glob.glob( os.path.join(base_path, 'hourly', '*' ) ) 
+                if os.path.isdir( i ) and 'slurm' not in i ]
 
 for variable in variables:
     files = sorted( glob.glob( os.path.join( base_path, 'hourly', variable.lower(), wildcard ) ) )
@@ -23,13 +23,13 @@ for variable in variables:
 
         # pathing
         # input_path = os.path.join( base_path, 'hourly', variable )
-        output_path = os.path.join( base_path, 'hourly_to_daily', variable.lower() )
+        output_path = os.path.join( base_path, 'daily', variable.lower() )
 
         if not os.path.exists( output_path ):
             os.makedirs( output_path )
 
         # metric switch -- aggregation
-        if variable is 'PCPT' or 'pcpt':
+        if variable in ['PCPT','pcpt', 'PCPC', 'pcpc' ,'PCPNC', 'pcpnc', 'ACSNOW', 'acsnow']:
             metric = 'sum'
         else:
             metric = 'mean'

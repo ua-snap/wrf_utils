@@ -172,7 +172,6 @@ if __name__ == '__main__':
     import xarray as xr
     import numpy as np
     import pandas as pd
-    from pathos.mp_map import mp_map
     from functools import partial
     import argparse
 
