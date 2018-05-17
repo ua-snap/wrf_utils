@@ -29,12 +29,12 @@ if __name__ == '__main__':
 	import multiprocessing as mp
 	from functools import partial
 
-	base_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_compress'
-	wildcards = [('GFDL-CM3_historical','*_hist*.nc'), ('GFDL-CM3_rcp85', '*rcp85*'), ('ERA_Interim', '*erain*')]
+	base_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf'
+	wildcards = [('GFDL-CM3_historical','*_hist*.nc')]#, ('GFDL-CM3_rcp85', '*rcp85*'), ('ERA_Interim', '*erain*')]
 	variables = [ os.path.basename(i).upper() for i in glob.glob( os.path.join(base_path, 'hourly', '*' ) ) if os.path.isdir( i ) and 'slurm' not in i ]
-	# variables = ['SNOW']  # RE-DO OF THIS VAR FOR PETER AS A MEAN not TOTAL
+	variables = ['TSLB']  # RE-DO OF THIS VAR FOR PETER AS A MEAN not TOTAL
 
-	years = { 'GFDL-CM3_historical':(1970, 2005),'GFDL-CM3_rcp85':(2006, 2100),'ERA_Interim':(1979, 2015) }
+	years = { 'GFDL-CM3_historical':(1970, 2005)} #,'GFDL-CM3_rcp85':(2006, 2100),'ERA_Interim':(1979, 2015) }
 
 	for group, wildcard in wildcards:
 		begin, end = years[ group ]
@@ -61,6 +61,8 @@ if __name__ == '__main__':
 
 			# dump to disk
 			out_fn = os.path.join( os.path.join( base_path, 'monthly', variable.lower(), '_'.join([variable.lower(), 'wrf_compress', group, 'monthly','-'.join([str(begin), str(end)]), metric]) + '.nc'  ) )
+			
+		
 			output_path = os.path.dirname( out_fn )
 
 			if not os.path.exists( output_path ):

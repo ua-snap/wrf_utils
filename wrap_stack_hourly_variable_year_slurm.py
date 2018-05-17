@@ -53,6 +53,8 @@ if __name__ == '__main__':
         commands = []
         for year in years:
             output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
+            if group == 'erain':
+                output_filename = output_filename.replace( '_erain_', '_era_interim_' )
             commands = commands + [' '.join(['python3','/workspace/UA/malindgren/repos/wrf_utils/stack_hourly_variable_year.py', 
                                             '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, 
                                             '-o', output_filename, '-t', template_fn])]

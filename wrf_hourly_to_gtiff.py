@@ -19,10 +19,10 @@ if __name__ == '__main__':
 	from affine import Affine
 
 	# # stuff that will become CLI args...
-	fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2/PCPT_wrf_hourly_gfdl_hist_1990_FULLTEST2.nc'
+	fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/monthly/tslb/tslb_wrf_GFDL-CM3_historical_monthly_1970-2005_mean_TEST_REMOVE.nc'
 	band = 1
-	out_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2/PCPT_wrf_hourly_gfdl_hist_1990_FULLTEST2_band{}_2.tif'.format(band)
-	variable = 'PCPT'
+	out_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/tslb_wrf_GFDL-CM3_historical_monthly_1970-2005_mean_TEST_REMOVE_band{}.tif'.format(band)
+	variable = 'TSLB'
 	# potentially hardwire... for peters work at least.
 	res = (19655.0,19655.0) # from the metadata in Peters outputs at the 'g5_lat_0' variable in the NC hourlies.
 
@@ -30,10 +30,13 @@ if __name__ == '__main__':
 	ds = xr.open_dataset( fn )
 
 	# get the affine transform for the output dataset
-	transform = transform_from_latlon( np.unique(ds.lat), np.unique(ds.lon) )
+	# transform = transform_from_latlon( np.unique(ds.lat), np.unique(ds.lon) )
+	transform = transform_from_latlon( np.unique(ds.projection_y_coordinates), np.unique(ds.projection_x_coordinates) )
 	# other way...  devised for the SMOKE outputs...
-	transform = rasterio.transform.from_origin( ds.lon.data.min(), ds.lat.data.min(), res[0], res[1] )
-	nlayers, height, width = ds[ variable ].shape
+	# transform = rasterio.transform.from_origin( ds.lon.data.min(), ds.lat.data.min(), res[0], res[1] )
+	transform = rasterio.transform.from_origin( ds.projection_x_coordinates.data.min(), ds.projection_y_coordinates.data.min(), res[0], res[1] )
+	# nlayers, height, width = ds[ variable ].shape
+	nlayers, nlevels, height, width = ds[ variable ].shape
 	
 	# proj4string -- built by hand from SALEM source... WATCH THIS.
 	polar_proj = '+proj=stere +lat_ts={} +lat_0=90.0 +lon_0={} +x_0=0 +y_0=0 +a=6370000 +b=6370000'.format( 37.233, -177.786 )
@@ -43,7 +46,7 @@ if __name__ == '__main__':
 	# crs = CRS.from_string( polar_proj )
 	
 	# RUDI's AFFINE FROM GTiff...
-	crs = Affine(19996.451606182643, 0.0, -2609990.449893133, 0.0, -19996.451606182643, -183320.66272092026)
+	# crs = Affine(19996.451606182643, 0.0, -2609990.449893133, 0.0, -19996.451606182643, -183320.66272092026)
 	
 	# make a metadata dict:
 	meta = { 'transform':transform,
@@ -51,11 +54,11 @@ if __name__ == '__main__':
 			'count':1,
 			'width':width,
 			'height':height,
-			'crs':crs,
+			'crs':rasterio.crs.CRS.from_string(polar_proj),
 			'driver':'GTiff',
 			'compress':'lzw' }
 
 	with rasterio.open( out_fn, 'w', **meta ) as out:
-		out.write( np.flipud(ds[ variable ].isel( time=band ).astype( np.float32 )), 1 )
+		out.write( ds[ variable ].isel( time=band ).astype( np.float32 )[0, ...].data, 1 )
 
 	print( 'completed: {}'.format( out_fn ) )

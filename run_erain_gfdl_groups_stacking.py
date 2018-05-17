@@ -24,6 +24,8 @@ for variable in variables:
     os.chdir( '/workspace/UA/malindgren/repos/wrf_utils' )
     for year in years:
         output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
+        if '_erain_' in output_filename:
+            output_filename = output_filename.replace( '_erain_', '_era_interim_' )        
         _ = subprocess.call(['python3','stack_hourly_variable_year_with_interpfix.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
 
 
@@ -49,6 +51,8 @@ for variable in variables:
     os.chdir( '/workspace/UA/malindgren/repos/wrf_utils' )
     for year in years:
         output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
+        if '_erain_' in output_filename:
+            output_filename = output_filename.replace( '_erain_', '_era_interim_' )        
         _ = subprocess.call(['python3','stack_hourly_variable_year_with_interpfix.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
 
 
@@ -72,4 +76,6 @@ years = list(range(2006,2100+1))
 os.chdir( '/workspace/UA/malindgren/repos/wrf_utils' )
 for year in years:
     output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
+    if '_erain_' in output_filename:
+        output_filename = output_filename.replace( '_erain_', '_era_interim_' )    
     _ = subprocess.call(['python3','stack_hourly_variable_year_with_interpfix.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])

@@ -36,12 +36,9 @@ def interp_1d_along_axis( y ):
 def open_ds( fn, variable ):
     ''' cleanly read variable/close a single hourly netcdf '''
     import xarray as xr
-    # ds = xr.open_dataset( fn, autoclose=True )
-    out = xr.open_dataset( fn, autoclose=True ).load()[ variable ]
-    out_arr = out.data.copy()
-    out.close()
-    out = None
-    return out_arr
+    with xr.open_dataset( fn ) as ds:
+        out = np.array( ds[ variable ].load() ).copy()
+    return out
 
 def rolling_window( a, window ):
     ''' simple 1-D rolling window function '''
@@ -158,7 +155,7 @@ def stack_year_accum( df, year, variable, ncores=15 ):
 def run_year( df, year, variable ):
     ''' handle accumulation and normal variables and run for a given year '''
     
-    ACCUM_VARS = [ 'PCPT', 'ACSNOW', 'PCPT', 'PCPC', 'PCPNC', 'POTEVP' ]
+    ACCUM_VARS = [ 'ACSNOW', 'PCPT', 'PCPC', 'PCPNC', 'POTEVP' ]
 
     # interpolate accumulation vars at `ind`
     if variable in ACCUM_VARS:
@@ -173,6 +170,7 @@ if __name__ == '__main__':
     import numpy as np
     import pandas as pd
     from functools import partial
+    import pickle
     import argparse
 
     # parse some args
@@ -195,10 +193,11 @@ if __name__ == '__main__':
 
     # # # # # FOR TESTING
     # input_path = '/storage01/rtladerjr/hourly'
+    # # input_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/raw_testing_data/2007'
     # group = 'gfdl_rcp85'
-    # variable = 'T2' #'T2'
+    # variable = 'PCPT' # 'PCPT' #
     # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
-    # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2'
+    # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/TESTING_SLURM_WRF'
     # # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
     # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
     # output_filename = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2/T2_wrf_hourly_gfdl_rcp85_1990_FULLTEST_FINAL.nc'
@@ -210,7 +209,7 @@ if __name__ == '__main__':
     lat_variable = 'g5_lat_0'
 
     # read in pre-built dataframe with forecast_time as a field
-    df = pd.read_csv( files_df_fn, sep=',', index_col=0 )
+    df = pd.read_csv( files_df_fn, sep=',', index_col=0 ).copy()
     # df[ 'interp_files' ] = adjacent_files( df )
 
     # run stacking of variable through time and deal with accumulations (if needed).
@@ -241,7 +240,7 @@ if __name__ == '__main__':
         
     elif len( arr.shape ) == 4: #(time,levels, x, y )
         # levelname to use if 4D
-        if variable in ['TSLB']:
+        if variable in ['TSLB','SMOIS']:
             levelname = 'lv_DBLY3'
         else:
             levelname = 'lv_ISBL2'
@@ -270,7 +269,15 @@ if __name__ == '__main__':
     encoding.update( zlib=True, complevel=5, contiguous=False, chunksizes=None, dtype='float32' )
     ds[ variable ].encoding = encoding
 
+    # with open( output_path.replace('.nc', '.pickle'), 'wb' ) as ff:
+    #     pickle.dump(ds, f, pickle.HIGHEST_PROTOCOL)
+    #     # pkl = pickle.dumps( ds, protocol=-1 )
+
     # write to disk
+    # remove an existing one since I think that is best practice here.
+    if os.path.exists( output_filename ):
+        os.remove( output_filename )
+
     print( 'writing to disk' )
     try:
         if not os.path.exists( dirname ):
@@ -278,7 +285,7 @@ if __name__ == '__main__':
     except:
         pass
 
-    ds.to_netcdf( output_filename, mode='w', format='NETCDF4_CLASSIC' )
+    ds.to_netcdf( output_filename, mode='w', format='netCDF4', engine='netcdf4' )
 
 
 # # # # # EXAMPLE # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
