@@ -240,7 +240,7 @@ if __name__ == '__main__':
         
     elif len( arr.shape ) == 4: #(time,levels, x, y )
         # levelname to use if 4D
-        if variable in ['TSLB','SMOIS']:
+        if variable in ['TSLB','SMOIS','SH20']:
             levelname = 'lv_DBLY3'
         else:
             levelname = 'lv_ISBL2'
