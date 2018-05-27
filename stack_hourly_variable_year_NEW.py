@@ -195,7 +195,7 @@ if __name__ == '__main__':
     # input_path = '/storage01/rtladerjr/hourly'
     # # input_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/raw_testing_data/2007'
     # group = 'gfdl_rcp85'
-    # variable = 'PCPT' # 'PCPT' #
+    # variable = 'SH2O' # 'PCPT' #
     # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
     # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/TESTING_SLURM_WRF'
     # # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
@@ -240,7 +240,7 @@ if __name__ == '__main__':
         
     elif len( arr.shape ) == 4: #(time,levels, x, y )
         # levelname to use if 4D
-        if variable in ['TSLB','SMOIS','SH20']:
+        if variable in ['TSLB','SMOIS','SH2O']:
             levelname = 'lv_DBLY3'
         else:
             levelname = 'lv_ISBL2'
