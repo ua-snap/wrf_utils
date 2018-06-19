@@ -274,12 +274,14 @@ def run( fn ):
 
         # using the base netCDF4 package update the times to be UTC and dump back to disk
         # hacky but overcomes a current somewhat limitation in xarray.
-        out_fn = force_update_times_UTC( out_fn )
+        retval = force_update_times_UTC( out_fn )
     except:
         print( 'ERROR: {} '.format(fn) )
         error = error + [fn]
+        retval =  'ERROR: {} '.format(fn)
+        pass
 
-    return out_fn
+    return retval
 
 
 if __name__ == '__main__':
@@ -298,13 +300,13 @@ if __name__ == '__main__':
     # parse the args and unpack
     args = parser.parse_args()
     base_dir = args.base_dir
-    variables = [ args.variable, args.variable.upper() ]
+    variables = [ args.variable, args.variable.upper(), args.variable.lower() ] # all combos and one that might be CamelCase
 
     # versioning
     snap_version = '0.3'
 
-    # base directory
-    base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
+    # # base directory
+    # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
 
     # list the data -- some 4d groups need some special attention...
     files = filelister( base_dir )
@@ -327,3 +329,20 @@ if __name__ == '__main__':
     out = pool.map( run, files )
     pool.close()
     pool.join()
+
+
+
+# # # # # #
+# import subprocess, os
+
+# # base directory
+# base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
+# variables = [ i.upper() for i in os.listdir( base_dir ) ]
+
+# for variable in variables:
+#     done = subprocess.call([ 'python', 'improve_hourly_netcdf_structure.py', '-b', base_dir, '-v', variable ])
+
+
+
+
+
