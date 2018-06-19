@@ -329,20 +329,3 @@ if __name__ == '__main__':
     out = pool.map( run, files )
     pool.close()
     pool.join()
-
-
-
-# # # # # #
-# import subprocess, os
-
-# # base directory
-# base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
-# variables = [ i.upper() for i in os.listdir( base_dir ) ]
-
-# for variable in variables:
-#     done = subprocess.call([ 'python', 'improve_hourly_netcdf_structure.py', '-b', base_dir, '-v', variable ])
-
-
-
-
-
