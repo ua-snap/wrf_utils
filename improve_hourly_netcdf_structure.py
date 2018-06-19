@@ -276,6 +276,7 @@ def run( fn ):
         # hacky but overcomes a current somewhat limitation in xarray.
         out_fn = force_update_times_UTC( out_fn )
     except:
+        print( 'ERROR: {} '.format(fn) )
         error = error + [fn]
 
     return out_fn
