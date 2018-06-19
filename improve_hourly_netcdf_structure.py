@@ -310,7 +310,7 @@ if __name__ == '__main__':
     files = filelister( base_dir )
 
     # pull out the variables we want to process on the current node make sure we only have one of each
-    files = set([ fn for fn in files for v in variables if v in fn ])
+    files = set([ fn for fn in files for v in variables if ''.join([os.path.sep,v,'_']) in fn ])
 
     # below is used for building some attrs into the files...
     # raw_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_raw_output_example/wrfout_d01_2025-07-10_00:00:00'
