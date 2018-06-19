@@ -298,7 +298,7 @@ if __name__ == '__main__':
     # parse the args and unpack
     args = parser.parse_args()
     base_dir = args.base_dir
-    variable = [ args.variable, args.variable.upper() ]
+    variables = [ args.variable, args.variable.upper() ]
 
     # versioning
     snap_version = '0.3'
