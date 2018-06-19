@@ -292,12 +292,12 @@ if __name__ == '__main__':
     # parse some args
     parser = argparse.ArgumentParser( description='stack the hourly outputs from raw WRF outputs to NetCDF files of hourlies broken up by year.' )
     parser.add_argument( "-b", "--base_dir", action='store', dest='base_dir', type=str, help="input hourly directory with annual sub-dirs containing hourly WRF NetCDF outputs" )
-    parser.add_argument( "-v", "--variables", action='store', dest='variables', type=list, help="list of variable names to process" )
+    parser.add_argument( "-v", "--variable", action='store', dest='variable', type=str, help="variable name to process" )
     
     # parse the args and unpack
     args = parser.parse_args()
     base_dir = args.base_dir
-    variables = args.variables
+    variables = args.variables + [ v.upper() for v in args.variables ]
 
     # versioning
     snap_version = '0.3'
