@@ -120,7 +120,7 @@ def force_update_times_UTC( fn ):
     f.close()
     return fn 
 
-def run( fn ):
+def run( fn, variable ):
     print( fn )
 
     # make an output name from the input name.
@@ -130,7 +130,14 @@ def run( fn ):
 
     # [NOTE]: naming below is hardwired to a naming that is identical (element-wise) 
     #    to this: 'ACSNOW_wrf_hourly_gfdl_rcp85_2018' (.nc removed above)
-    variable, group, timestep, model, scenario, year = basename.split( '_' )
+
+    name_elems = basename.split( '_' )
+    if not len(name_elems) > 6:
+        variable, group, timestep, model, scenario, year = name_elems
+    else:
+        variableA, variableB, group, timestep, model, scenario, year = name_elems
+        variable = '_'.join([variableA, variableB])
+
     modelnames = {'gfdl':'GFDL-CM3','era':'ERA-Interim'}
     scenarionames = {'rcp85':'rcp85', 'hist':'historical','interim':'historical'}
     # metric_lookup = {'min':'Minimum', 'max':'Maximum', 'sum':'Sum/Total', 'mean':'Mean/Avg'}

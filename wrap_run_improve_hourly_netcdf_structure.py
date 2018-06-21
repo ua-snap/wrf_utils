@@ -32,11 +32,13 @@ if __name__ == '__main__':
     os.chdir( slurm_dir )
 
     for variable in variables:
-        if variable in ['acsnow','albedo','pcpt','qvapor','sh2o','smois','swupbc']:
+        if variable in ['acsnow','albedo','pcpt','sh2o','smois','swupbc']:
             ncpus = 5
+        elif variable in ['qvapor','ght']:
+            ncpus = 3
         else:
             ncpus = 10
 
-        command = ' '.join([ 'python', '/workspace/UA/malindgren/repos/wrf_utils/improve_hourly_netcdf_structure.py', '-b', base_dir, '-v', variable, '-n', ncpus ])
+        command = ' '.join([ 'python', '/workspace/UA/malindgren/repos/wrf_utils/improve_hourly_netcdf_structure.py', '-b', base_dir, '-v', variable, '-n', str(ncpus) ])
         fn = os.path.join( slurm_dir, '{}_improve_hourlies.slurm'.format(variable) )
         run( fn, command )
