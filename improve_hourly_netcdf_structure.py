@@ -328,7 +328,7 @@ if __name__ == '__main__':
     var_attrs_lookup[ 'lv_DBLY3' ] = {'long_name': 'layer between two depths below land surface', 'units': 'cm'}
 
     # run
-    f = partial(run, variable=variable )
+    f = partial(run, variable=args.variable )
     pool = mp.Pool( ncpus )
     out = pool.map( f, files )
     pool.close()
