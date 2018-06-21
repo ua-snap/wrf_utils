@@ -1,7 +1,7 @@
 # wrap wrf variable re-stacker for running on slurm nodes
-def run( fn, command ):
+def run( fn, command, ncpus=10 ):
     import os, subprocess
-    ncpus = 10 # less for this application...
+    ncpus = 32 # to hold the node
     head = '#!/bin/sh\n' + \
             '#SBATCH --ntasks={}\n'.format(ncpus) + \
             '#SBATCH --nodes=1\n' + \
@@ -32,6 +32,11 @@ if __name__ == '__main__':
     os.chdir( slurm_dir )
 
     for variable in variables:
-        command = ' '.join([ 'python', '/workspace/UA/malindgren/repos/wrf_utils/improve_hourly_netcdf_structure.py', '-b', base_dir, '-v', variable ])
+        if variable in ['acsnow','albedo','pcpt','qvapor','sh2o','smois','swupbc']:
+            ncpus = 5
+        else:
+            ncpus = 10
+
+        command = ' '.join([ 'python', '/workspace/UA/malindgren/repos/wrf_utils/improve_hourly_netcdf_structure.py', '-b', base_dir, '-v', variable, '-n', ncpus ])
         fn = os.path.join( slurm_dir, '{}_improve_hourlies.slurm'.format(variable) )
         run( fn, command )
