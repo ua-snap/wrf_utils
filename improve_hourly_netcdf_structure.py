@@ -289,6 +289,7 @@ if __name__ == '__main__':
     import xarray as xr
     from collections import OrderedDict
     import os
+    from functools import partial
     import multiprocessing as mp
     import argparse
 
@@ -327,7 +328,8 @@ if __name__ == '__main__':
     var_attrs_lookup[ 'lv_DBLY3' ] = {'long_name': 'layer between two depths below land surface', 'units': 'cm'}
 
     # run
+    f = partial(run, variable=variable )
     pool = mp.Pool( ncpus )
-    out = pool.map( run, files )
+    out = pool.map( f, files )
     pool.close()
     pool.join()
