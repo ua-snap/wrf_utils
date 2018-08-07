@@ -9,7 +9,7 @@ def to_gtiff( arr, origin, output_filename, nodata=-9999 ):
     # set up args.  Some hardwired for our WRF data...
     x,y = origin
     res = 20000
-    transform = rasterio.transform.from_origin( x, y, res, res )
+    transform = rasterio.transform.from_origin( x0, y0, res, res )
     wrf_polar_crs = '+units=m +proj=stere +lat_ts=64.0 +lon_0=-152.0 +lat_0=90.0 +x_0=0 +y_0=0 +a=6370000 +b=6370000'
     dtype = 'float32'
     
