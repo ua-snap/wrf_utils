@@ -45,7 +45,8 @@ if __name__ == '__main__':
     import os
     
     # setup args
-    base_path = '/storage01/pbieniek/gfdl/hist/hourly'
+    # base_path = '/storage01/pbieniek/ccsm/hist/hourly'
+    base_path = '/storage01/pbieniek/ccsm/rcp85/hourly'
     # base_path = '/storage01/pbieniek/erain/hourly'
     # base_path = '/storage01/rtladerjr/hourly'
   
@@ -60,7 +61,7 @@ if __name__ == '__main__':
 
     ncpus = 32
     output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs'
-    group = 'gfdl_hist'
+    group = 'ccsm_rcp85'
     # group = 'erain'
     # group = 'gfdl_rcp85'
 

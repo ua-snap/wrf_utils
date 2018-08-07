@@ -22,8 +22,8 @@ if __name__ == '__main__':
     import os, subprocess
 
     # input_path = '/storage01/pbieniek/erain/hourly'
-    input_path = '/storage01/pbieniek/gfdl/hist/hourly'
-    # input_path = '/storage01/rtladerjr/hourly'
+    # input_path = '/storage01/pbieniek/gfdl/hist/hourly'
+    input_path = '/storage01/rtladerjr/hourly'
     # years = range(1979, 2015+1)
     years = range(1970, 2006+1) 
     # years = list(range(2006,2100+1))
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     # 'SWUPB','LWUPB','CANWAT','POTEVP','SH2O']
 
     files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
-    output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/hourly'
+    output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/TESTING_SLURM_WRF'
 
     for variable in variables:
         print( variable )
@@ -59,7 +59,8 @@ if __name__ == '__main__':
                                             '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, 
                                             '-o', output_filename, '-t', template_fn])]
         
-        commands = '\n'.join( commands )
+        commands = 'srun -c 32 ' + '\n\nsrun -c 32 '.join( commands )
+
         
         slurm_path = os.path.join( output_path, 'slurm_log' )
         if not os.path.exists( slurm_path ):
@@ -68,3 +69,4 @@ if __name__ == '__main__':
         fn = os.path.join( slurm_path, 'run_{}_wrf_hourly_{}.slurm'.format( variable, group ) )
 
         done = run_model( fn, commands )
+        break

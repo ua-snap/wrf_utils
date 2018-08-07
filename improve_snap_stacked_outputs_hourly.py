@@ -85,7 +85,7 @@ def flip_data_and_coords( ds, variable=None ):
         variable = get_variable_name( ds )
 
     data = np.array( ds[ variable ] )
-    x = np.flipud( ds[ 'lon' ].values )
+    x = ds[ 'lon' ].values
     y = np.flipud( ds[ 'lat' ].values )
 
     if len(data.shape) == 3:
@@ -155,7 +155,7 @@ def run( fn ):
     out_fn = os.path.join( dirname, basename )
 
     # open the dataset to restructure / improve
-    ds = xr.open_dataset( fn )
+    ds = xr.open_dataset( fn, autoclose=True )
 
     # get the variable name from the already stacked files (produced by SNAP)
     variable = get_variable_name( ds )
@@ -312,6 +312,7 @@ if __name__ == '__main__':
     files = sorted([ fn for fn in files if 'QVAPOR' not in fn and 'qvapor' not in fn and 'TSLB' not in fn and 'tslb' not in fn ])
     # set2 = sorted([ fn for fn in files if 'QVAPOR' in fn or 'qvapor' in fn ])
     # set3 = sorted([ fn for fn in files if 'TSLB' in fn or 'tslb' in fn ])
+    files = [ fn for fn in files if 'T2' in fn ]
 
     # below is used for building some attrs into the files...
     # raw_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_raw_output_example/wrfout_d01_2025-07-10_00:00:00'
