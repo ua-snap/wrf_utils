@@ -24,8 +24,7 @@ if __name__ == '__main__':
 
     # base directory
     base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
-    # variables = [ i.upper() for i in os.listdir( base_dir ) ]
-    variables = ['cldfra','qvapor']
+    variables = ['acsnow','canwat','cldfra_high','cldfra_mid' ]
 
     slurm_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data'
     if not os.path.exists( slurm_dir ):
@@ -35,7 +34,7 @@ if __name__ == '__main__':
     for variable in variables:
         if variable in ['acsnow','albedo','pcpt','sh2o','smois','swupbc']:
             ncpus = 5
-        elif variable in ['cldfra']:
+        elif 'cldfra' in variable:
             ncpus = 3
         elif variable in ['qvapor','ght']:
             ncpus = 1

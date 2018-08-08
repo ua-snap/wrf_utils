@@ -185,7 +185,14 @@ def run( fn, meta ):
 
     # [NOTE]: naming below is hardwired to a naming that is identical (element-wise) 
     #    to this: 'ACSNOW_wrf_hourly_gfdl_rcp85_2018' (.nc removed above)
-    variable, group, timestep, model, scenario, year = basename.split( '_' )
+
+    name_elems = basename.split( '_' )
+    if not len(name_elems) > 6:
+        variable, group, timestep, model, scenario, year = name_elems
+    else:
+        variableA, variableB, group, timestep, model, scenario, year = name_elems
+        variable = '_'.join([variableA, variableB])
+
     modelnames = {'gfdl':'GFDL-CM3','era':'ERA-Interim'}
     scenarionames = {'rcp85':'rcp85', 'hist':'historical','interim':'historical'}
     # metric_lookup = {'min':'Minimum', 'max':'Maximum', 'sum':'Sum/Total', 'mean':'Mean/Avg'}
@@ -195,16 +202,16 @@ def run( fn, meta ):
 
     # open the dataset to restructure / improve
     ds = xr.open_dataset( fn, autoclose=True )
-
+    
     # get the variable name from the already stacked files (produced by SNAP)
     variable = get_variable_name( ds )
     flipped = flip_data_and_coords( ds, variable=variable )
-
+    
     # make some file coords and attrs from the file metadata we built
     x,y = meta['xc'], meta['yc']
     time = ds['time']
     base_attrs = ds.attrs.copy()
-
+    
     # update time attributes.
     time_attrs = time.attrs.copy()
     time_attrs.update( {'time zone': 'all times are UTC.'})
@@ -227,7 +234,7 @@ def run( fn, meta ):
     elif len(flipped['data'].shape) == 4: #(time,levels, x, y )
         # levelname to use if 4D
         level_attrs = None
-        if variable in ['TSLB']:
+        if variable in ['TSLB','SMOIS','SH2O']:
             levelname = 'lv_DBLY3'
         else:
             levelname = 'lv_ISBL2'
