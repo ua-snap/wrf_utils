@@ -24,7 +24,8 @@ if __name__ == '__main__':
 
     # base directory
     base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
-    variables = ['acsnow','canwat','cldfra_high','cldfra_mid' ]
+    variables = ['tslb','albedo','cldfra_low','ght','lh']
+    # ['acsnow','canwat','cldfra_high','cldfra_mid', 'pcpt', 't2', 'cldfra' , 'hfx','lwdnb','pcpc','psfc','qbot' ,'seaice','slp','snow','snowh','swdnbc','swupbc','tbot']
 
     slurm_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data'
     if not os.path.exists( slurm_dir ):
