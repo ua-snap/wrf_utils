@@ -23,11 +23,19 @@ if __name__ == '__main__':
     import subprocess, os
 
     # base directory
-    base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
-    variables = ['tslb','albedo','cldfra_low','ght','lh']
-    # ['acsnow','canwat','cldfra_high','cldfra_mid', 'pcpt', 't2', 'cldfra' , 'hfx','lwdnb','pcpc','psfc','qbot' ,'seaice','slp','snow','snowh','swdnbc','swupbc','tbot']
+    # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
+    base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
+    variables = ['acsnow', 't2', 'canwat', 'cldfra', 'hfx', 'lh', 
+                'lwdnb', 'lwupb', 'pcpc', 'pcpnc', 'pcpt', 'potevp', 
+                'qbot', 'q2', 'snow', 'qvapor', 'snowc', 'snowh', 
+                'swupb', 'swdnb', 'tslb' ]
 
-    slurm_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data'
+    # ['albedo', 'vegfra', 'cldfra_high',
+    #  'cldfra_low', 'cldfra_mid', 'lwupbc', 'lwdnbc', 'ght', 
+    #  'omega', 'psfc', 'slp', 'sh2o', 'seaice', 'swupbc', 
+    #  'smois', 'swdnbc', 'tbot', 'tsk', 't']
+
+    slurm_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/slurm'
     if not os.path.exists( slurm_dir ):
         os.makedirs( slurm_dir )
     os.chdir( slurm_dir )

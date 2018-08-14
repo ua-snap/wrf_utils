@@ -1,8 +1,8 @@
-def make_args( base_path, agg_group='hourly' ):
+def make_args( base_path, variables=None, agg_group='hourly' ):
     wildcard = '*.nc' 
-    variables = [ os.path.basename(i).upper() for i in glob.glob( os.path.join(base_path, agg_group, '*' ) ) 
-                    if os.path.isdir( i ) and 'slurm' not in i ]
-    
+    if variables is None:
+        variables = [ os.path.basename(i) for i in glob.glob( os.path.join(base_path, agg_group, '*' ) ) 
+                        if os.path.isdir( i ) and 'slurm' not in i ]     
     args = []
     for variable in variables:
         files = sorted( glob.glob( os.path.join( base_path, agg_group, variable.lower(), wildcard ) ) )
@@ -16,7 +16,7 @@ def resample( fn, variable, agg_str='D' ):
     ds = xr.open_dataset( fn, autoclose=True )
     # get some attrs
     global_attrs = ds.attrs
-    local_attrs = ds[ variable ].attrs
+    local_attrs = ds[ variable ].attrs          
     xy_attrs = ds.lon.attrs
     time_attrs = ds.time.attrs
 
@@ -39,6 +39,8 @@ def resample( fn, variable, agg_str='D' ):
         ds_day = ds.resample( time=agg_str ).mean()
 
     ds_day_comp = ds_day.compute() # watch this one
+    local_attrs.update( temporal_resampling='Daily: these data represent {} daily outputs\
+                         from hourly wrf dynamical downscaling outputs.'.format( metric ) )
 
     # ds_day_comp = ds_day_comp.to_dataset( name=variable )
     ds_day_comp.attrs = global_attrs
@@ -67,11 +69,41 @@ def resample( fn, variable, agg_str='D' ):
     ds_day = None
     ds_day_comp.close()
     ds_day_comp = None
-    return output_filename
+
+    # using the base netCDF4 package update the times to be UTC and dump back to disk
+    # hacky but overcomes a current somewhat limitation in xarray.
+    out_fn = force_update_times_UTC( output_filename )
+
+    return out_fn
 
 def wrap( x ):
     variable, fn = x
     return resample( fn, variable )
+
+def force_update_times_UTC( fn ):
+    ''' use the base netCDF4 python pkg to see if we can add UTC to times.'''
+    import netCDF4 as nc4
+
+    # open the dataset with xarray to cut down on code
+    with xr.open_dataset( fn ) as ds:
+        dates = ds.time.to_index().to_pydatetime().tolist()
+
+    ds = None
+
+    f = nc4.Dataset( fn, mode='r+' )
+    units = f['time'].units
+    suffix = ' UTC'
+    if not units.endswith( suffix ):
+        units = units + suffix
+
+    # units = 'hours since 1979-01-02 00:00 UTC'
+    values = nc4.date2num(dates, units=units)
+    f['time'][:] = values
+    f['time'].units = units
+
+    f.close()
+    return fn 
+
 
 if __name__ == '__main__':
     # resample hourly to monthly for data delivery
@@ -81,9 +113,12 @@ if __name__ == '__main__':
     import os, glob, itertools
     import multiprocessing as mp
 
-    base_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables'
-    args = make_args( base_path, agg_group='hourly' )
-    # args = [ (i,j) for i,j in args if i == 'POTEVP' ] # REMOVE temporary to split it up for speed...
+    base_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data'
+    variables = [ 'pcpnc', 'lwupb', 'q2', 'sh2o', 'snowc', 'smois', 
+                'tsk', 'swdnb', 'swupb', 'vegfra']
+                # RUN ME: 'qvapor'
+    
+    args = make_args( base_path, variables=variables, agg_group='hourly_fix' )
     ncpus = 40
 
     # parallel process

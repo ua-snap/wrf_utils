@@ -3,7 +3,7 @@
 # AND CF-CONVENTIONS AND FROM OTHERS NEEDS, I AM UPDATING THE FILE METADATA AND 
 # COORDS / DIMS APPROPRIATELY. 
 # 
-# June 2018 - Michael Lindgren (malindgren@alaska.edu)
+# August 2018 - Michael Lindgren (malindgren@alaska.edu)
 # # # # # # # # # # # # # # # # # # # # # 
 
 def get_meta_from_wrf( ds ):
@@ -192,7 +192,7 @@ def run( fn, meta ):
         variableA, variableB, group, timestep, model, scenario, year = name_elems
         variable = '_'.join([variableA, variableB])
 
-    modelnames = {'gfdl':'GFDL-CM3','era':'ERA-Interim'}
+    modelnames = {'gfdl':'GFDL-CM3','era':'ERA-Interim', 'ccsm':'NCAR-CCSM4'}
     scenarionames = {'rcp85':'rcp85', 'hist':'historical','interim':'historical'}
     # metric_lookup = {'min':'Minimum', 'max':'Maximum', 'sum':'Sum/Total', 'mean':'Mean/Avg'}
 
