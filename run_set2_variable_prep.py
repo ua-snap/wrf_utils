@@ -11,7 +11,7 @@ import os, subprocess
 
 input_path = '/storage01/pbieniek/erain/hourly'
 group = 'erain'
-variables = ['GHT']
+variables = ['T']
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
 output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
 
@@ -39,7 +39,7 @@ import os, subprocess
 
 input_path = '/storage01/pbieniek/gfdl/hist/hourly'
 group = 'gfdl_hist'
-variables = ['GHT']
+variables = ['T']
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
 output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
 
@@ -67,7 +67,7 @@ import os, subprocess
 
 input_path = '/storage01/rtladerjr/hourly'
 group = 'gfdl_rcp85'
-variables = ['GHT']
+variables = ['T']
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
 output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
 
@@ -79,7 +79,7 @@ for variable in variables:
         template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' ) # USING PETERS HISTORICALS HERE...
         pass
 
-    years = list(range(2006,2100+1)) # CHANGED!
+    years = list(range(2006,2100+1))
 
     os.chdir( '/workspace/UA/malindgren/repos/wrf_utils' )
     for year in years:

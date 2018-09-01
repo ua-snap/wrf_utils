@@ -176,26 +176,31 @@ def rotate_winds_to_earth_coords( fn, variable ):
     rotate the winds data from grid-centric to earth-centric
     using file metadata that was added by P.Bienik in the post-processed
     files given to SNAP to standardize.
-     '''
-    if 'U' in variable:
+    '''
+
+    if variable in ['U', 'U10', 'UBOT']:
         Uvar = variable
         Vvar = variable.replace( 'U', 'V' )
-    elif 'V' in variable:
+    elif variable in ['V', 'V10', 'VBOT']:
         Uvar = variable.replace( 'V', 'U' )
         Vvar = variable
     else:
         AttributeError( 'must have a U or V in the name -- WINDS only' )
 
     with xr.open_dataset( fn ) as ds:
-        Ugrid = ds['U']
-        Vgrid = ds['V']
-        cos = np.cos( ds.g5_rot_2 )
-        sin = np.sin( ds.g5_rot_2 )
+        Ugrid = ds[ Uvar ]
+        Vgrid = ds[ Vvar ]
+        cosaplha = np.cos( ds['g5_rot_2'] )
+        sinaplha = np.sin( ds['g5_rot_2'] )
+        lons = ds['g5_lon_1']
+        lats = ds['g5_lat_0']
 
-    Vearth = (cos*Vgrid) - (sin*Ugrid)
-    Uearth = (sin*Vgrid) + (cos*Ugrid)
+    Vearth = (cosalpha*Vgrid) - (sinaplha*Ugrid)
+    Uearth = (sinaplha*Vgrid) + (cosalpha*Ugrid)
 
     return Uearth, Vearth
+
+# rotate_vector( Uearth, Vearth, lons, lats, returnxy=True )
 
 def run_winds( fn, variable ):
     da = open_ds( fn, variable )
@@ -299,7 +304,7 @@ if __name__ == '__main__':
     tmp_ds = xr.open_dataset( sub_df.fn.tolist()[0] )
     global_attrs = tmp_ds.attrs.copy()
     global_attrs[ 'reference_time' ] = str(new_dates[0]) # 1979 hourly does NOT start at day 01...  rather day 02....
-    global_attrs[ 'proj_parameters' ] = "+proj=stere +lat_0=90 +lat_ts=90 +lon_0=-150 +k=0.994 +x_0=2000000 +y_0=2000000 +datum=WGS84 +units=m +no_defs"
+    global_attrs[ 'proj_parameters' ] = '+units=m +proj=stere +lat_ts=64.0 +lon_0=-152.0 +lat_0=90.0 +x_0=0 +y_0=0 +a=6370000 +b=6370000'
     local_attrs = tmp_ds[ variable ].attrs.copy()
     xy_attrs = mon_tmp_ds.lon.attrs.copy()
 
