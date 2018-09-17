@@ -188,15 +188,19 @@ def rotate_winds_to_earth_coords( fn, variable ):
         AttributeError( 'must have a U or V in the name -- WINDS only' )
 
     with xr.open_dataset( fn ) as ds:
-        Ugrid = ds[ Uvar ]
-        Vgrid = ds[ Vvar ]
-        cosaplha = np.cos( ds['g5_rot_2'] )
-        sinaplha = np.sin( ds['g5_rot_2'] )
-        lons = ds['g5_lon_1']
-        lats = ds['g5_lat_0']
+        Ugrid = ds[ Uvar ].data
+        Vgrid = ds[ Vvar ].data
+        cosalpha = np.cos( ds['g5_rot_2'].data )
+        sinalpha = np.sin( ds['g5_rot_2'].data )
+        # lons = ds['g5_lon_1']
+        # lats = ds['g5_lat_0']
 
-    Vearth = (cosalpha*Vgrid) - (sinaplha*Ugrid)
-    Uearth = (sinaplha*Vgrid) + (cosalpha*Ugrid)
+        if len(Ugrid.shape) == 3: # deal with levels
+            cosalpha = np.broadcast_to(cosalpha, Ugrid.shape)
+            sinalpha = np.broadcast_to(sinalpha, Ugrid.shape)
+
+        Vearth = (cosalpha*Vgrid) - (sinalpha*Ugrid)
+        Uearth = (sinalpha*Vgrid) + (cosalpha*Ugrid)
 
     return Uearth, Vearth
 
@@ -205,18 +209,19 @@ def rotate_winds_to_earth_coords( fn, variable ):
 def run_winds( fn, variable ):
     da = open_ds( fn, variable )
     ue,ve = rotate_winds_to_earth_coords( fn, variable )
+
     if variable in ['U', 'U10', 'UBOT']:
         out = ue
     elif variable in ['V', 'V10', 'VBOT']:
         out = ve
-    return np.array( out )
+    return out
 
 def stack_year_wind_rot( df, year, variable, ncores=32 ):
     import multiprocessing as mp
     from functools import partial
     
-    # rotate the wind vectors
-    Ugrid, Vgrid = rotate_winds_to_earth_coords( fn, variable )
+    # # rotate the wind vectors
+    # Ugrid, Vgrid = rotate_winds_to_earth_coords( fn, variable )
         
     f = partial( run_winds, variable=variable )
     files = df[ df.year == year ].fn.tolist()
@@ -273,18 +278,19 @@ if __name__ == '__main__':
     # input_path = '/storage01/rtladerjr/hourly'
     # # input_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/raw_testing_data/2007'
     # group = 'gfdl_rcp85'
-    # variable = 'SH2O' # 'PCPT' #
+    # variable = 'U' # 'PCPT' #
     # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
     # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/TESTING_SLURM_WRF'
     # # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
     # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
-    # output_filename = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2/T2_wrf_hourly_gfdl_rcp85_1990_FULLTEST_FINAL.nc'
+    # output_filename = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/U_wrf_hourly_gfdl_rcp85_1990_FULLTEST_FINAL.nc'
     # year = 2007
     # # # # # END TESTING
 
     # wrf output standard vars -- [hardwired] for now
     lon_variable = 'g5_lon_1'
     lat_variable = 'g5_lat_0'
+    rot_variable = 'g5_rot_2'
 
     # read in pre-built dataframe with forecast_time as a field
     df = pd.read_csv( files_df_fn, sep=',', index_col=0 ).copy()
@@ -372,9 +378,9 @@ if __name__ == '__main__':
 
 # input_path = '/storage01/pbieniek/gfdl/hist/hourly'
 # group = 'gfdl_hist'
-# variable = 'PCPT' #'T2'
+# variable = 'U10' #'T2'
 # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
-# output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2'
+# output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables'
 # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
 # years = list(range(1970,2005+1))
 
@@ -382,4 +388,7 @@ if __name__ == '__main__':
 # for year in years:
 #     print( year )
 #     output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
-#     _ = subprocess.call(['python3','stack_hourly_variable_year_accumulation.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
+#     _ = subprocess.call(['python3','stack_hourly_variable_year_NEW_uv.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
+
+
+

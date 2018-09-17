@@ -366,8 +366,8 @@ if __name__ == '__main__':
 
     # # # # BEGIN TEST
     # # # base directory
-    # base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
-    # variable = 'omega'
+    # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
+    # variable = 'qvapor'
     # ncpus = 10
     # variables = [ variable, variable.upper(), variable.lower() ] # all combos and one that might be CamelCase
     # # # # END TEST

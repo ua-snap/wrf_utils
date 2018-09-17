@@ -3,8 +3,8 @@ import os
 import pandas as pd
 import numpy as np
 
-base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
-# base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
+# base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly_fix'
+base_dir = '/storage01/malindgren/wrf_ccsm4/hourly_fix'
 files = [ os.path.join(r,fn) for r,s,files in os.walk( base_dir ) for fn in files if fn.endswith('.nc') ]
 colnames = ['variable','output', 'timestep', 'model', 'scenario', 'year']
 files_elems = [ os.path.splitext(os.path.basename(fn))[0].split('_') for fn in files ]

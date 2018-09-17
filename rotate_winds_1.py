@@ -71,6 +71,15 @@ t2m = nc.variables['T2'][0]
 ue = ur * cosalpha - vr * sinalpha
 ve = vr * cosalpha + ur * sinalpha
 
+formula_v:  Vearth = cos(rot)*Vgrid - sin(rot)*Ugrid
+formula_u:  Uearth = sin(rot)*Vgrid + cos(rot)*Ugrid
+
+u_earth = u * COSALPHA - v * SINALPHA
+v_earth = v * COSALPHA + u * SINALPHA
+
+u-earth = u-model*cosalpha - v-model*sinalpha
+v-earth = v-model*cosalpha + u-model*sinalpha
+
 # # # ADDED
 import wrf
 wrf.uvmet(ur, vr, lats, lons, cenlon, cone=1.0, meta=True, units='m s-1')

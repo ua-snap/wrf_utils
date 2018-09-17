@@ -25,7 +25,9 @@ if __name__ == '__main__':
     # base directory
     # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
     base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
-    variables = ['omega'] #,'lwupbc', 'lwdnbc', 'omega', 't']
+    variables = ['t']
+    # ['omega', 't']
+    # ['lwdnbc', 'lwupbc', 'omega', 't']
 
     # ['albedo', 'vegfra', 'cldfra_high',
     #  'cldfra_low', 'cldfra_mid', 'lwupbc', 'lwdnbc', 'ght', 
@@ -38,11 +40,11 @@ if __name__ == '__main__':
     os.chdir( slurm_dir )
 
     for variable in variables:
-        if variable in ['acsnow','albedo','pcpt','sh2o','smois','swupbc','t','omega']:
+        if variable in ['acsnow','albedo','pcpt','sh2o','smois','swupbc']:
             ncpus = 5
-        elif 'cldfra' in variable:
+        elif variable in ['cldfra']:
             ncpus = 3
-        elif variable in ['qvapor','ght']:
+        elif variable in ['qvapor','t','ght','omega']:
             ncpus = 1
         else:
             ncpus = 10

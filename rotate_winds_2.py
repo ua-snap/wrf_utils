@@ -1,7 +1,7 @@
 
 # this may be rotating correctly...precision is a bit different than the other approach but keep this for a bit.
 
-def rotate_vector(uin,vin,lons,lats,returnxy=False):
+def rotate_vector( uin,vin,lons,lats,returnxy=False ):
     """
     Rotate a vector field (``uin,vin``) on a rectilinear grid
     with longitudes = ``lons`` and latitudes = ``lats`` from

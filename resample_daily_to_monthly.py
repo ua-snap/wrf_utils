@@ -3,8 +3,8 @@ def make_args( base_path, agg_group='daily' ):
     variables = [ os.path.basename(i).upper() for i in glob.glob( os.path.join(base_path, agg_group, '*' ) ) 
                     if os.path.isdir( i ) and 'slurm' not in i ]
 
-    groups = ['ERA-Interim', 'GFDL-CM3_historical', 'GFDL-CM3_rcp85']
-    years_lu = {'ERA-Interim':('1979','2015'), 'GFDL-CM3_historical':('1970','2006'), 'GFDL-CM3_rcp85':('2006','2100')}
+    groups = ['ERA-Interim', 'GFDL-CM3_historical', 'GFDL-CM3_rcp85','NCAR-CCSM4_historical', 'NCAR-CCSM4_rcp85']
+    years_lu = {'ERA-Interim':('1979','2015'), 'GFDL-CM3_historical':('1970','2006'), 'GFDL-CM3_rcp85':('2006','2100'), 'NCAR-CCSM4_historical':('1970','2005'), 'NCAR-CCSM4_rcp85':('2006','2100')}
     
     args = [ (variable,sorted( glob.glob( os.path.join( base_path, agg_group, variable.lower(), '*{}*.nc'.format(wildcard) ) ) ), years_lu[wildcard]) 
                     for variable in variables
@@ -13,6 +13,8 @@ def make_args( base_path, agg_group='daily' ):
 
 def resample( files, variable, begin_year, end_year, agg_str='M' ):
     print( 'working on: {}'.format( variable ) )
+    
+    variable = variable.lower()
 
     ds = xr.open_mfdataset( files, autoclose=True )
     
@@ -20,7 +22,7 @@ def resample( files, variable, begin_year, end_year, agg_str='M' ):
     global_attrs = ds.attrs
     variable_attrs = ds[ variable ].attrs
 
-    output_path = os.path.join( base_path, 'monthly_fix', variable.lower() )
+    output_path = os.path.join( base_path, 'monthly', variable.lower() )
 
     try:
         if not os.path.exists( output_path ):
@@ -58,8 +60,8 @@ def resample( files, variable, begin_year, end_year, agg_str='M' ):
     basename = basename.replace( 'daily', 'monthly' )
     # get single filename elements for output_filename
     elems = basename.split('.')[0].split('_')
-    _ = elems.pop(-1) # remove the single year...
-    elems.append( '{}-{}'.format(begin_year, end_year) ) # put in full year range to filename
+    _ = elems.pop(-2) # remove the single year...
+    elems.insert(-1, '{}-{}'.format(begin_year, end_year) ) # put in full year range to filename
 
     output_filename = os.path.join( output_path, '_'.join(elems)+'.nc' )
     ds_day_comp.to_netcdf( output_filename, mode='w', format='NETCDF4_CLASSIC' )
@@ -91,10 +93,24 @@ if __name__ == '__main__':
     import os, glob, itertools
     import multiprocessing as mp
 
-    base_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data'
-    args = make_args( base_path, agg_group='daily_fix' )
-    # args = [ (i,j,k) for i,j,k in args if i == 'POTEVP' ]
-    ncpus = 25
+    # base_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data'
+    base_path = '/storage01/malindgren/wrf_ccsm4'
+    args = make_args( base_path, agg_group='daily' )
+    varlist = ['snowc']
+    # ['canwat', 'acsnow','pcpnc', 'potevp', 'cldfra_high', 'cldfra_mid']
+    # ['swupb','tbot','tslb','albedo','cldfra','cldfra_low' ]
+    # ['sh2o', 'hfx', 'lwdnb', 'smois', 'lwupb']
+    # ['swdnb', 'ght', 'lh', 'lwdnbc', 'lwupbc', 'pcpc', 'pcpt']
+    # ['psfc', 'seaice', 'slp', 'snowh', 'snow', 'swdnbc', 'swupbc', 't2', 'tsk', 'vegfra']
+    # ['omega']
+    # ['q2']
+    # ['t']
+    # ['qbot']
+    # ['qvapor']
+    # ['ght']
+    # ['snowc']
+    args = [ (i,j,k) for i,j,k in args if i.lower() in varlist if len(j) > 0 ]
+    ncpus = 5
 
     # parallel process
     pool = mp.Pool( ncpus )

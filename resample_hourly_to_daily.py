@@ -113,13 +113,24 @@ if __name__ == '__main__':
     import os, glob, itertools
     import multiprocessing as mp
 
-    base_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data'
-    variables = [ 'pcpnc', 'lwupb', 'q2', 'sh2o', 'snowc', 'smois', 
-                'tsk', 'swdnb', 'swupb', 'vegfra']
-                # RUN ME: 'qvapor'
-    
+    # base_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data'
+    base_path = '/storage01/malindgren/wrf_ccsm4'
+    variables = ['ght' ]
+
+    # ['acsnow','canwat','cldfra_high','cldfra_mid','hfx','lwdnb' ,'lwupb' ]
+    # ['omega']
+    # ['qvapor']
+    # ['t']
+
+    # ['pcpnc','potevp','q2','sh2o','smois','snowc','swdnb']
+    # ['swupb','tbot','tslb','albedo','cldfra','cldfra_low' ]
+    # ['ght','lh' ,'lwdnbc','lwupbc','pcpc' ,'pcpt','psfc',]
+    # ['qbot','seaice','slp']
+    # ['snow' ,'snowh','swdnbc','swupbc','t2','tsk' ,'vegfra']
+
     args = make_args( base_path, variables=variables, agg_group='hourly_fix' )
-    ncpus = 40
+    # args = [(i,j) for i,j in args if '2064' in j ]
+    ncpus = 32
 
     # parallel process
     pool = mp.Pool( ncpus )
