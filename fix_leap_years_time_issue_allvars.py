@@ -33,7 +33,7 @@ if __name__ == '__main__':
     # parse the args and unpack
     args = parser.parse_args()
     base_dir = args.base_dir
-    variables = args.variable
+    variable = args.variable
     ncpus = args.ncpus
 
     # # # # # 
