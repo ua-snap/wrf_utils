@@ -87,8 +87,7 @@ def get_variable_name( ds ):
     '''
     variables = ds.variables.mapping.keys()
     dropkeys = ['time','lon','lat','longitude','latitude',
-                'xc','yc',
-                'x','y','levels','level','lv_DBLY3','lv_ISBL2']
+                'xc','yc','x','y','levels','level','lv_DBLY3','lv_ISBL2']
     variable, = [ variable for variable in variables if variable not in dropkeys ]
     return variable
 
@@ -294,7 +293,7 @@ def run( fn, meta ):
 
     # level attrs (if needed / available)
     if level_attrs is not None:
-        new_ds[ levelname ].attrs = level_attrs
+        new_ds[ levels_lu[levelname] ].attrs = level_attrs
 
     # lon/lat attrs
     lon_attrs = OrderedDict({'long_name':'Longitude','units':'degrees','grid_notes':'irregular grid representing centroids of locations in Cartesian grid of \
@@ -367,8 +366,8 @@ if __name__ == '__main__':
     # # # # BEGIN TEST
     # # # base directory
     # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
-    # variable = 'qvapor'
-    # ncpus = 10
+    # variable = 'ght'
+    # ncpus = 1
     # variables = [ variable, variable.upper(), variable.lower() ] # all combos and one that might be CamelCase
     # # # # END TEST
 
