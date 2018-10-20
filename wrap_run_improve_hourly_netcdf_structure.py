@@ -25,7 +25,7 @@ if __name__ == '__main__':
     # base directory
     # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
     base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
-    variables = ['t']
+    variables = ['GHT','OMEGA','QVAPOR','SH2O','SMOIS','T'] # fix 4D
     # ['omega', 't']
     # ['lwdnbc', 'lwupbc', 'omega', 't']
 

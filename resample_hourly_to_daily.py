@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
     # base_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data'
     base_path = '/storage01/malindgren/wrf_ccsm4'
-    variables = ['ght' ]
+    variables = ['t']
 
     # ['acsnow','canwat','cldfra_high','cldfra_mid','hfx','lwdnb' ,'lwupb' ]
     # ['omega']
@@ -129,8 +129,8 @@ if __name__ == '__main__':
     # ['snow' ,'snowh','swdnbc','swupbc','t2','tsk' ,'vegfra']
 
     args = make_args( base_path, variables=variables, agg_group='hourly_fix' )
-    # args = [(i,j) for i,j in args if '2064' in j ]
-    ncpus = 32
+    args = [(i,j) for i,j in args if 'historical' in j ]
+    ncpus = 10
 
     # parallel process
     pool = mp.Pool( ncpus )

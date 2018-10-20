@@ -4,37 +4,38 @@ import pandas as pd
 import os, glob
 
 # setup pathing, etc.
-input_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/hourly'
+input_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly_fix'
 
 variable = 't2'
-group = 'erain'
+group = 'ERA-Interim'
 
 # read in mfdataset
-ds = xr.open_mfdataset( glob.glob( os.path.join( input_path, variable, '*'.join(['', variable.upper(), group,'.nc']) )) )
+files = sorted( glob.glob( os.path.join( input_path, variable, '*'.join([variable, group,'.nc']) )) )
+ds = xr.open_mfdataset( files )
 
 # get the attrs from the input dset
 global_attrs = ds.attrs
-local_attrs = ds[ variable.upper() ].attrs
+local_attrs = ds[ variable ].attrs
 xy_attrs = ds[ 'lon' ].attrs
-# time_attrs = ds[ 'time' ].attrs
+time_attrs = ds[ 'time' ].attrs
 
 # set up some output pathing for the new aggregates
 # day
-output_path_day = os.path.join( input_path.replace( 'hourly', 'daily' ) )
+output_path_day = os.path.join( input_path.replace( 'hourly', 'daily_TEST' ) )
 if not os.path.exists( output_path_day ):
 	os.makedirs( output_path_day )
 # month
-output_path_mon = os.path.join( input_path.replace( 'hourly', 'monthly' ) )
+output_path_mon = os.path.join( input_path.replace( 'hourly', 'monthly_TEST' ) )
 if not os.path.exists( output_path_mon ):
 	os.makedirs( output_path_mon )
 
 # temp min -- daily
-ds_min = ds.resample( 'D', dim='time', how='min' )
+ds_min = ds_max = ds.resample( time='D').min( 'time' )
 ds_min_comp = ds_min.compute()
 
 # setup the output dataset with proper varname and attrs
-new_varname = 'TMIN'
-ds_min_comp = ds_min_comp[ variable.upper() ].to_dataset( name=new_varname )
+new_varname = variable+'min'
+ds_min_comp = ds_min_comp[ variable ].to_dataset( name=new_varname )
 ds_min_comp.attrs = global_attrs
 ds_min_comp[ new_varname ].attrs = local_attrs
 ds_min_comp[ 'lon' ].attrs = xy_attrs
@@ -42,33 +43,33 @@ ds_min_comp[ 'lat' ].attrs = xy_attrs
 
 ds_min_comp.to_netcdf( os.path.join( output_path_day, '{}_wrf_day_{}.nc'.format( new_varname.lower(), group ) ), mode='w', format='NETCDF4_CLASSIC' )
 
-# temp min -- monthly
-ds_min_mon = ds_min_comp.resample( 'M', dim='time', how='mean' )
-ds_min_mon_comp = ds_min_mon.compute()
+# # temp min -- monthly
+# ds_min_mon = ds_min_comp.resample( 'M', dim='time', how='mean' )
+# ds_min_mon_comp = ds_min_mon.compute()
 
-# setup the output dataset with proper varname and attrs
-# ds_min_comp[ variable.upper ].to_dataset( name=new_varname )
-ds_min_mon_comp.attrs = global_attrs
-ds_min_mon_comp[ new_varname ].attrs = local_attrs
-ds_min_mon_comp[ 'lon' ].attrs = xy_attrs
-ds_min_mon_comp[ 'lat' ].attrs = xy_attrs
+# # setup the output dataset with proper varname and attrs
+# # ds_min_comp[ variable.upper ].to_dataset( name=new_varname )
+# ds_min_mon_comp.attrs = global_attrs
+# ds_min_mon_comp[ new_varname ].attrs = local_attrs
+# ds_min_mon_comp[ 'lon' ].attrs = xy_attrs
+# ds_min_mon_comp[ 'lat' ].attrs = xy_attrs
 
-ds_min_mon_comp.to_netcdf( os.path.join( output_path_mon, '{}_wrf_month_{}.nc'.format( new_varname.lower(), group ) ), mode='w', format='NETCDF4_CLASSIC' )
+# ds_min_mon_comp.to_netcdf( os.path.join( output_path_mon, '{}_wrf_month_{}.nc'.format( new_varname.lower(), group ) ), mode='w', format='NETCDF4_CLASSIC' )
 
-# cleanup...
-ds_min.close()
-ds_min = None
-ds_min_comp.close()
-ds_min_comp = None
-ds_min_mon_comp.close()
-ds_min_mon_comp = None
+# # cleanup...
+# ds_min.close()
+# ds_min = None
+# ds_min_comp.close()
+# ds_min_comp = None
+# ds_min_mon_comp.close()
+# ds_min_mon_comp = None
 
 # temp max -- daily
-ds_max = ds.resample( 'D', dim='time', how='max' )
+ds_max = ds.resample( time='D').max( 'time' )
 ds_max_comp = ds_max.compute()
 
 # setup the output dataset with proper varname and attrs
-new_varname = 'TMAX'
+new_varname = variable + 'max'
 ds_max_comp = ds_max_comp[ variable.upper() ].to_dataset( name=new_varname )
 ds_max_comp.attrs = global_attrs
 ds_max_comp[ new_varname ].attrs = local_attrs
@@ -77,26 +78,26 @@ ds_max_comp[ 'lat' ].attrs = xy_attrs
 
 ds_max_comp.to_netcdf( os.path.join( output_path_day, '{}_wrf_day_{}.nc'.format( new_varname.lower(), group ) ), mode='w', format='NETCDF4_CLASSIC' )
 
-# temp max -- monthly
-ds_max_mon = ds_max_comp.resample( 'M', dim='time', how='mean' )
-ds_max_mon_comp = ds_max_mon.compute()
+# # temp max -- monthly
+# ds_max_mon = ds_max_comp.resample( 'M', dim='time', how='mean' )
+# ds_max_mon_comp = ds_max_mon.compute()
 
-# setup the output dataset with proper varname and attrs
-# ds_min_comp[ variable.upper ].to_dataset( name=new_varname )
-ds_max_mon_comp.attrs = global_attrs
-ds_max_mon_comp[ new_varname ].attrs = local_attrs
-ds_max_mon_comp[ 'lon' ].attrs = xy_attrs
-ds_max_mon_comp[ 'lat' ].attrs = xy_attrs
+# # setup the output dataset with proper varname and attrs
+# # ds_min_comp[ variable.upper ].to_dataset( name=new_varname )
+# ds_max_mon_comp.attrs = global_attrs
+# ds_max_mon_comp[ new_varname ].attrs = local_attrs
+# ds_max_mon_comp[ 'lon' ].attrs = xy_attrs
+# ds_max_mon_comp[ 'lat' ].attrs = xy_attrs
 
-ds_max_mon_comp.to_netcdf( os.path.join( output_path_mon, '{}_wrf_month_{}.nc'.format( new_varname.lower(), group ) ), mode='w', format='NETCDF4_CLASSIC' )
+# ds_max_mon_comp.to_netcdf( os.path.join( output_path_mon, '{}_wrf_month_{}.nc'.format( new_varname.lower(), group ) ), mode='w', format='NETCDF4_CLASSIC' )
 
-# cleanup...
-ds_max.close()
-ds_max = None
-ds_max_comp.close()
-ds_max_comp = None
-ds_max_mon_comp.close()
-ds_max_mon_comp = None
+# # cleanup...
+# ds_max.close()
+# ds_max = None
+# ds_max_comp.close()
+# ds_max_comp = None
+# ds_max_mon_comp.close()
+# ds_max_mon_comp = None
 
 # close master
 ds.close()

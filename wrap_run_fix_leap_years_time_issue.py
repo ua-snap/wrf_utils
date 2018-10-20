@@ -27,13 +27,14 @@ if __name__ == '__main__':
     group = 'GFDL'
     # base_dir = '/storage01/malindgren/wrf_ccsm4/hourly_fix'
     # group = 'CCSM4'
-    variables = ['t2', 'pcpt', 'cldfra_high', 'cldfra_mid', 'acsnow', 'canwat', 'cldfra_low', 
-                'cldfra', 'pcpc', 'psfc', 'hfx', 'lwdnb', 'qbot', 'seaice', 'snow', 'slp', 
-                'snowh', 'swdnbc', 'swupbc', 'tbot', 'albedo', 'lh', 'tslb', 'potevp', 
-                'pcpnc', 'lwupb', 'q2', 'sh2o', 'snowc', 'smois', 'tsk', 'swdnb', 
-                'swupb', 'vegfra', 'lwupbc', 'lwdnbc']
 
-    # variables = ['ght','qvapor','omega', 't']
+    # variables = ['tsk','t2', 'pcpt', 'cldfra_high', 'cldfra_mid', 'acsnow', 'canwat', 'cldfra_low', 
+    #             'cldfra', 'pcpc', 'psfc', 'hfx', 'lwdnb', 'qbot', 'seaice', 'snow', 'slp', 
+    #             'snowh', 'swdnbc', 'swupbc', 'tbot', 'albedo', 'lh', 'tslb', 'potevp', 
+    #             'pcpnc', 'lwupb', 'q2', 'sh2o', 'snowc', 'smois','swdnb', 
+    #             'swupb', 'vegfra', 'lwupbc', 'lwdnbc']
+
+    variables = ['ght','qvapor','omega', 't']
 
     slurm_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/slurm'
     if not os.path.exists( slurm_dir ):

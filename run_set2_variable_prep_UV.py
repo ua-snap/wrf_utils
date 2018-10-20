@@ -5,13 +5,12 @@
 # new_variables = ['SH2O', 'SLP', 'PSFC']
 
 
-
 # ERA-INTERIM
 import os, subprocess
 
 input_path = '/storage01/pbieniek/erain/hourly'
 group = 'erain'
-variables = ['T']
+variables = ['U10','V10']
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
 output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
 
@@ -30,7 +29,7 @@ for variable in variables:
         output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
         if '_erain_' in output_filename:
             output_filename = output_filename.replace( '_erain_', '_era_interim_' )
-        _ = subprocess.call(['python3','stack_hourly_variable_year_NEW.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
+        _ = subprocess.call(['python3','stack_hourly_variable_year_NEW_uv.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
 
 
 
@@ -39,7 +38,7 @@ import os, subprocess
 
 input_path = '/storage01/pbieniek/gfdl/hist/hourly'
 group = 'gfdl_hist'
-variables = ['T']
+variables = ['U10','V10']
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
 output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
 
@@ -58,7 +57,7 @@ for variable in variables:
         output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
         if '_erain_' in output_filename:
             output_filename = output_filename.replace( '_erain_', '_era_interim_' )
-        _ = subprocess.call(['python3','stack_hourly_variable_year_NEW.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
+        _ = subprocess.call(['python3','stack_hourly_variable_year_NEW_uv.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
 
 
 
@@ -67,7 +66,7 @@ import os, subprocess
 
 input_path = '/storage01/rtladerjr/hourly'
 group = 'gfdl_rcp85'
-variables = ['T']
+variables = ['U10','V10']
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
 output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
 
@@ -86,7 +85,7 @@ for variable in variables:
         output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
         if '_erain_' in output_filename:
             output_filename = output_filename.replace( '_erain_', '_era_interim_' )
-        _ = subprocess.call(['python3','stack_hourly_variable_year_NEW.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
+        _ = subprocess.call(['python3','stack_hourly_variable_year_NEW_uv.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
 
 
 # # # # # CCSM4
@@ -95,9 +94,9 @@ import os, subprocess
 
 input_path = '/storage01/pbieniek/ccsm/hist/hourly'
 group = 'ccsm_hist'
-variables = ['CLDFRA_MID']
+variables = ['U10','V10']
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
-output_path = '/storage01/malindgren/wrf_ccsm4/hourly'
+output_path = '/storage01/malindgren/wrf_ccsm4/hourly_new_variables'
 
 for variable in variables:
     template_fn = '/storage01/pbieniek/ccsm/hist/monthly/monthly_{}-chist2.nc'.format( variable )
@@ -112,7 +111,7 @@ for variable in variables:
     os.chdir( '/workspace/UA/malindgren/repos/wrf_utils' )
     for year in years:
         output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
-        _ = subprocess.call(['python3','stack_hourly_variable_year_NEW.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
+        _ = subprocess.call(['python3','stack_hourly_variable_year_NEW_uv.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
         
 
 # CCSM4-RCP85
@@ -120,9 +119,9 @@ import os, subprocess
 
 input_path = '/storage01/pbieniek/ccsm/rcp85/hourly'
 group = 'ccsm_rcp85'
-variables = ['SNOWC'] # SNOWH, SWDNB, SWUPB, T2, TSLB, VEGFRA, ALBEDO, CLDFRA_HIGH, CLDFRA_LOW, CLDFRA_MID
+variables = ['U10','V10']
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
-output_path = '/storage01/malindgren/wrf_ccsm4/hourly'
+output_path = '/storage01/malindgren/wrf_ccsm4/hourly_new_variables'
 
 for variable in variables:
     template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-chist2.nc'.format( variable ) # USING PETERS HISTORICALS HERE...

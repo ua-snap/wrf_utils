@@ -178,7 +178,7 @@ def run( fn, meta ):
     print( 'running: {}'.format( fn ) )
 
     # make an output name from the input name.
-    out_fn = fn.replace( '/hourly','/hourly_fix' )
+    out_fn = fn.replace( '/hourly','/hourly_fix_4d' )
     dirname, basename = os.path.split( out_fn )
     basename, ext = os.path.splitext( basename )
 
@@ -247,13 +247,13 @@ def run( fn, meta ):
         # [NEW] end make a new level name
 
         # build dataset with levels at each timestep
-        new_ds = xr.Dataset( {variable.lower():(['time',levelname,'yc', 'xc'], flipped['data'])},
+        new_ds = xr.Dataset( {variable.lower():(['time',levels_lu[levelname],'yc', 'xc'], flipped['data'])},
                     coords={'xc': ('xc', x[0,]),
                             'yc': ('yc', y[:,0]),
                             'lon':(['yc','xc'], lons ),
                             'lat':(['yc','xc'], lats ),
                             'time': time,
-                            'levels':levels})
+                            levels_lu[levelname]:levels})
     else:
         raise BaseException( 'wrong number of dimensions' )
 
