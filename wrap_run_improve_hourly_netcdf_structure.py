@@ -9,7 +9,7 @@ def run( fn, command, ncpus=10 ):
             '#SBATCH --account=snap\n' + \
             '#SBATCH --mail-type=FAIL\n' + \
             '#SBATCH --mail-user=malindgren@alaska.edu\n' + \
-            '#SBATCH -p main\n'
+            '#SBATCH -p viz,main\n'
     
     with open( fn, 'w' ) as f:
         f.write( head + '\n' + command + '\n' )
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     # base directory
     # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
     base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
-    variables = ['GHT','OMEGA','QVAPOR','SH2O','SMOIS','T'] # fix 4D
+    variables = ['ght', 'omega', 'qvapor', 'sh2o', 'smois', 't'] # fix 4D
     # ['omega', 't']
     # ['lwdnbc', 'lwupbc', 'omega', 't']
 

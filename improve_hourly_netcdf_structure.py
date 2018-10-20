@@ -252,7 +252,7 @@ def run( fn, meta ):
                             'lon':(['yc','xc'], lons ),
                             'lat':(['yc','xc'], lats ),
                             'time': time,
-                            levels_lu[levelname]:levels})
+                            levels_lu[levelname]:levels.values})
     else:
         raise BaseException( 'wrong number of dimensions' )
 
@@ -346,30 +346,30 @@ if __name__ == '__main__':
     import os
     from functools import partial
     import multiprocessing as mp
-    import argparse
+    # import argparse
 
-    # parse some args
-    parser = argparse.ArgumentParser( description='stack the hourly outputs from raw WRF outputs to NetCDF files of hourlies broken up by year.' )
-    parser.add_argument( "-b", "--base_dir", action='store', dest='base_dir', type=str, help="input hourly directory with annual sub-dirs containing hourly WRF NetCDF outputs" )
-    parser.add_argument( "-v", "--variable", action='store', dest='variable', type=str, help="variable name to process" )
-    parser.add_argument( "-n", "--ncpus", action='store', dest='ncpus', type=int, help="number of cpus to use" )
+    # # parse some args
+    # parser = argparse.ArgumentParser( description='stack the hourly outputs from raw WRF outputs to NetCDF files of hourlies broken up by year.' )
+    # parser.add_argument( "-b", "--base_dir", action='store', dest='base_dir', type=str, help="input hourly directory with annual sub-dirs containing hourly WRF NetCDF outputs" )
+    # parser.add_argument( "-v", "--variable", action='store', dest='variable', type=str, help="variable name to process" )
+    # parser.add_argument( "-n", "--ncpus", action='store', dest='ncpus', type=int, help="number of cpus to use" )
     
-    # parse the args and unpack
-    args = parser.parse_args()
-    base_dir = args.base_dir
-    variables = [ args.variable, args.variable.upper(), args.variable.lower() ] # all combos and one that might be CamelCase
-    ncpus = args.ncpus
+    # # parse the args and unpack
+    # args = parser.parse_args()
+    # base_dir = args.base_dir
+    # variables = [ args.variable, args.variable.upper(), args.variable.lower() ] # all combos and one that might be CamelCase
+    # ncpus = args.ncpus
 
     # versioning
     snap_version = '0.4'
 
-    # # # # BEGIN TEST
-    # # # base directory
-    # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
-    # variable = 'ght'
-    # ncpus = 1
-    # variables = [ variable, variable.upper(), variable.lower() ] # all combos and one that might be CamelCase
-    # # # # END TEST
+    # # # BEGIN TEST
+    # # base directory
+    base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
+    variable = 'smois'
+    ncpus = 1
+    variables = [ variable, variable.upper(), variable.lower() ] # all combos and one that might be CamelCase
+    # # # END TEST
 
     # list the data -- some 4d groups need some special attention...
     files = filelister( base_dir )
