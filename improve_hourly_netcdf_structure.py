@@ -3,7 +3,7 @@
 # AND CF-CONVENTIONS AND FROM OTHERS NEEDS, I AM UPDATING THE FILE METADATA AND 
 # COORDS / DIMS APPROPRIATELY. 
 # 
-# August 2018 - Michael Lindgren (malindgren@alaska.edu)
+# December 2018 - Michael Lindgren (malindgren@alaska.edu)
 # # # # # # # # # # # # # # # # # # # # # 
 
 def get_meta_from_wrf( ds ):
