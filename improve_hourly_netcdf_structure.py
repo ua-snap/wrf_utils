@@ -208,6 +208,11 @@ def run( fn, meta ):
     # make some file coords and attrs from the file metadata we built
     x,y = meta['xc'], meta['yc']
     time = ds['time']
+    dates = time.to_index()
+    start_dt = dates[0]
+    dates = pd.date_range(start_dt.strftime('%Y-%m-%d 00'), start_dt.strftime('%Y-12-31 23'), freq='1H')
+    time.data = pd.DatetimeIndex([ d for d in dates if d.strftime('%m-%d') != '02-29' ])
+
     base_attrs = ds.attrs.copy()
     
     # update time attributes.
@@ -361,12 +366,12 @@ if __name__ == '__main__':
     ncpus = args.ncpus
 
     # versioning
-    snap_version = '1.0'
+    snap_version = '0.5'
 
     # # # # BEGIN TEST
     # # # base directory
     # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
-    # variable = 't'
+    # variable = 't2'
     # ncpus = 1
     # variables = [ variable, variable.upper(), variable.lower() ] # all combos and one that might be CamelCase
     # # # # END TEST
