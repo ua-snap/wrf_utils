@@ -349,6 +349,7 @@ if __name__ == '__main__':
     import xarray as xr
     from collections import OrderedDict
     import os
+    import pandas as pd
     from functools import partial
     import multiprocessing as mp
     import argparse
