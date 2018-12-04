@@ -177,7 +177,7 @@ def run( fn, meta ):
     print( 'running: {}'.format( fn ) )
 
     # make an output name from the input name.
-    out_fn = fn.replace( '/hourly','/hourly_fix_4d' )
+    out_fn = fn.replace( '/hourly','/hourly_fix' )
     dirname, basename = os.path.split( out_fn )
     basename, ext = os.path.splitext( basename )
 
@@ -199,7 +199,7 @@ def run( fn, meta ):
     out_fn = os.path.join( dirname, basename )
 
     # open the dataset to restructure / improve
-    ds = xr.open_dataset( fn, autoclose=True )
+    ds = xr.open_dataset( fn ) #autoclose=True
     
     # get the variable name from the already stacked files (produced by SNAP)
     variable = get_variable_name( ds )
@@ -215,17 +215,17 @@ def run( fn, meta ):
     time_attrs.update( {'time zone': 'all times are UTC.'})
     time.attrs = time_attrs
 
-    # pull out the lat / lons from the input file to toss into the cleaned stacked outputs
-    lons = ds.lon.data
-    lats = np.flipud( ds.lat.data ) # so they are north-up! which makes it easier and pythonic.
+    # # pull out the lat / lons from the input file to toss into the cleaned stacked outputs
+    # lons = ds.lon.data
+    # lats = np.flipud( ds.lat.data ) # so they are north-up! which makes it easier and pythonic.
 
     if len(flipped['data'].shape) == 3:
         # build a new NetCDF and dump to disk -- with compression
         new_ds = xr.Dataset({variable.lower(): (['time','yc', 'xc'], flipped['data'])},
                             coords={'xc': ('xc', x[0,]),
                                     'yc': ('yc', y[:,0]),
-                                    'lon':(['yc','xc'], lons ),
-                                    'lat':(['yc','xc'], lats ),
+                                    # 'lon':(['yc','xc'], lons ),
+                                    # 'lat':(['yc','xc'], lats ),
                                     'time':time })
         level_attrs = None
         
@@ -249,8 +249,8 @@ def run( fn, meta ):
         new_ds = xr.Dataset( {variable.lower():(['time',levels_lu[levelname],'yc', 'xc'], flipped['data'])},
                     coords={'xc': ('xc', x[0,]),
                             'yc': ('yc', y[:,0]),
-                            'lon':(['yc','xc'], lons ),
-                            'lat':(['yc','xc'], lats ),
+                            # 'lon':(['yc','xc'], lons ),
+                            # 'lat':(['yc','xc'], lats ),
                             'time': time,
                             levels_lu[levelname]:levels.values})
     else:
@@ -295,13 +295,13 @@ def run( fn, meta ):
     if level_attrs is not None:
         new_ds[ levels_lu[levelname] ].attrs = level_attrs
 
-    # lon/lat attrs
-    lon_attrs = OrderedDict({'long_name':'Longitude','units':'degrees','grid_notes':'irregular grid representing centroids of locations in Cartesian grid of \
-                                                                                        Polar Stereographic in the Geographic WGS84 coordinates. These come directly from WRF.'})
-    lat_attrs = OrderedDict({'long_name':'Latitude','units':'degrees','grid_notes':'irregular grid representing centroids of locations in Cartesian grid of \
-                                                                                        Polar Stereographic in the Geographic WGS84 coordinates. These come directly from WRF.'})
-    new_ds[ 'lon' ].attrs = lon_attrs
-    new_ds[ 'lat' ].attrs = lat_attrs
+    # # lon/lat attrs
+    # lon_attrs = OrderedDict({'long_name':'Longitude','units':'degrees','grid_notes':'irregular grid representing centroids of locations in Cartesian grid of \
+    #                                                                                     Polar Stereographic in the Geographic WGS84 coordinates. These come directly from WRF.'})
+    # lat_attrs = OrderedDict({'long_name':'Latitude','units':'degrees','grid_notes':'irregular grid representing centroids of locations in Cartesian grid of \
+    #                                                                                     Polar Stereographic in the Geographic WGS84 coordinates. These come directly from WRF.'})
+    # new_ds[ 'lon' ].attrs = lon_attrs
+    # new_ds[ 'lat' ].attrs = lat_attrs
 
     # VARIABLE attributes
     var_attrs = OrderedDict()
@@ -335,7 +335,7 @@ def run( fn, meta ):
 
     # using the base netCDF4 package update the times to be UTC and dump back to disk
     # hacky but overcomes a current somewhat limitation in xarray.
-    out_fn = force_update_times_UTC( out_fn )
+    # out_fn = force_update_times_UTC( out_fn )
 
     return out_fn
 
@@ -361,12 +361,12 @@ if __name__ == '__main__':
     ncpus = args.ncpus
 
     # versioning
-    snap_version = '0.4'
+    snap_version = '1.0'
 
     # # # # BEGIN TEST
     # # # base directory
     # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
-    # variable = 'smois'
+    # variable = 't'
     # ncpus = 1
     # variables = [ variable, variable.upper(), variable.lower() ] # all combos and one that might be CamelCase
     # # # # END TEST
