@@ -24,8 +24,11 @@ if __name__ == '__main__':
 
     # base directory
     # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
+    # groupname = 'GFDL'
     base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
-    variables = ['ght', 'omega', 'qvapor', 'sh2o', 'smois', 't'] # fix 4D
+    groupname = 'CCSM4'
+    # variables = ['ght', 'omega', 'qvapor', 'sh2o', 'smois', 't'] # fix 4D
+    variables = ['omega','qvapor','t']
     # ['omega', 't']
     # ['lwdnbc', 'lwupbc', 'omega', 't']
 
@@ -50,5 +53,5 @@ if __name__ == '__main__':
             ncpus = 10
 
         command = ' '.join([ 'python', '/workspace/UA/malindgren/repos/wrf_utils/improve_hourly_netcdf_structure.py', '-b', base_dir, '-v', variable, '-n', str(ncpus) ])
-        fn = os.path.join( slurm_dir, '{}_improve_hourlies.slurm'.format(variable) )
+        fn = os.path.join( slurm_dir, '{}_improve_hourlies_{}.slurm'.format(variable,groupname) )
         run( fn, command )
