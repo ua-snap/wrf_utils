@@ -212,7 +212,7 @@ def run( fn, meta ):
     
     # update time attributes.
     time_attrs = time.attrs.copy()
-    time_attrs.update( {'time zone': 'all times are UTC.'})
+    time_attrs.update( {'time zone': 'UTC'})
     time.attrs = time_attrs
 
     # # pull out the lat / lons from the input file to toss into the cleaned stacked outputs

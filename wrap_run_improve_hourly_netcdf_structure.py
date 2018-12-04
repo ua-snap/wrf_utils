@@ -27,15 +27,14 @@ if __name__ == '__main__':
     # groupname = 'GFDL'
     base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
     groupname = 'CCSM4'
+    variables = ['omega','qvapor','t','ght']
     # variables = ['ght', 'omega', 'qvapor', 'sh2o', 'smois', 't'] # fix 4D
-    variables = ['omega','qvapor','t']
-    # ['omega', 't']
-    # ['lwdnbc', 'lwupbc', 'omega', 't']
-
-    # ['albedo', 'vegfra', 'cldfra_high',
-    #  'cldfra_low', 'cldfra_mid', 'lwupbc', 'lwdnbc', 'ght', 
-    #  'omega', 'psfc', 'slp', 'sh2o', 'seaice', 'swupbc', 
-    #  'smois', 'swdnbc', 'tbot', 'tsk', 't']
+    variables = ['pcpt', 'snowc', 'vegfra', 'qbot', 't2', 'snow', 'tslb', 
+                'acsnow', 'cldfra', 'hfx', 'lh', 'lwdnb', 'lwupb', 
+                'q2', 'snowh', 'swdnb', 'swupb', 'pcpc', 'pcpnc', 'potevp', 
+                'canwat', 'tbot', 'tsk', 'seaice', 'albedo', 'cldfra_high', 
+                'cldfra_low', 'cldfra_mid', 'psfc', 'sh2o', 'slp', 
+                'smois', 'swdnbc', 'swupbc', 'lwdnbc', 'lwupbc']
 
     slurm_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/slurm'
     if not os.path.exists( slurm_dir ):
