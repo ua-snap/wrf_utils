@@ -216,7 +216,7 @@ def run( fn, meta ):
         # erroneous leap day...
         time.data = pd.DatetimeIndex([ d for d in dates if d.strftime('%m-%d') != '02-29' ])
     else: # do nothing
-        time.data = pd.DatetimeIndex([ d for d in dates ])
+        time.data = time.to_index()
         
     base_attrs = ds.attrs.copy()
     
