@@ -353,7 +353,7 @@ if __name__ == '__main__':
     import numpy as np
     import xarray as xr
     from collections import OrderedDict
-    import os
+    import os, calendar
     import pandas as pd
     from functools import partial
     import multiprocessing as mp
