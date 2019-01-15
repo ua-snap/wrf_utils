@@ -178,7 +178,6 @@ def rotate_winds_to_earth_coords( fn, variable, ancillary_fn ):
     files given to SNAP to standardize.
     '''
 
-    ancillary = xr.open_dataset( ancillary_fn )
     if variable in ['U', 'U10', 'UBOT']:
         Uvar = variable
         Vvar = variable.replace( 'U', 'V' )
@@ -193,15 +192,19 @@ def rotate_winds_to_earth_coords( fn, variable, ancillary_fn ):
         Vgrid = ds[ Vvar ].data
         # cosalpha = np.cos( ds['g5_rot_2'].data )
         # sinalpha = np.sin( ds['g5_rot_2'].data )
-        cosalpha = ancillary['COSALPHA']
-        sinalpha = ancillary['SINALPHA']
 
-        if len(Ugrid.shape) == 3: # deal with levels
-            cosalpha = np.broadcast_to(cosalpha, Ugrid.shape)
-            sinalpha = np.broadcast_to(sinalpha, Ugrid.shape)
+    with xr.open_dataset( ancillary_fn ) as ancillary:
+        cosalpha = ancillary['COSALPHA'].copy( deep=True )
+        sinalpha = ancillary['SINALPHA'].copy( deep=True )
+    
+    ancillary = None # cleanup
 
-        Vearth = (cosalpha*Vgrid) - (sinalpha*Ugrid)
-        Uearth = (sinalpha*Vgrid) + (cosalpha*Ugrid)
+    if len(Ugrid.shape) == 3: # deal with levels
+        cosalpha = np.broadcast_to(cosalpha, Ugrid.shape)
+        sinalpha = np.broadcast_to(sinalpha, Ugrid.shape)
+
+    Vearth = (cosalpha*Vgrid) - (sinalpha*Ugrid)
+    Uearth = (sinalpha*Vgrid) + (cosalpha*Ugrid)
 
     return Uearth, Vearth
 
@@ -213,7 +216,7 @@ def run_winds( fn, variable, ancillary_fn ):
         out = ue
     elif variable in ['V', 'V10', 'VBOT']:
         out = ve
-    return out
+    return np.squeeze(out).data
 
 def stack_year_wind_rot( df, year, variable, ancillary_fn, ncores=32 ):
     import multiprocessing as mp
@@ -223,10 +226,11 @@ def stack_year_wind_rot( df, year, variable, ancillary_fn, ncores=32 ):
     files = df[ df.year == year ].fn.tolist()
 
     pool = mp.Pool( ncores )
-    out = np.array( pool.map( f, files ) )
+    out = pool.map( f, files )
     pool.close()
     pool.join()
-    return out
+    arr = np.array( out )
+    return arr
 
 def run_year( df, year, variable, ancillary_fn=None ):
     ''' handle accumulation and normal variables and run for a given year '''
@@ -252,7 +256,7 @@ if __name__ == '__main__':
     import numpy as np
     import pandas as pd
     from functools import partial
-    import pickle
+    # import pickle
     import argparse
 
     # parse some args
@@ -281,10 +285,10 @@ if __name__ == '__main__':
     # group = 'gfdl_rcp85'
     # variable = 'U10' # 'PCPT' #
     # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
-    # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/TESTING_SLURM_WRF'
+    # # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/TESTING_SLURM_WRF'
     # # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
     # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
-    # output_filename = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/U_wrf_hourly_gfdl_rcp85_1990_FULLTEST_FINAL.nc'
+    # output_filename = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/U_wrf_hourly_gfdl_rcp85_2007_TESTING.nc'
     # ancillary_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/ancillary_wrf_constants/geo_em.d01.nc'
     # year = 2007
     # # # # # END TESTING
