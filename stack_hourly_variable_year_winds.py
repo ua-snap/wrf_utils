@@ -102,7 +102,7 @@ def stack_year_accum( df, year, variable, ncores=15 ):
 
     # group the data into forecast_time begin/end groups
     groups = df.groupby((df.forecast_time == 6).cumsum())
-    # unpack it.  this is ugly, but I really hate pandas apply.
+    # unpack it.  this is ugly.
     groups = [ group for idx,group in groups ]
     # which indexes correspond to the year in question?
     ind = [ count for count, group in enumerate( groups ) if year in group.year.tolist() ]
@@ -152,14 +152,96 @@ def stack_year_accum( df, year, variable, ncores=15 ):
     arr[ arr < 0 ] = 0
     return arr
 
-def run_year( df, year, variable ):
+# def make_uv_earth_coords( fn ):
+#     ''' another way to rotate the winds...'''
+#     from wrf import uvmet
+    
+#     ds = xr.open_dataset( fn )
+
+#     # from RAW template WRF output
+#     # template = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_raw_output_example/wrfout_d01_2025-07-10_00:00:00'
+#     wrf_crs_meta = {'CENLAT': 63.99999, 'CENLON': -152.0, 'LAT1': 64.0, 'LAT2': 64.0}
+
+#     # get the grid-relative wind components
+#     ur = ds['U10']
+#     vr = ds['V10']
+#     lats = ds['g5_lat_0']
+#     lons = ds['g5_lon_1']
+
+#     return uvmet( ur, vr, lats, lons, wrf_crs_meta['CENLON'], \
+#                     cone=1.0, meta=True, units='m s-1' )
+
+def rotate_winds_to_earth_coords( fn, variable, ancillary_fn ):
+    ''' 
+    rotate the winds data from grid-centric to earth-centric
+    using file metadata that was added by P.Bienik in the post-processed
+    files given to SNAP to standardize.
+    '''
+
+    ancillary = xr.open_dataset( ancillary_fn )
+    if variable in ['U', 'U10', 'UBOT']:
+        Uvar = variable
+        Vvar = variable.replace( 'U', 'V' )
+    elif variable in ['V', 'V10', 'VBOT']:
+        Uvar = variable.replace( 'V', 'U' )
+        Vvar = variable
+    else:
+        AttributeError( 'must have a U or V in the name -- WINDS only' )
+
+    with xr.open_dataset( fn ) as ds:
+        Ugrid = ds[ Uvar ].data
+        Vgrid = ds[ Vvar ].data
+        # cosalpha = np.cos( ds['g5_rot_2'].data )
+        # sinalpha = np.sin( ds['g5_rot_2'].data )
+        cosalpha = ancillary['COSALPHA']
+        sinalpha = ancillary['SINALPHA']
+
+        if len(Ugrid.shape) == 3: # deal with levels
+            cosalpha = np.broadcast_to(cosalpha, Ugrid.shape)
+            sinalpha = np.broadcast_to(sinalpha, Ugrid.shape)
+
+        Vearth = (cosalpha*Vgrid) - (sinalpha*Ugrid)
+        Uearth = (sinalpha*Vgrid) + (cosalpha*Ugrid)
+
+    return Uearth, Vearth
+
+def run_winds( fn, variable, ancillary_fn ):
+    da = open_ds( fn, variable )
+    ue,ve = rotate_winds_to_earth_coords( fn, variable, ancillary_fn )
+
+    if variable in ['U', 'U10', 'UBOT']:
+        out = ue
+    elif variable in ['V', 'V10', 'VBOT']:
+        out = ve
+    return out
+
+def stack_year_wind_rot( df, year, variable, ancillary_fn, ncores=32 ):
+    import multiprocessing as mp
+    from functools import partial
+            
+    f = partial( run_winds, variable=variable, ancillary_fn=ancillary_fn )
+    files = df[ df.year == year ].fn.tolist()
+
+    pool = mp.Pool( ncores )
+    out = np.array( pool.map( f, files ) )
+    pool.close()
+    pool.join()
+    return out
+
+def run_year( df, year, variable, ancillary_fn=None ):
     ''' handle accumulation and normal variables and run for a given year '''
     
     ACCUM_VARS = [ 'ACSNOW', 'PCPT', 'PCPC', 'PCPNC', 'POTEVP' ]
+    WIND_VARS = ['U', 'U10', 'UBOT', 'V', 'V10', 'VBOT']
 
     # interpolate accumulation vars at `ind`
     if variable in ACCUM_VARS:
         arr = stack_year_accum( df, year, variable )
+    elif variable in WIND_VARS:
+        if ancillary_fn:
+            arr = stack_year_wind_rot( df, year, variable, ancillary_fn )
+        else:
+            BaseException('please add a path for ancillary_fn when working with winds stacking.')
     else:
         arr = stack_year( df, year, variable )
     return arr
@@ -181,7 +263,8 @@ if __name__ == '__main__':
     parser.add_argument( "-v", "--variable", action='store', dest='variable', type=str, help="variable name (exact)" )
     parser.add_argument( "-o", "--output_filename", action='store', dest='output_filename', type=str, help="output filename for the new NetCDF hourly data for the input year" )
     parser.add_argument( "-t", "--template_fn", action='store', dest='template_fn', type=str, help="monthly template file that is used for passing global metadata to output NC files." )
-    
+    parser.add_argument( "-a", "--ancillary_fn", action='store', dest='ancillary_fn', type=str, help="ancillary file that contains COSALPHA, SINALPHA relating to the winds data for rotation to Earth coordinates." )
+
     # parse the args and unpack
     args = parser.parse_args()
     input_path = args.input_path
@@ -190,17 +273,19 @@ if __name__ == '__main__':
     variable = args.variable
     output_filename = args.output_filename
     template_fn = args.template_fn
+    ancillary_fn = args.ancillary_fn
 
     # # # # # FOR TESTING
     # input_path = '/storage01/rtladerjr/hourly'
     # # input_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/raw_testing_data/2007'
     # group = 'gfdl_rcp85'
-    # variable = 'SH2O' # 'PCPT' #
+    # variable = 'U10' # 'PCPT' #
     # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
     # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/TESTING_SLURM_WRF'
     # # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
     # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
-    # output_filename = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2/T2_wrf_hourly_gfdl_rcp85_1990_FULLTEST_FINAL.nc'
+    # output_filename = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/U_wrf_hourly_gfdl_rcp85_1990_FULLTEST_FINAL.nc'
+    # ancillary_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/ancillary_wrf_constants/geo_em.d01.nc'
     # year = 2007
     # # # # # END TESTING
 
@@ -213,7 +298,7 @@ if __name__ == '__main__':
     # df[ 'interp_files' ] = adjacent_files( df )
 
     # run stacking of variable through time and deal with accumulations (if needed).
-    arr = run_year( df, year, variable )
+    arr = run_year( df, year, variable, ancillary_fn )
 
     # subset the data frame to the desired year -- for naming stuff
     sub_df = df[ (df.year == year) & (df.folder_year == year) ].reset_index()
@@ -226,7 +311,7 @@ if __name__ == '__main__':
     tmp_ds = xr.open_dataset( sub_df.fn.tolist()[0] )
     global_attrs = tmp_ds.attrs.copy()
     global_attrs[ 'reference_time' ] = str(new_dates[0]) # 1979 hourly does NOT start at day 01...  rather day 02....
-    global_attrs[ 'proj_parameters' ] = "+proj=stere +lat_0=90 +lat_ts=90 +lon_0=-150 +k=0.994 +x_0=2000000 +y_0=2000000 +datum=WGS84 +units=m +no_defs"
+    global_attrs[ 'proj_parameters' ] = '+units=m +proj=stere +lat_ts=64.0 +lon_0=-152.0 +lat_0=90.0 +x_0=0 +y_0=0 +a=6370000 +b=6370000'
     local_attrs = tmp_ds[ variable ].attrs.copy()
     xy_attrs = mon_tmp_ds.lon.attrs.copy()
 
@@ -294,9 +379,9 @@ if __name__ == '__main__':
 
 # input_path = '/storage01/pbieniek/gfdl/hist/hourly'
 # group = 'gfdl_hist'
-# variable = 'PCPT' #'T2'
+# variable = 'U10' #'T2'
 # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
-# output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2'
+# output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables'
 # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
 # years = list(range(1970,2005+1))
 
@@ -304,4 +389,7 @@ if __name__ == '__main__':
 # for year in years:
 #     print( year )
 #     output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
-#     _ = subprocess.call(['python3','stack_hourly_variable_year_accumulation.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
+#     _ = subprocess.call(['python3','stack_hourly_variable_year_NEW_uv.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
+
+
+

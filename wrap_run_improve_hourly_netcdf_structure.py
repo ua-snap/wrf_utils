@@ -22,21 +22,22 @@ def run( fn, command, ncpus=10 ):
 if __name__ == '__main__':
     import subprocess, os
 
-    # base directory
+    # # base directory
     # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
     # groupname = 'GFDL'
     base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
     groupname = 'CCSM4'
-    variables = ['omega','qvapor','t','ght']
-    # variables = ['pcpt', 'snowc', 'vegfra', 'qbot', 't2', 'snow', 'tslb']
+    variables = ['tbot','ght']
+    # variables = ['acsnow', 'cldfra', 'hfx', 'lh', 'lwdnb', 'lwupb',]
+    # ['pcpt', 'snowc', 'vegfra', 'qbot', 't2', 'snow', 'tslb']
+    # variables = ['acsnow', 'cldfra', 'hfx', 'lh', 'lwdnb', 'lwupb',]
     # , 
-    #             'acsnow', 'cldfra', 'hfx', 'lh', 'lwdnb', 'lwupb', 
-    #             'q2', 'snowh', 'swdnb', 'swupb', 'pcpc', 'pcpnc', 'potevp', 
-    #             'canwat', 'tbot', 'tsk', 'seaice', 'albedo', 'cldfra_high', 
-    #             'cldfra_low', 'cldfra_mid', 'psfc', 'sh2o', 'slp', 
-    #             'smois', 'swdnbc', 'swupbc', 'lwdnbc', 'lwupbc']
-
-    # variables = ['ght', 'omega', 'qvapor', 'sh2o', 'smois', 't'] # fix 4D
+    # variables = ['q2', 'snowh', 'swdnb', 'swupb', 'pcpc', 'pcpnc', 'potevp',]
+    # variables =  [ 'canwat', 'tbot', 'tsk', 'seaice', 'albedo', 'psfc' ] # , 'cldfra_high',
+    #             'cldfra_low', 'cldfra_mid',  
+    # variables = ['smois', 'swdnbc', 'swupbc', 'lwdnbc', 'lwupbc','sh2o', 'slp',]
+    # variables = ['sh2o', 'smois'] # fix 4D
+    # variables = ['psfc']
 
     slurm_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/slurm'
     if not os.path.exists( slurm_dir ):

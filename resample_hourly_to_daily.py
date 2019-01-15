@@ -13,15 +13,13 @@ def make_args( base_path, variables=None, agg_group='hourly' ):
 def resample( fn, variable, agg_str='D' ):
     print( 'working on: {} - {}'.format( fn, variable ) )
 
-    ds = xr.open_dataset( fn, autoclose=True )
+    ds = xr.open_dataset( fn )
     # get some attrs
     global_attrs = ds.attrs
-    local_attrs = ds[ variable ].attrs          
-    xy_attrs = ds.lon.attrs
+    local_attrs = ds[ variable ].attrs
     time_attrs = ds.time.attrs
 
     # pathing
-    # input_path = os.path.join( base_path, 'hourly', variable )
     output_path = os.path.join( base_path, 'daily', variable.lower() )
 
     try:
@@ -45,8 +43,6 @@ def resample( fn, variable, agg_str='D' ):
     # ds_day_comp = ds_day_comp.to_dataset( name=variable )
     ds_day_comp.attrs = global_attrs
     ds_day_comp[ variable ].attrs = local_attrs
-    ds_day_comp[ 'lon' ].attrs = xy_attrs
-    ds_day_comp[ 'lat' ].attrs = xy_attrs
     ds_day_comp[ 'time' ].attrs = time_attrs
 
     # set output compression and encoding for serialization
@@ -57,7 +53,7 @@ def resample( fn, variable, agg_str='D' ):
     # dump to disk
     dirname, basename = os.path.split( fn )
     # [ WATCH ] this is hardwired to hourly / daily...
-    basename = basename.replace( 'hourly', 'daily' ).replace( '.nc', '_{}.nc'.format(metric) )
+    basename = basename.replace( 'hourly', 'daily' ) #.replace( '.nc', '_{}.nc'.format(metric) )
     output_filename = os.path.join( output_path, basename )
 
     ds_day_comp.to_netcdf( output_filename, mode='w', format='NETCDF4_CLASSIC' )
@@ -72,8 +68,9 @@ def resample( fn, variable, agg_str='D' ):
 
     # using the base netCDF4 package update the times to be UTC and dump back to disk
     # hacky but overcomes a current somewhat limitation in xarray.
-    out_fn = force_update_times_UTC( output_filename )
-
+    # out_fn = force_update_times_UTC( output_filename )
+    out_fn = output_filename
+    
     return out_fn
 
 def wrap( x ):
@@ -115,22 +112,23 @@ if __name__ == '__main__':
 
     # base_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data'
     base_path = '/storage01/malindgren/wrf_ccsm4'
-    variables = ['t']
-
-    # ['acsnow','canwat','cldfra_high','cldfra_mid','hfx','lwdnb' ,'lwupb' ]
-    # ['omega']
-    # ['qvapor']
-    # ['t']
-
-    # ['pcpnc','potevp','q2','sh2o','smois','snowc','swdnb']
-    # ['swupb','tbot','tslb','albedo','cldfra','cldfra_low' ]
-    # ['ght','lh' ,'lwdnbc','lwupbc','pcpc' ,'pcpt','psfc',]
-    # ['qbot','seaice','slp']
-    # ['snow' ,'snowh','swdnbc','swupbc','t2','tsk' ,'vegfra']
+    # variables = ['pcpt','t2',] # 't2min','t2max'] # from downscaling team regarding the dailies on AWS
+    variables = ['q2','pcpc',]
+    
+    # # # # # # # # # # # # # # # # # # 
+    # # VARIABLES FOR DAILY FOLDER AWS
+    # # --- --- --- --- --- --- --- ---
+    # Tmax
+    # Tmin
+    # Tmean
+    # Precipitation
+    # Winds (speed and direction)
+    # Humidity
+    # # # # # # # # # # # # # # # # # # 
 
     args = make_args( base_path, variables=variables, agg_group='hourly_fix' )
-    args = [(i,j) for i,j in args if 'historical' in j ]
-    ncpus = 10
+    # args = [(i,j) for i,j in args if 'historical' in j ]
+    ncpus = 20
 
     # parallel process
     pool = mp.Pool( ncpus )

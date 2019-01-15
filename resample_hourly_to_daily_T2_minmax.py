@@ -1,8 +1,8 @@
-# resample hourly T2 to daily T2 min/max
+# resample hourly_fix t2 to daily t2 min/max
 
 def make_args( base_path, agg_group='hourly' ):
     wildcard = '*.nc' 
-    variable = 'T2'
+    variable = 't2'
 
     files = sorted( glob.glob( os.path.join( base_path, agg_group, variable.lower(), wildcard ) ) )
     varnames = [variable] * len( files )
@@ -12,20 +12,20 @@ def resample( fn, variable, agg_str='D' ):
     from collections import OrderedDict
     print( 'working on: {} - {}'.format( fn, variable ) )
 
-    ds = xr.open_dataset( fn, autoclose=True )
+    ds = xr.open_dataset( fn )
     # get some attrs
     global_attrs = ds.attrs
     local_attrs = ds[ variable ].attrs
-    xy_attrs = ds.lon.attrs
+    # xy_attrs = ds.lon.attrs
     time_attrs = ds.time.attrs
 
     for metric in ['min', 'max']:
         if metric == 'min':
-            # new_varname = 'T2min'
+            # new_varname = 't2min'
             ds_day = ds.resample( time=agg_str ).min()
 
         elif metric == 'max':
-            # new_varname = 'T2max'
+            # new_varname = 't2max'
             ds_day = ds.resample( time=agg_str ).max()
         else:
             BaseException( 'this tool is only for Min/Max aggregations from hourly to daily' )
@@ -33,8 +33,8 @@ def resample( fn, variable, agg_str='D' ):
         ds_day_comp = ds_day.compute() # watch this one
         ds_day_comp.attrs = global_attrs
         ds_day_comp[ variable ].attrs = local_attrs
-        ds_day_comp[ 'lon' ].attrs = xy_attrs
-        ds_day_comp[ 'lat' ].attrs = xy_attrs
+        # ds_day_comp[ 'lon' ].attrs = xy_attrs
+        # ds_day_comp[ 'lat' ].attrs = xy_attrs
         ds_day_comp[ 'time' ].attrs = time_attrs
 
         # set output compression and encoding for serialization
@@ -45,19 +45,19 @@ def resample( fn, variable, agg_str='D' ):
         # dump to disk
         dirname, basename = os.path.split( fn )
         # [ WATCH ] this is hardwired to hourly / daily...
-        basename = basename.replace( 'hourly', 'daily' ).replace( '.nc', '_{}.nc'.format(metric) )
+        basename = basename.replace( 'hourly', 'daily' ) #.replace( '.nc', '.nc'.format(metric) )
 
         # modify the variable name
         if metric == 'min':
-            ds_day_comp = ds_day_comp.rename({'T2':'T2min'})
-            ds_day_comp['T2min'].attrs = OrderedDict({'long_name':'Daily Temperature Minimum Derived from Hourlies', 'description':'hourly data were resampled / aggregated to daily using the hourly minimum data for the given day'})
-            basename = basename.replace('T2', 'T2min')
+            ds_day_comp = ds_day_comp.rename({'t2':'t2min'})
+            ds_day_comp['t2min'].attrs = OrderedDict({'long_name':'Daily Temperature Minimum Derived from Hourlies', 'description':'hourly data were resampled / aggregated to daily using the hourly minimum data for the given day'})
+            basename = basename.replace('t2', 't2min')
             output_path = os.path.join( base_path, 'daily', 't2min' )
             output_filename = os.path.join( output_path, basename )
         elif metric == 'max':
-            ds_day_comp = ds_day_comp.rename({'T2':'T2max'})
-            ds_day_comp['T2max'].attrs = OrderedDict({'long_name':'Daily Temperature Maximum Derived from Hourlies', 'description':'hourly data were resampled / aggregated to daily using the hourly maximum data for the given day'})
-            basename = basename.replace('T2', 'T2max')
+            ds_day_comp = ds_day_comp.rename({'t2':'t2max'})
+            ds_day_comp['t2max'].attrs = OrderedDict({'long_name':'Daily Temperature Maximum Derived from Hourlies', 'description':'hourly data were resampled / aggregated to daily using the hourly maximum data for the given day'})
+            basename = basename.replace('t2', 't2max')
             output_path = os.path.join( base_path, 'daily', 't2max' )
             output_filename = os.path.join( output_path, basename )
     
@@ -92,9 +92,10 @@ if __name__ == '__main__':
     import os, glob, itertools
     import multiprocessing as mp
 
-    base_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data'
-    args = make_args( base_path, agg_group='hourly' )
-    ncpus = 32
+    # base_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data'
+    base_path = '/storage01/malindgren/wrf_ccsm4'
+    args = make_args( base_path, agg_group='hourly_fix' ) # use the '_fixed' hourlies so that we populate with all of the needed metadata.
+    ncpus = 16
 
     # parallel process
     pool = mp.Pool( ncpus )
