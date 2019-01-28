@@ -5,9 +5,10 @@ import os, subprocess
 
 input_path = '/storage01/pbieniek/erain/hourly'
 group = 'erain'
-variables = ['U10','V10']
+variables = ['U10'] # 'V10'
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
-output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
+# output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
+output_path = '/rcs/project_data/wrf_new_variables/hourly'
 ancillary_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/ancillary_wrf_constants/geo_em.d01.nc'
 
 for variable in variables:
@@ -33,9 +34,10 @@ import os, subprocess
 
 input_path = '/storage01/pbieniek/gfdl/hist/hourly'
 group = 'gfdl_hist'
-variables = ['U10','V10']
+variables = ['U10'] #NOT RUN YET
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
-output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
+# output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
+output_path = '/rcs/project_data/wrf_new_variables/hourly'
 ancillary_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/ancillary_wrf_constants/geo_em.d01.nc'
 
 for variable in variables:
@@ -62,9 +64,10 @@ import os, subprocess
 
 input_path = '/storage01/rtladerjr/hourly'
 group = 'gfdl_rcp85'
-variables = ['U10','V10']
+variables = ['U10'] #,'V10']
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
-output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
+# output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
+output_path = '/rcs/project_data/wrf_new_variables/hourly'
 ancillary_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/ancillary_wrf_constants/geo_em.d01.nc'
 
 for variable in variables:
@@ -91,9 +94,10 @@ import os, subprocess
 
 input_path = '/storage01/pbieniek/ccsm/hist/hourly'
 group = 'ccsm_hist'
-variables = ['U10','V10']
+variables = ['U10'] #,'V10']
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
-output_path = '/storage01/malindgren/wrf_ccsm4/hourly_new_variables'
+# output_path = '/storage01/malindgren/wrf_ccsm4/hourly_new_variables'
+output_path = '/rcs/project_data/wrf_new_variables/hourly/ccsm4'
 ancillary_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/ancillary_wrf_constants/geo_em.d01.nc'
 
 for variable in variables:
@@ -117,9 +121,10 @@ import os, subprocess
 
 input_path = '/storage01/pbieniek/ccsm/rcp85/hourly'
 group = 'ccsm_rcp85'
-variables = ['U10','V10']
+variables = ['U10'] #,'V10']
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
-output_path = '/storage01/malindgren/wrf_ccsm4/hourly_new_variables'
+# output_path = '/storage01/malindgren/wrf_ccsm4/hourly_new_variables'
+output_path = '/rcs/project_data/wrf_new_variables/hourly/ccsm4'
 ancillary_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/ancillary_wrf_constants/geo_em.d01.nc'
 
 for variable in variables:

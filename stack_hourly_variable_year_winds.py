@@ -203,8 +203,14 @@ def rotate_winds_to_earth_coords( fn, variable, ancillary_fn ):
         cosalpha = np.broadcast_to(cosalpha, Ugrid.shape)
         sinalpha = np.broadcast_to(sinalpha, Ugrid.shape)
 
-    Vearth = (cosalpha*Vgrid) - (sinalpha*Ugrid)
-    Uearth = (sinalpha*Vgrid) + (cosalpha*Ugrid)
+    # http://www2.mmm.ucar.edu/wrf/users/FAQ_files/Miscellaneous.html.
+
+    Vearth = (Vgrid*cosalpha) + (Ugrid*sinalpha)
+    Uearth = (Ugrid*cosalpha) - (Vgrid*sinalpha)
+
+    # DO NOT USE THIS VERSION WITH THE geo_em.d1.nc file
+    # Vearth = (cosalpha*Vgrid) - (sinalpha*Ugrid)
+    # Uearth = (sinalpha*Vgrid) + (cosalpha*Ugrid)
 
     return Uearth, Vearth
 
