@@ -222,7 +222,7 @@ def run_winds( fn, variable, ancillary_fn ):
         out = ue
     elif variable in ['V', 'V10', 'VBOT']:
         out = ve
-    return np.squeeze(out).data
+    return np.squeeze(out)
 
 def stack_year_wind_rot( df, year, variable, ancillary_fn, ncores=32 ):
     import multiprocessing as mp
@@ -289,7 +289,7 @@ if __name__ == '__main__':
     # input_path = '/storage01/rtladerjr/hourly'
     # # input_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/raw_testing_data/2007'
     # group = 'gfdl_rcp85'
-    # variable = 'U10' # 'PCPT' #
+    # variable = 'U' # 'PCPT' #
     # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
     # # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/TESTING_SLURM_WRF'
     # # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )

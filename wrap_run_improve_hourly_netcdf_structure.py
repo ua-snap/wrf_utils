@@ -24,11 +24,13 @@ if __name__ == '__main__':
 
     # # base directory
     # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
-    base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
-    groupname = 'GFDL'
+    # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
+    # base_dir = '/rcs/project_data/wrf_new_variables/hourly/gfdl'
+    # groupname = 'GFDL'
     # base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
-    # groupname = 'CCSM4'
-    variables = ['u10','v10']
+    base_dir = '/rcs/project_data/wrf_new_variables/hourly/ccsm4'
+    groupname = 'CCSM4'
+    variables = ['u10','v10','ubot','vbot']
     # variables = ['tbot','ght']
     # variables = ['acsnow', 'cldfra', 'hfx', 'lh', 'lwdnb', 'lwupb',]
     # ['pcpt', 'snowc', 'vegfra', 'qbot', 't2', 'snow', 'tslb']
