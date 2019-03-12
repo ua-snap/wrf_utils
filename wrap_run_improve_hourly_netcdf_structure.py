@@ -23,27 +23,17 @@ if __name__ == '__main__':
     import subprocess, os
 
     # # base directory
-    # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
+    base_dir = '/rcs/project_data/wrf_data/hourly'
     # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
-    # base_dir = '/rcs/project_data/wrf_new_variables/hourly/gfdl'
+    # base_dir = '/rcs/project_data/wrf_data/hourly'
     # groupname = 'GFDL'
     # base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
-    base_dir = '/rcs/project_data/wrf_new_variables/hourly/ccsm4'
-    groupname = 'CCSM4'
-    variables = ['u10','v10','ubot','vbot']
-    # variables = ['tbot','ght']
-    # variables = ['acsnow', 'cldfra', 'hfx', 'lh', 'lwdnb', 'lwupb',]
-    # ['pcpt', 'snowc', 'vegfra', 'qbot', 't2', 'snow', 'tslb']
-    # variables = ['acsnow', 'cldfra', 'hfx', 'lh', 'lwdnb', 'lwupb',]
-    # , 
-    # variables = ['q2', 'snowh', 'swdnb', 'swupb', 'pcpc', 'pcpnc', 'potevp',]
-    # variables =  [ 'canwat', 'tbot', 'tsk', 'seaice', 'albedo', 'psfc' ] # , 'cldfra_high',
-    #             'cldfra_low', 'cldfra_mid',  
-    # variables = ['smois', 'swdnbc', 'swupbc', 'lwdnbc', 'lwupbc','sh2o', 'slp',]
-    # variables = ['sh2o', 'smois'] # fix 4D
-    # variables = ['psfc']
+    # base_dir = '/rcs/project_data/wrf_new_variables/hourly/ccsm4'
+    # groupname = 'CCSM4'
+    variables = ['t2','tsk','pcpt']
 
-    slurm_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/slurm'
+
+    slurm_dir = '/rcs/project_data/wrf_data/slurm'
     if not os.path.exists( slurm_dir ):
         os.makedirs( slurm_dir )
     os.chdir( slurm_dir )
@@ -53,11 +43,11 @@ if __name__ == '__main__':
             ncpus = 5
         elif variable in ['cldfra']:
             ncpus = 3
-        elif variable in ['qvapor','t','ght','omega']:
+        elif variable in ['qvapor','t','ght','omega', 'u', 'v']:
             ncpus = 1
         else:
             ncpus = 10
 
         command = ' '.join([ 'python', '/workspace/UA/malindgren/repos/wrf_utils/improve_hourly_netcdf_structure.py', '-b', base_dir, '-v', variable, '-n', str(ncpus) ])
-        fn = os.path.join( slurm_dir, '{}_improve_hourlies_{}.slurm'.format(variable,groupname) )
+        fn = os.path.join( slurm_dir, '{}_improve_hourlies_{}.slurm'.format(variable,'version_1_update') )
         run( fn, command )

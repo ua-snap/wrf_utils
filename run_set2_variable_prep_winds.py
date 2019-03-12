@@ -35,7 +35,7 @@ import os, subprocess
 
 input_path = '/storage01/pbieniek/gfdl/hist/hourly'
 group = 'gfdl_hist'
-variables = ['VBOT']
+variables = ['V']
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
 # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly/gfdl'
 output_path = '/rcs/project_data/wrf_new_variables/hourly/gfdl'
@@ -65,7 +65,7 @@ import os, subprocess
 
 input_path = '/storage01/rtladerjr/hourly'
 group = 'gfdl_rcp85'
-variables = ['UBOT']
+variables = ['V']
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
 # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly/gfdl'
 output_path = '/rcs/project_data/wrf_new_variables/hourly/gfdl'
@@ -95,7 +95,7 @@ import os, subprocess
 
 input_path = '/storage01/pbieniek/ccsm/hist/hourly'
 group = 'ccsm_hist'
-variables = ['VBOT']
+variables = ['V']
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
 # output_path = '/storage01/malindgren/wrf_ccsm4/hourly_new_variables'
 # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly/ccsm'
@@ -123,7 +123,7 @@ import os, subprocess
 
 input_path = '/storage01/pbieniek/ccsm/rcp85/hourly'
 group = 'ccsm_rcp85'
-variables = ['VBOT']
+variables = ['V']
 files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
 # output_path = '/storage01/malindgren/wrf_ccsm4/hourly_new_variables'
 # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly/ccsm'
