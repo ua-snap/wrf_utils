@@ -369,6 +369,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     base_dir = args.base_dir
     ncpus = args.ncpus
+    variable = args.variable
 
     # versioning
     snap_version = '1.0'
