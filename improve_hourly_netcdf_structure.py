@@ -1,10 +1,10 @@
-# IMPROVE THE SNAP OUTPUTS FOR DISTRIBUTION
-# THIS IS A LIVING AND CHANGING SCRIPT AS I LEARN MORE ABOUT THE FILE STRUCTURE
-# AND CF-CONVENTIONS AND FROM OTHERS NEEDS, I AM UPDATING THE FILE METADATA AND 
-# COORDS / DIMS APPROPRIATELY. 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# IMPROVE THE SNAP OUTPUTS FOR DISTRIBUTION ON AWS
 # 
-# December 2018 - Michael Lindgren (malindgren@alaska.edu)
-# # # # # # # # # # # # # # # # # # # # # 
+# VERSION 1.0 update
+#  
+# March 2019 - Michael Lindgren (malindgren@alaska.edu)
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 def get_meta_from_wrf( ds ):
     """Get the WRF projection/coords and other metadata out of the file."""
@@ -249,11 +249,11 @@ def run( fn, meta ):
         
         level_attrs = var_attrs_lookup[levelname]
 
-        # [NEW] make a new level name...
+        # make a new level name...
         levels_lu = {'lv_ISBL2':'plev', 'lv_DBLY3':'depth'}
         leveldata = ds[levelname].values
         levels = xr.DataArray( leveldata, coords={'plev':leveldata}, dims=['plev'] )
-        # [NEW] end make a new level name
+        # end make a new level name
 
         # build dataset with levels at each timestep
         new_ds = xr.Dataset( {variable.lower():(['time',levels_lu[levelname],'yc', 'xc'], flipped['data'])},
@@ -368,7 +368,6 @@ if __name__ == '__main__':
     # parse the args and unpack
     args = parser.parse_args()
     base_dir = args.base_dir
-    variables = [ args.variable, args.variable.upper(), args.variable.lower() ] # all combos and one that might be CamelCase
     ncpus = args.ncpus
 
     # versioning
@@ -379,11 +378,10 @@ if __name__ == '__main__':
     # base_dir = '/rcs/project_data/wrf_data/hourly'
     # variable = 't2'
     # ncpus = 10
-    # variables = [ variable, variable.upper(), variable.lower() ] # all combos and one that might be CamelCase
     # # # # END TEST
 
     # list the data -- some 4d groups need some special attention...
-    files = filelister( base_dir )
+    files = sorted(list(set(filelister( os.path.join(base_dir, variable) ))))
 
     # pull out the variables we want to process on the current node make sure we only have one of each
     files = sorted(list(set([ fn for fn in files for v in variables if ''.join([os.path.sep,v,'_']) in fn ])))
@@ -393,16 +391,16 @@ if __name__ == '__main__':
     with xr.open_dataset( wrf_raw_fn ) as ds:
         meta = get_meta_from_wrf( ds )
 
-    # below is used for building some attrs into the files...
-    raw_fn = '/storage01/pbieniek/gfdl/hist/hourly/1970/WRFDS_d01.1970-02-22_21.nc' # not raw, but pre-processed by Peter
+    # below is used for building some attrs into the files... copied to a dir not on Dione (which is dying)
+    raw_fn = '/rcs/project_data/ancillary_wrf_constants/WRFDS_d01.1970-02-22_21.nc' # not raw, but pre-processed by Peter
     var_attrs_lookup = make_variable_lookup( raw_fn )
 
     # Add T2min / T2max as special cases to the var_attrs_lookup dict() since they are derived variables.
     var_attrs_lookup[ 'T2min' ] = {'long_name': 'TEMP at 2 M -- Min(24hr)', 'units': 'K'}
     var_attrs_lookup[ 'T2max' ] = {'long_name': 'TEMP at 2 M -- Max(24hr)', 'units': 'K'}
     var_attrs_lookup[ 'lv_DBLY3' ] = {'long_name': 'layer between two depths below land surface', 'units': 'cm'}
-
-    # run
+  
+    # # run
     f = partial( run, meta=meta )
     pool = mp.Pool( ncpus )
     out = pool.map( f, files )

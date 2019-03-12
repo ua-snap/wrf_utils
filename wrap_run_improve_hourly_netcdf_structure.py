@@ -30,7 +30,7 @@ if __name__ == '__main__':
     # base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
     # base_dir = '/rcs/project_data/wrf_new_variables/hourly/ccsm4'
     # groupname = 'CCSM4'
-    variables = ['t2','tsk','pcpt']
+    variables = ['tsk','t2']
 
 
     slurm_dir = '/rcs/project_data/wrf_data/slurm'
