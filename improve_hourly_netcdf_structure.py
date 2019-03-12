@@ -385,7 +385,7 @@ if __name__ == '__main__':
     files = sorted(list(set(filelister( os.path.join(base_dir, variable) ))))
 
     # pull out the variables we want to process on the current node make sure we only have one of each
-    files = sorted(list(set([ fn for fn in files for v in variables if ''.join([os.path.sep,v,'_']) in fn ])))
+    # files = sorted(list(set([ fn for fn in files for v in variables if ''.join([os.path.sep,v,'_']) in fn ])))
 
     # this file is the RAW output from WRF before Peter performs some cleanup of the data.  This is VERY IMPORTANT for proper file metadata
     wrf_raw_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_raw_output_example/wrfout_d01_2025-07-10_00:00:00'
