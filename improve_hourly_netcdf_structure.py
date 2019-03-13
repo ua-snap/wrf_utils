@@ -212,7 +212,7 @@ def run( fn, meta ):
     start_dt = dates[0]
     end_dt = dates[-1]
     dates = pd.date_range(start_dt.strftime('%Y-%m-%d 00'), start_dt.strftime('%Y-12-31 23'), freq='1H')
-    if (calendar.isleap(start_dt.year)): # and (end_dt.strftime('%Y-%m-%d %H') != '{}-12-31 23'.format(end_dt.strftime('%Y'))):
+    if (calendar.isleap(start_dt.year)) and ('ERA-Interim' not in fn) and ('era' not in fn): # and (end_dt.strftime('%Y-%m-%d %H') != '{}-12-31 23'.format(end_dt.strftime('%Y'))):
         # erroneous leap day...
         time.data = pd.DatetimeIndex([ d for d in dates if d.strftime('%m-%d') != '02-29' ])
     else: # do nothing
