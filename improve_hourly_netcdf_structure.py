@@ -193,7 +193,6 @@ def run( fn, meta ):
 
     modelnames = {'gfdl':'GFDL-CM3','era':'ERA-Interim', 'ccsm':'NCAR-CCSM4'}
     scenarionames = {'rcp85':'rcp85', 'hist':'historical','interim':'historical'}
-    # metric_lookup = {'min':'Minimum', 'max':'Maximum', 'sum':'Sum/Total', 'mean':'Mean/Avg'}
 
     basename = '_'.join([variable.lower(),timestep,group,modelnames[model],scenarionames[scenario],year]) + ext
     out_fn = os.path.join( dirname, basename )
@@ -212,7 +211,7 @@ def run( fn, meta ):
     start_dt = dates[0]
     end_dt = dates[-1]
     dates = pd.date_range(start_dt.strftime('%Y-%m-%d 00'), start_dt.strftime('%Y-12-31 23'), freq='1H')
-    if (calendar.isleap(start_dt.year)) and ('ERA-Interim' not in fn) and ('era' not in fn): # and (end_dt.strftime('%Y-%m-%d %H') != '{}-12-31 23'.format(end_dt.strftime('%Y'))):
+    if (calendar.isleap(start_dt.year)) and ('ERA-Interim' not in fn) and ('era' not in fn):
         # erroneous leap day...
         time.data = pd.DatetimeIndex([ d for d in dates if d.strftime('%m-%d') != '02-29' ])
     else: # do nothing
@@ -225,9 +224,13 @@ def run( fn, meta ):
     time_attrs.update( {'time zone': 'UTC'})
     time.attrs = time_attrs
 
+    # close the open file handle to open up some RAM
+    ds.close()
+    ds = None
+
     # # pull out the lat / lons from the input file to toss into the cleaned stacked outputs
     # lons = ds.lon.data
-    # lats = np.flipud( ds.lat.data ) # so they are north-up! which makes it easier and pythonic.
+    # lats = np.flipud( ds.lat.data ) # so they are north-up! which makes it easier.
 
     if len(flipped['data'].shape) == 3:
         # build a new NetCDF and dump to disk -- with compression
@@ -251,7 +254,12 @@ def run( fn, meta ):
 
         # make a new level name...
         levels_lu = {'lv_ISBL2':'plev', 'lv_DBLY3':'depth'}
-        leveldata = ds[levelname].values
+        
+        # yes, reopen the closed dataset for 4-D attrs... This helps with HUGE RAM overheads of LOADING the file.
+        #   but that allows us to have MUCH faster processing speeds.
+        with xr.open_dataset(fn) as ds:
+            leveldata = ds[levelname].values
+
         levels = xr.DataArray( leveldata, coords={'plev':leveldata}, dims=['plev'] )
         # end make a new level name
 
@@ -335,13 +343,12 @@ def run( fn, meta ):
     except:
         pass
 
-    # close the open file handle and remove the file to rewrite it out...  
-    ds.close()
-    ds = None
-
     new_ds.to_netcdf( out_fn, mode='w', format='NETCDF4' )
+    # cleanup
     new_ds.close()
     new_ds = None
+    flipped = None
+    ds = None
 
     # using the base netCDF4 package update the times to be UTC and dump back to disk
     # hacky but overcomes a current somewhat limitation in xarray.
@@ -377,15 +384,12 @@ if __name__ == '__main__':
     # # # # BEGIN TEST
     # # # base directory
     # base_dir = '/rcs/project_data/wrf_data/hourly'
-    # variable = 't2'
-    # ncpus = 10
+    # variable = 'omega'
+    # ncpus = 1
     # # # # END TEST
 
     # list the data -- some 4d groups need some special attention...
-    files = sorted(list(set(filelister( os.path.join(base_dir, variable) ))))
-
-    # pull out the variables we want to process on the current node make sure we only have one of each
-    # files = sorted(list(set([ fn for fn in files for v in variables if ''.join([os.path.sep,v,'_']) in fn ])))
+    files = sorted(list(set(filelister(os.path.join(base_dir, variable)))))
 
     # this file is the RAW output from WRF before Peter performs some cleanup of the data.  This is VERY IMPORTANT for proper file metadata
     wrf_raw_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_raw_output_example/wrfout_d01_2025-07-10_00:00:00'

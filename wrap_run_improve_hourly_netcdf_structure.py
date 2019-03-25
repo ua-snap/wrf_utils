@@ -10,7 +10,7 @@ def run( fn, command, ncpus=10 ):
             '#SBATCH --mail-type=FAIL\n' + \
             '#SBATCH --mail-user=malindgren@alaska.edu\n' + \
             '#SBATCH -p viz,main\n'
-    
+
     with open( fn, 'w' ) as f:
         f.write( head + '\n' + command + '\n' )
     
@@ -24,14 +24,16 @@ if __name__ == '__main__':
 
     # # base directory
     base_dir = '/rcs/project_data/wrf_data/hourly'
-    # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
-    # base_dir = '/rcs/project_data/wrf_data/hourly'
-    # groupname = 'GFDL'
-    # base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
-    # base_dir = '/rcs/project_data/wrf_new_variables/hourly/ccsm4'
-    # groupname = 'CCSM4'
-    variables = ['tsk','t2']
-
+    # variables = ['acsnow', 'albedo', 'canwat', 'cldfra', 'cldfra_high', 'cldfra_low']
+    # variables = ['cldfra_mid',  'ght', 'hfx', 'lh', 'lwdnb', 'lwdnbc','lwupb',]
+    # variables = ['lwupbc', 'omega', 'pcpc', 'pcpnc', 'potevp','psfc']
+    # variables = ['psfc','seaice', 'sh2o', 'slp', 'smois',]
+    # variables = ['snow', 'snowc', 'snowh','qbot','tbot',]
+    # variables = ['qvapor',]
+    # variables = ['swdnb', 'swdnbc', 'swupb', 'swupbc', ]
+    variables = ['tslb', 'vegfra', 'u10', 'ubot', 'u',]
+    # variables = ['q2', 't', ]
+     # 'v', 'v10', 'vbot']
 
     slurm_dir = '/rcs/project_data/wrf_data/slurm'
     if not os.path.exists( slurm_dir ):
@@ -51,3 +53,12 @@ if __name__ == '__main__':
         command = ' '.join([ 'python', '/workspace/UA/malindgren/repos/wrf_utils/improve_hourly_netcdf_structure.py', '-b', base_dir, '-v', variable, '-n', str(ncpus) ])
         fn = os.path.join( slurm_dir, '{}_improve_hourlies_{}.slurm'.format(variable,'version_1_update') )
         run( fn, command )
+
+
+# base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
+# base_dir = '/rcs/project_data/wrf_data/hourly'
+# groupname = 'GFDL'
+# base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
+# base_dir = '/rcs/project_data/wrf_new_variables/hourly/ccsm4'
+# groupname = 'CCSM4'
+# variables = ['tsk','t2','pcpt']
