@@ -1,7 +1,7 @@
 # wrap wrf variable re-stacker for running on slurm nodes
 def run( fn, command, ncpus=10 ):
     import os, subprocess
-    ncpus = 32 # to hold the node
+    ncpus = 64 # to hold the node
     head = '#!/bin/sh\n' + \
             '#SBATCH --ntasks={}\n'.format(ncpus) + \
             '#SBATCH --nodes=1\n' + \
@@ -9,7 +9,7 @@ def run( fn, command, ncpus=10 ):
             '#SBATCH --account=snap\n' + \
             '#SBATCH --mail-type=FAIL\n' + \
             '#SBATCH --mail-user=malindgren@alaska.edu\n' + \
-            '#SBATCH -p viz,main\n'
+            '#SBATCH -p viz\n'
 
     with open( fn, 'w' ) as f:
         f.write( head + '\n' + command + '\n' )
@@ -23,17 +23,17 @@ if __name__ == '__main__':
     import subprocess, os
 
     # # base directory
-    base_dir = '/rcs/project_data/wrf_data/hourly'
+    # base_dir = '/rcs/project_data/wrf_data/hourly'
+    base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
     # variables = ['acsnow', 'albedo', 'canwat', 'cldfra', 'cldfra_high', 'cldfra_low']
     # variables = ['cldfra_mid',  'ght', 'hfx', 'lh', 'lwdnb', 'lwdnbc','lwupb',]
     # variables = ['lwupbc', 'omega', 'pcpc', 'pcpnc', 'potevp','psfc']
     # variables = ['psfc','seaice', 'sh2o', 'slp', 'smois',]
     # variables = ['snow', 'snowc', 'snowh','qbot','tbot',]
-    # variables = ['qvapor',]
     # variables = ['swdnb', 'swdnbc', 'swupb', 'swupbc', ]
-    variables = ['tslb', 'vegfra', 'u10', 'ubot', 'u',]
-    # variables = ['q2', 't', ]
-     # 'v', 'v10', 'vbot']
+    # variables = [ 'vegfra', 'u10', 'ubot', 'u',]
+    # variables = ['v10', 'vbot','q2']
+    variables = ['t'] #'t', 'v','tslb','qvapor',  ]
 
     slurm_dir = '/rcs/project_data/wrf_data/slurm'
     if not os.path.exists( slurm_dir ):
@@ -45,16 +45,18 @@ if __name__ == '__main__':
             ncpus = 5
         elif variable in ['cldfra']:
             ncpus = 3
-        elif variable in ['qvapor','t','ght','omega', 'u', 'v']:
+        elif variable in ['qvapor','t','ght','omega', 'u', 'v', 'tslb']:
             ncpus = 1
         else:
             ncpus = 10
 
         command = ' '.join([ 'python', '/workspace/UA/malindgren/repos/wrf_utils/improve_hourly_netcdf_structure.py', '-b', base_dir, '-v', variable, '-n', str(ncpus) ])
-        fn = os.path.join( slurm_dir, '{}_improve_hourlies_{}.slurm'.format(variable,'version_1_update') )
+        fn = os.path.join( slurm_dir, '{}_improve_GFDL_hourlies_{}.slurm'.format(variable,'version_1_update') )
         run( fn, command )
 
 
+
+# # OLD DIRECTORIES BEFORE MOVING TO RCS
 # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
 # base_dir = '/rcs/project_data/wrf_data/hourly'
 # groupname = 'GFDL'

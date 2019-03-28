@@ -1,0 +1,2 @@
+# remove the extra historical 2006 files in GFDL that are not in NCAR on S3
+aws s3 mv s3://wrf-ak-ar5/hourly/GFDL-CM3/historical s3://wrf-ak-ar5/remove_2006 --recursive --exclude '*' --include '*historical*2006.nc'
