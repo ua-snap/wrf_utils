@@ -95,62 +95,62 @@ def stack_year( df, year, variable, ncores=32 ):
     pool.join()
     return out
 
-def stack_year_accum( df, year, variable, ncores=15 ):
-    ''' stack, diff, interp accumulation variables -- wrf '''
-    import multiprocessing as mp
-    from functools import partial
+# def stack_year_accum( df, year, variable, ncores=15 ):
+#     ''' stack, diff, interp accumulation variables -- wrf '''
+#     import multiprocessing as mp
+#     from functools import partial
 
-    # group the data into forecast_time begin/end groups
-    groups = df.groupby((df.forecast_time == 6).cumsum())
-    # unpack it.  this is ugly.
-    groups = [ group for idx,group in groups ]
-    # which indexes correspond to the year in question?
-    ind = [ count for count, group in enumerate( groups ) if year in group.year.tolist() ]
+#     # group the data into forecast_time begin/end groups
+#     groups = df.groupby((df.forecast_time == 6).cumsum())
+#     # unpack it.  this is ugly.
+#     groups = [ group for idx,group in groups ]
+#     # which indexes correspond to the year in question?
+#     ind = [ count for count, group in enumerate( groups ) if year in group.year.tolist() ]
     
-    # test to be sure they are all chronological -- Should be since dataframe is pre-sorted
-    assert np.diff( ind ).all() == 1
+#     # test to be sure they are all chronological -- Should be since dataframe is pre-sorted
+#     assert np.diff( ind ).all() == 1
 
-    # handle beginning and ending years in the series 
-    # get the forecast_time groups that overlap with our current year
-    #   and the adjacent groups for seamless time-series.
-    if year > df.year.min() and year < df.year.max():
-        first_outer_group_idx, last_outer_group_idx = (ind[0] - 1, ind[-1] + 1)
-        ind = [ first_outer_group_idx ] + ind + [ last_outer_group_idx ]
+#     # handle beginning and ending years in the series 
+#     # get the forecast_time groups that overlap with our current year
+#     #   and the adjacent groups for seamless time-series.
+#     if year > df.year.min() and year < df.year.max():
+#         first_outer_group_idx, last_outer_group_idx = (ind[0] - 1, ind[-1] + 1)
+#         ind = [ first_outer_group_idx ] + ind + [ last_outer_group_idx ]
 
-    elif year == df.year.min():
-        last_outer_group_idx = ind[-1] + 1
-        ind = ind + [ last_outer_group_idx ]
+#     elif year == df.year.min():
+#         last_outer_group_idx = ind[-1] + 1
+#         ind = ind + [ last_outer_group_idx ]
 
-    elif year == df.year.max():
-        first_outer_group_idx = ind[0] - 1
-        ind = [ first_outer_group_idx ] + ind
+#     elif year == df.year.max():
+#         first_outer_group_idx = ind[0] - 1
+#         ind = [ first_outer_group_idx ] + ind
 
-    else:
-        AttributeError( 'broken groups and indexing issues...' )
+#     else:
+#         AttributeError( 'broken groups and indexing issues...' )
 
-    # get the corresponding groups for current year processing
-    groups = [ groups[idx] for idx in ind ]
+#     # get the corresponding groups for current year processing
+#     groups = [ groups[idx] for idx in ind ]
 
-    # we need some indexing for slicing the output array to ONLY this current year
-    groups_df = pd.concat( groups ) # should be chronological
-    current_year_ind, = np.where( groups_df.year == year ) # along time dimension
+#     # we need some indexing for slicing the output array to ONLY this current year
+#     groups_df = pd.concat( groups ) # should be chronological
+#     current_year_ind, = np.where( groups_df.year == year ) # along time dimension
            
-    # process groups and concatenate 3D cubes along time axis chronologically
-    f = partial( _run_group, variable=variable )
-    pool = mp.Pool( ncores )
-    arr = np.concatenate( pool.map( f, groups ), axis=0 )
-    pool.close()
-    pool.join()
+#     # process groups and concatenate 3D cubes along time axis chronologically
+#     f = partial( _run_group, variable=variable )
+#     pool = mp.Pool( ncores )
+#     arr = np.concatenate( pool.map( f, groups ), axis=0 )
+#     pool.close()
+#     pool.join()
 
-    # interpolate across the np.nan's brought in with differencing each forecast_time group
-    arr = np.apply_along_axis( interp_1d_along_axis, axis=0, arr=arr )
+#     # interpolate across the np.nan's brought in with differencing each forecast_time group
+#     arr = np.apply_along_axis( interp_1d_along_axis, axis=0, arr=arr )
 
-    # slice back to the current year
-    arr = arr[ current_year_ind, ... ]
+#     # slice back to the current year
+#     arr = arr[ current_year_ind, ... ]
 
-    # make sure we have no leftover negative precip
-    arr[ arr < 0 ] = 0
-    return arr
+#     # make sure we have no leftover negative precip
+#     arr[ arr < 0 ] = 0
+#     return arr
 
 # def make_uv_earth_coords( fn ):
 #     ''' another way to rotate the winds...'''
@@ -222,7 +222,7 @@ def run_winds( fn, variable, ancillary_fn ):
         out = ue
     elif variable in ['V', 'V10', 'VBOT']:
         out = ve
-    return np.squeeze(out)
+    return np.squeeze(np.array(out))
 
 def stack_year_wind_rot( df, year, variable, ancillary_fn, ncores=32 ):
     import multiprocessing as mp
@@ -237,6 +237,15 @@ def stack_year_wind_rot( df, year, variable, ancillary_fn, ncores=32 ):
     pool.join()
     arr = np.array( out )
     return arr
+
+# this may be a temporary fix until I re-run all of that jazz
+def fix_input_df_pathnames( df, input_path, input_path_dione ):
+    ''' 
+    this is a way to update the input_path of the current year to the faster /atlas_scratch
+    input location that we are using now.
+    '''
+    df['fn'] = df.fn.apply(lambda x: x.replace(input_path_dione, input_path))
+    return df
 
 def run_year( df, year, variable, ancillary_fn=None ):
     ''' handle accumulation and normal variables and run for a given year '''
@@ -286,17 +295,20 @@ if __name__ == '__main__':
     ancillary_fn = args.ancillary_fn
 
     # # # # # FOR TESTING
-    # input_path = '/storage01/rtladerjr/hourly'
+    # input_path_dione = '/storage01/rtladerjr/hourly'
     # # input_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/raw_testing_data/2007'
+    # input_path = '/atlas_scratch/malindgren/WRF_DATA'
     # group = 'gfdl_rcp85'
-    # variable = 'U' # 'PCPT' #
+    # group_out_name = 'GFDL-CM3_rcp85'
+    # variable = 'U10' # 'PCPT' #
     # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
-    # # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/TESTING_SLURM_WRF'
+    # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/TEST_FINAL'
     # # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
-    # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
-    # output_filename = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/U_wrf_hourly_gfdl_rcp85_2007_TESTING.nc'
+    # # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
+    # template_fn = '/atlas_scratch/malindgren/WRF_DATA/ANCILLARY/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
     # ancillary_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/ancillary_wrf_constants/geo_em.d01.nc'
-    # year = 2007
+    # year = 2006
+    # output_filename = os.path.join(output_path, variable, '{}_wrf_hourly_wrf_{}_{}.nc'.format(variable.lower(), group_out_name, year))
     # # # # # END TESTING
 
     # wrf output standard vars -- [hardwired] for now
@@ -306,6 +318,9 @@ if __name__ == '__main__':
     # read in pre-built dataframe with forecast_time as a field
     df = pd.read_csv( files_df_fn, sep=',', index_col=0 ).copy()
     # df[ 'interp_files' ] = adjacent_files( df )
+
+    # [ TEMPORARY FIX ] fix the filenames in the DF <- this is due to running from /atlas_scratch instead of dione for speed
+    df = fix_input_df_pathnames( df, input_path, input_path_dione )
 
     # run stacking of variable through time and deal with accumulations (if needed).
     arr = run_year( df, year, variable, ancillary_fn )

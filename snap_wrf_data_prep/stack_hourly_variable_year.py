@@ -152,9 +152,18 @@ def stack_year_accum( df, year, variable, ncores=15 ):
     arr[ arr < 0 ] = 0
     return arr
 
+# this may be a temporary fix until I re-run all of that jazz
+def fix_input_df_pathnames( df, input_path, input_path_dione ):
+    ''' 
+    this is a way to update the input_path of the current year to the faster /atlas_scratch
+    input location that we are using now.
+    '''
+    df['fn'] = df.fn.apply(lambda x: x.replace(input_path_dione, input_path))
+    return df
+
 def run_year( df, year, variable ):
     ''' handle accumulation and normal variables and run for a given year '''
-    
+
     ACCUM_VARS = [ 'ACSNOW', 'PCPT', 'PCPC', 'PCPNC', 'POTEVP' ]
 
     # interpolate accumulation vars at `ind`
@@ -192,16 +201,19 @@ if __name__ == '__main__':
     template_fn = args.template_fn
 
     # # # # # FOR TESTING
-    # input_path = '/storage01/rtladerjr/hourly'
+    # input_path_dione = '/storage01/rtladerjr/hourly'
     # # input_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/raw_testing_data/2007'
+    # input_path = '/atlas_scratch/malindgren/WRF_DATA'
     # group = 'gfdl_rcp85'
-    # variable = 'SH2O' # 'PCPT' #
+    # group_out_name = 'GFDL-CM3_rcp85'
+    # variable = 'PCPT' #'PCPT' # 'SH2O' #  #
     # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
-    # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/TESTING_SLURM_WRF'
+    # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/TEST_FINAL'
     # # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
-    # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
-    # output_filename = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/v2/T2_wrf_hourly_gfdl_rcp85_1990_FULLTEST_FINAL.nc'
-    # year = 2007
+    # # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
+    # template_fn = '/atlas_scratch/malindgren/WRF_DATA/ANCILLARY/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
+    # year = 2006
+    # output_filename = os.path.join(output_path, variable, '{}_wrf_hourly_{}_{}.nc'.format(variable, group_out_name, year))
     # # # # # END TESTING
 
     # wrf output standard vars -- [hardwired] for now
@@ -211,6 +223,12 @@ if __name__ == '__main__':
     # read in pre-built dataframe with forecast_time as a field
     df = pd.read_csv( files_df_fn, sep=',', index_col=0 ).copy()
     # df[ 'interp_files' ] = adjacent_files( df )
+
+    # [ TEMPORARY FIX ] fix the filenames in the DF <- this is due to running from /atlas_scratch instead of dione for speed
+    df = fix_input_df_pathnames( df, input_path, input_path_dione )
+
+    # # [ TEMPORARY FIX ] only hold onto the year we are processing and see if the accum works...
+    # df = df[ (df.year == year) & (df.folder_year == year) ].reset_index()
 
     # run stacking of variable through time and deal with accumulations (if needed).
     arr = run_year( df, year, variable )
