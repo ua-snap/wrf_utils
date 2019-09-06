@@ -7,7 +7,6 @@
 #SBATCH --mail-user=malindgren@alaska.edu
 #SBATCH -p main
 
-
 SCRIPTNAME='/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/stack_hourly_variable_year.py'
 DIONEPATH='/storage01/rtladerjr/hourly' 
 INPATH='/atlas_scratch/malindgren/WRF_DATA'
@@ -15,5 +14,7 @@ FILES_DF_FN='/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFD
 VARIABLE='PCPT'
 OUTPUT_FILENAME='/workspace/Shared/Tech_Projects/wrf_data/project_data/TEST_FINAL/PCPT_wrf_hourly_GFDL-CM3_rcp85_2006.nc'
 TEMPLATE_FN='/atlas_scratch/malindgren/WRF_DATA/ANCILLARY/monthly/monthly_PCPT-gfdlh.nc'
+YEAR=2006
 
 ipython $SCRIPTNAME -- -i $INPATH -id $DIONEPATH -y $YEAR -f $FILES_DF_FN -v $VARIABLE -o $OUTPUT_FILENAME -t TEMPLATE_FN
+
