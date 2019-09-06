@@ -16,5 +16,5 @@ OUTPUT_FILENAME='/workspace/Shared/Tech_Projects/wrf_data/project_data/TEST_FINA
 TEMPLATE_FN='/atlas_scratch/malindgren/WRF_DATA/ANCILLARY/monthly/monthly_PCPT-gfdlh.nc'
 YEAR=2006
 
+echo $YEAR
 ipython $SCRIPTNAME -- -i $INPATH -id $DIONEPATH -y $YEAR -f $FILES_DF_FN -v $VARIABLE -o $OUTPUT_FILENAME -t TEMPLATE_FN
-
