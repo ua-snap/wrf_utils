@@ -24,7 +24,8 @@ if __name__ == '__main__':
 
     # # base directory
     # base_dir = '/rcs/project_data/wrf_data/hourly'
-    base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
+    # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
+    base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
     # variables = ['acsnow', 'albedo', 'canwat', 'cldfra', 'cldfra_high', 'cldfra_low']
     # variables = ['cldfra_mid',  'ght', 'hfx', 'lh', 'lwdnb', 'lwdnbc','lwupb',]
     # variables = ['lwupbc', 'omega', 'pcpc', 'pcpnc', 'potevp','psfc']
@@ -33,7 +34,7 @@ if __name__ == '__main__':
     # variables = ['swdnb', 'swdnbc', 'swupb', 'swupbc', ]
     # variables = [ 'vegfra', 'u10', 'ubot', 'u',]
     # variables = ['v10', 'vbot','q2']
-    variables = ['t'] #'t', 'v','tslb','qvapor',  ]
+    variables = ['omega'] #'t', 'v','tslb','qvapor',  ]
 
     slurm_dir = '/rcs/project_data/wrf_data/slurm'
     if not os.path.exists( slurm_dir ):
