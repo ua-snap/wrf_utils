@@ -27,4 +27,4 @@ if __name__ == '__main__':
         print('running: {}'.format(variable))
         output_filename = os.path.join(output_path, variable, '{}_wrf_hourly_{}_{}.nc'.format(variable, group_out_name, year))
         script_name = '/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/stack_hourly_variable_year.py'
-        _ = subprocess.call(['ipython','script_name','--','-i',input_path,'-id',input_path_dione,'-y',str(year),'-f',files_df_fn,'-v',variable,'-o',output_filename,'-t',template_fn])
+        _ = subprocess.call(['ipython',script_name,'--','-i',input_path,'-id',input_path_dione,'-y',str(year),'-f',files_df_fn,'-v',variable,'-o',output_filename,'-t',template_fn])
