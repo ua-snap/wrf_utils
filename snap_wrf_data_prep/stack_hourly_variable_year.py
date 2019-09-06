@@ -185,6 +185,7 @@ if __name__ == '__main__':
     # parse some args
     parser = argparse.ArgumentParser( description='stack the hourly outputs from raw WRF outputs to NetCDF files of hourlies broken up by year.' )
     parser.add_argument( "-i", "--input_path", action='store', dest='input_path', type=str, help="input hourly directory with annual sub-dirs containing raw WRF NetCDF outputs" )
+    parser.add_argument( "-id", "--input_path_dione", action='store', dest='input_path_dione', type=str, help="input hourly directory [FROM DIONE server] with annual sub-dirs containing raw WRF NetCDF outputs" )
     parser.add_argument( "-y", "--year", action='store', dest='year', type=int, help="year to process" )
     parser.add_argument( "-f", "--files_df_fn", action='store', dest='files_df_fn', type=str, help="path to the .csv file containing parsed filename and forecast_time already precomputed " )
     parser.add_argument( "-v", "--variable", action='store', dest='variable', type=str, help="variable name (exact)" )
