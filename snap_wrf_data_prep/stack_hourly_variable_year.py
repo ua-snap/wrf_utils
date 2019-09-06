@@ -195,6 +195,7 @@ if __name__ == '__main__':
     # parse the args and unpack
     args = parser.parse_args()
     input_path = args.input_path
+    input_path_dione = args.input_path_dione
     year = args.year
     files_df_fn = args.files_df_fn
     variable = args.variable
