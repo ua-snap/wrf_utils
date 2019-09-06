@@ -16,12 +16,12 @@ if __name__ == '__main__':
     output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/TEST_FINAL'
     template_fn = '/atlas_scratch/malindgren/WRF_DATA/ANCILLARY/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
     year = 2006
+    
     # the actual wrf-vars
-    variables = ['acsnow', 't2', 'canwat', 'cldfra', 'hfx', 'lh', 'lwdnb', 'lwupb', 
-                'pcpc', 'pcpnc', 'pcpt', 'potevp', 'qbot', 'q2', 'snow', 'qvapor', 
-                'snowc', 'snowh', 'swupb', 'swdnb', 'tslb', 'albedo', 'vegfra', 'cldfra_high', 
-                'cldfra_low', 'cldfra_mid', 'lwupbc', 'lwdnbc', 'ght', 'omega', 'psfc', 'slp', 
-                'sh2o', 'seaice', 'swupbc', 'smois', 'swdnbc', 'tbot', 'tsk', 't']
+    variables = ['ACSNOW', 'T2', 'CANWAT', 'CLDFRA', 'HFX', 'LH', 'LWDNB', 'LWUPB', 'PCPC', 'PCPNC', 'PCPT', 'POTEVP', 
+                'QBOT', 'Q2', 'SNOW', 'QVAPOR', 'SNOWC', 'SNOWH', 'SWUPB', 'SWDNB', 'TSLB', 'ALBEDO', 'VEGFRA', 
+                'CLDFRA_HIGH', 'CLDFRA_LOW', 'CLDFRA_MID', 'LWUPBC', 'LWDNBC', 'GHT', 'OMEGA', 'PSFC', 'SLP', 'SH2O', 
+                'SEAICE', 'SWUPBC', 'SMOIS', 'SWDNBC', 'TBOT', 'TSK', 'T']
 
     for variable in variables:
         print('running: {}'.format(variable))
