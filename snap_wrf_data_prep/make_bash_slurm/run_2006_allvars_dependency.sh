@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/sh
 
 jid01=$(sbatch ACSNOW_2006_gfdl_rcp85.slurm)
 jid02=$(sbatch ALBEDO_2006_gfdl_rcp85.slurm)
