@@ -82,4 +82,4 @@ jid40=${jid40##* }
 
 jobs="$jid01,$jid02,$jid03,$jid04,$jid05,$jid06,$jid07,$jid08,$jid09,$jid10,$jid11,$jid12,$jid13,$jid14,$jid15,$jid16,$jid17,$jid18,$jid19,$jid20,$jid21,$jid22,$jid23,$jid24,$jid25,$jid26,$jid27,$jid28,$jid29,$jid30,$jid31,$jid32,$jid33,$jid34,$jid35,$jid36,$jid37,$jid38,$jid39,$jid40"
 echo $jobs
-jid999=$(sbatch --dependency=afterok:$jid01:$jid02:$jid03:$jid04:$jid05:$jid06:$jid07:$jid08:$jid09:$jid10:$jid11:$jid12:$jid13:$jid14:$jid15:$jid16:$jid17:$jid18:$jid19:$jid20:$jid21:$jid22:$jid23:$jid24:$jid25:$jid26:$jid27:$jid28:$jid29:$jid30:$jid31:$jid32:$jid33:$jid34:$jid35:$jid36:$jid37:$jid38:$jid39:$jid40 T_2006_gfdl_rcp85.slurm --wait)
+jid999=$(sbatch --dependency=afterok:$jid01,$jid02,$jid03,$jid04,$jid05,$jid06,$jid07,$jid08,$jid09,$jid10,$jid11,$jid12,$jid13,$jid14,$jid15,$jid16,$jid17,$jid18,$jid19,$jid20,$jid21,$jid22,$jid23,$jid24,$jid25,$jid26,$jid27,$jid28,$jid29,$jid30,$jid31,$jid32,$jid33,$jid34,$jid35,$jid36,$jid37,$jid38,$jid39,$jid40 T_2006_gfdl_rcp85.slurm --wait)
