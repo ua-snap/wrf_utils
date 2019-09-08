@@ -83,7 +83,7 @@ do
     jid34=$(sbatch SWUPBC_"$year"_gfdl_rcp85.slurm --job-name=array_job_test)
     jid34=${jid34##* }
     jid35=$(sbatch T_"$year"_gfdl_rcp85.slurm --job-name=array_job_test)
-    jid35=${jid999##* }
+    jid35=${jid35##* }
     jid36=$(sbatch T2_"$year"_gfdl_rcp85.slurm --job-name=array_job_test)
     jid36=${jid36##* }
     jid37=$(sbatch TBOT_"$year"_gfdl_rcp85.slurm --job-name=array_job_test)
