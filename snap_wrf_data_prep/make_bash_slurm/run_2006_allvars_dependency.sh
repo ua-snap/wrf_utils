@@ -84,4 +84,4 @@ jid02=${jid02##* }
 # # echo $jobs
 joblist='$jid01: $jid02'
 echo $joblist
-jid999=$(sbatch T_2006_gfdl_rcp85.slurm --dependency=after:joblist)
+jid999=$(sbatch T_2006_gfdl_rcp85.slurm --d after:joblist)
