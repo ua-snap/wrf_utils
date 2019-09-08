@@ -13,6 +13,6 @@ if __name__ == '__main__':
     print(input_path)
     if 'atlas_scratch' in input_path:
         # os.system( 'rm -r {}'.format(input_path) )
-        print( 'rm -r {}'.format(input_path) )
+        os.system( 'rm -r {}'.format(input_path) )
     else:
         print('WRONG DIRECTORY TO REMOVE!!! atlas_scratch only!')
