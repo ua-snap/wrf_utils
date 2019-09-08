@@ -1,0 +1,21 @@
+head = '''
+#!/bin/sh
+#SBATCH --ntasks=32\n
+#SBATCH --nodes=1\n
+#SBATCH --ntasks-per-node=32\n
+#SBATCH --account=snap\n
+#SBATCH --mail-type=FAIL\n
+#SBATCH --mail-user=malindgren@alaska.edu\n
+#SBATCH -p main\n
+'''
+
+SCRIPTNAME='/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/stack_hourly_variable_year.py'
+DIONEPATH='/storage01/rtladerjr/hourly' 
+INPATH='/atlas_scratch/malindgren/WRF_DATA'
+FILES_DF_FN='/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_gfdl_rcp85.csv'
+VARIABLE='PCPT'
+OUTPUT_FILENAME='/workspace/Shared/Tech_Projects/wrf_data/project_data/TEST_FINAL/PCPT_wrf_hourly_GFDL-CM3_rcp85_2006.nc'
+TEMPLATE_FN='/atlas_scratch/malindgren/WRF_DATA/ANCILLARY/monthly/monthly_PCPT-gfdlh.nc'
+YEAR=2006
+
+ipython $SCRIPTNAME -- -i $INPATH -id $DIONEPATH -y $YEAR -f $FILES_DF_FN -v $VARIABLE -o $OUTPUT_FILENAME -t TEMPLATE_FN
