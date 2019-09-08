@@ -96,4 +96,4 @@ jobids="$jid01":"$jid02"
 
 # remove the year-1 folder
 SCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/remove_dir_atlas_scratch.py
-srun -N 1 -n 5 -p main -d after:$jobids ipython $SCRIPTNAME -- -i /atlas_scratch/malindgren/WRF_DATA/2100
+srun -N 1 -n 1 -p main -d afterany:$jobids ipython $SCRIPTNAME -- -i /atlas_scratch/malindgren/WRF_DATA/2100
