@@ -1,16 +1,25 @@
 #!/bin/sh
 
+# make sure the first year is already moved over before we loop
+input_path=/storage01/rtladerjr/hourly/2006
+output_path=/atlas_scratch/malindgren/WRF_DATA/2006
+ipython /workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/copy_year_dione_to_atlas_scratch.py -- -i $input_path -o $output_path
+echo "copied:2006"
+
 for (( year=2006; year<=2100; year++ ))
 do
     echo "$year"
     
     # # copy year+1 folder to the current directory
-    input_path=/storage01/rtladerjr/hourly/"$year"
-    output_path=/atlas_scratch/malindgren/WRF_DATA/"$year"
-    # ipython copy_year_dione_to_atlas_scratch.py -- -i $input_path -o $output_path
+    let CPYEAR=$year+1
+    input_path=/storage01/rtladerjr/hourly/"$CPYEAR"
+    output_path=/atlas_scratch/malindgren/WRF_DATA/"$CPYEAR"
+    ipython /workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/copy_year_dione_to_atlas_scratch.py -- -i $input_path -o $output_path
     echo $input_path
     echo $output_path
+    echo 'copied':"$CPYEAR"
 
+    # # move to the proper pre-built .slurm files directory for the given year
     cd /workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/slurm_scripts/"$year"
     echo $(pwd)
 
@@ -100,6 +109,6 @@ do
 
     # remove the year-1 folder
     SCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/remove_dir_atlas_scratch.py
-    RMDIR=/atlas_scratch/malindgren/WRF_DATA/2100_TMP
-    srun -N 1 -n 1 -p main -d afterok:$jobids ipython $SCRIPTNAME -- -i $RMDIR
+    RMDIRNAME=/atlas_scratch/malindgren/WRF_DATA/"$year"
+    srun -N 1 -n 1 -p main -d afterok:$jobids ipython $SCRIPTNAME -- -i $RMDIRNAME
 done
