@@ -76,7 +76,7 @@
 # jid38=${jid38##* }
 # jid39=$(sbatch TSLB_2006_gfdl_rcp85.slurm --job-name=array_job_test)
 # jid39=${jid39##* }
-jid40=$(sbatch VEGFRA_2006_gfdl_rcp85.slurm --job-name=array_job_test)
+jid40=$(sbatch VEGFRA_2006_gfdl_rcp85.slurm --job-name=array_job_test --wait)
 jid40=${jid40##* }
 
 
