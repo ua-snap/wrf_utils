@@ -114,8 +114,7 @@ for (( year=2006; year<200; year++ ));
         # remove the year-1 folder
         SCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/remove_dir_atlas_scratch.py;
         RMDIRNAME=/atlas_scratch/malindgren/WRF_DATA/${year};
-        depends=afterok:${jobids}
+        depends=afterok:${jobids};
 
-        # srun -n 1 -p main --dependency $depends ipython $SCRIPTNAME -- -i $RMDIRNAME
-
-    done;
+        srun -n 1 -p main --dependency=$depends ipython $SCRIPTNAME -- -i $RMDIRNAME;
+done;
