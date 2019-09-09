@@ -7,7 +7,7 @@ output_path=/atlas_scratch/malindgren/WRF_DATA/2006
 echo "copied:2006"
 wait
 
-for (( year=2006; year<200; year++ ));
+for (( year=2006; year<2007; year++ ));
     do     
         if [ $year -lt 2100 ]
         then
@@ -118,4 +118,5 @@ for (( year=2006; year<200; year++ ));
         echo ${depends}
 
         srun -n 1 -p main --dependency=$depends ipython $SCRIPTNAME -- -i $RMDIRNAME;
-done;
+
+    done
