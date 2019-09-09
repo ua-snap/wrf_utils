@@ -117,5 +117,5 @@ for (( year=2006; year<200; year++ ));
         depends=afterok:${jobids}
 
         srun -n 1 -p main --dependency=$depends ipython $SCRIPTNAME -- -i $RMDIRNAME;
-    done;
+    done
 
