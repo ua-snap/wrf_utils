@@ -113,7 +113,7 @@ for (( year=2006; year<=2007; year++ ));
 
         # remove the year-1 folder
         SCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/remove_dir_atlas_scratch.py;
-        RMDIRNAME=/atlas_scratch/malindgren/WRF_DATA/${year};
+        RMDIRNAME=/atlas_scratch/malindgren/WRF_DATA/${year}_TMP;
         depends=afterok:${jobids};
         echo ${depends}
 
