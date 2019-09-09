@@ -7,7 +7,7 @@ output_path=/atlas_scratch/malindgren/WRF_DATA/2006
 echo "copied:2006"
 wait
 
-for (( year=2006; year<2007; year++ ));
+for (( year=2006; year<=2007; year++ ));
     do     
         if [ $year -lt 2100 ]
         then
@@ -20,7 +20,7 @@ for (( year=2006; year<2007; year++ ));
             echo $input_path;
             echo $output_path;
             echo 'copied':"$CPYEAR";
-
+        fi
 
         # # move to the proper pre-built .slurm files directory for the given year
         cd /workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/slurm_scripts/"$year";
@@ -119,4 +119,4 @@ for (( year=2006; year<2007; year++ ));
 
         srun -n 1 -p main --dependency=$depends ipython $SCRIPTNAME -- -i $RMDIRNAME;
 
-    done
+    done;
