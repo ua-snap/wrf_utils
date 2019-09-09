@@ -396,25 +396,3 @@ if __name__ == '__main__':
         pass
 
     ds.to_netcdf( output_filename, mode='w', format='netCDF4', engine='netcdf4' )
-
-
-# # # # # EXAMPLE # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# # # FOR TESTING
-# import os, subprocess
-
-# input_path = '/storage01/pbieniek/gfdl/hist/hourly'
-# group = 'gfdl_hist'
-# variable = 'U10' #'T2'
-# files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
-# output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables'
-# template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
-# years = list(range(1970,2005+1))
-
-# os.chdir( '/workspace/UA/malindgren/repos/wrf_utils' )
-# for year in years:
-#     print( year )
-#     output_filename = os.path.join( output_path, variable.lower(), '{}_wrf_hourly_{}_{}.nc'.format(variable, group, year) )
-#     _ = subprocess.call(['python3','stack_hourly_variable_year_NEW_uv.py', '-i', input_path, '-y', str(year), '-f', files_df_fn, '-v', variable, '-o', output_filename, '-t', template_fn])
-
-
-
