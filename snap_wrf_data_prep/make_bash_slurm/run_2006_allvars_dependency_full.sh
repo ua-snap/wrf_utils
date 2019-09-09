@@ -3,20 +3,20 @@
 # make sure the first year is already moved over before we loop
 input_path=/storage01/rtladerjr/hourly/2006
 output_path=/atlas_scratch/malindgren/WRF_DATA/2006
-ipython /workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/copy_year_dione_to_atlas_scratch.py -- -i $input_path -o $output_path;
+# ipython /workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/copy_year_dione_to_atlas_scratch.py -- -i $input_path -o $output_path;
 echo "copied:2006"
 wait
 
-for (( year=2006; year<=2007; year++ ));
+for (( year=2006; year<200; year++ ));
     do     
         if [ $year -lt 2100 ]
         then
             echo "$year";
             # # copy year+1 folder to the current directory
             let CPYEAR=$year+1;
-            input_path=/storage01/rtladerjr/hourly/"$CPYEAR";
-            output_path=/atlas_scratch/malindgren/WRF_DATA/"$CPYEAR";
-            ipython /workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/copy_year_dione_to_atlas_scratch.py -- -i $input_path -o $output_path;
+            input_path=/storage01/rtladerjr/hourly/${CPYEAR};
+            output_path=/atlas_scratch/malindgren/WRF_DATA/${CPYEAR};
+            # ipython /workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/copy_year_dione_to_atlas_scratch.py -- -i $input_path -o $output_path;
             echo $input_path;
             echo $output_path;
             echo 'copied':"$CPYEAR";
@@ -113,9 +113,9 @@ for (( year=2006; year<=2007; year++ ));
 
         # remove the year-1 folder
         SCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/remove_dir_atlas_scratch.py;
-        RMDIRNAME=/atlas_scratch/malindgren/WRF_DATA/"$year";
+        RMDIRNAME=/atlas_scratch/malindgren/WRF_DATA/${year};
         depends=afterok:"$jobids"
 
-        srun -n 1 -p main -d $depends ipython $SCRIPTNAME -- -i $RMDIRNAME;
-    done
+        srun -n 1 -p main --dependency=$depends ipython $SCRIPTNAME -- -i $RMDIRNAME;
+    done;
 
