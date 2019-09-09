@@ -11,7 +11,7 @@ for (( year=2006; year<200; year++ ));
     do     
         if [ $year -lt 2100 ]
         then
-            echo "$year";
+            echo ${year};
             # # copy year+1 folder to the current directory
             let CPYEAR=$year+1;
             input_path=/storage01/rtladerjr/hourly/${CPYEAR};
@@ -116,6 +116,6 @@ for (( year=2006; year<200; year++ ));
         RMDIRNAME=/atlas_scratch/malindgren/WRF_DATA/${year};
         depends=afterok:${jobids}
 
-        srun -n 1 -p main --dependency=$depends ipython $SCRIPTNAME -- -i $RMDIRNAME;
-    done
+        srun -n 1 -p main --dependency=$depends ipython $SCRIPTNAME -- -i $RMDIRNAME
 
+    done
