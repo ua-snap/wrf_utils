@@ -1,13 +1,16 @@
 #!/bin/sh
 
 # make sure the first year is already moved over before we loop
-input_path=/storage01/rtladerjr/hourly/2006
-output_path=/atlas_scratch/malindgren/WRF_DATA/2006
-# ipython /workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/copy_year_dione_to_atlas_scratch.py -- -i $input_path -o $output_path;
-echo "copied:2006"
+FIRSTYEAR=2006
+input_path=/storage01/rtladerjr/hourly/${FIRSTYEAR}
+output_path=/atlas_scratch/malindgren/WRF_DATA/${FIRSTYEAR}
+CPSCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/copy_year_dione_to_atlas_scratch.py
+# ipython ${CPSCRIPTNAME} -- -i $input_path -o $output_path;
+# srun -p main -N 1 -c 32 ipython ${CPSCRIPTNAME} -- -i $input_path -o $output_path;
+echo "copied:${FIRSTYEAR}"
 wait
 
-for (( year=2006; year<=2007; year++ ));
+for (( year=${FIRSTYEAR}; year<2007; year++ ));
     do     
         if [ $year -lt 2100 ]
         then
@@ -16,7 +19,7 @@ for (( year=2006; year<=2007; year++ ));
             let CPYEAR=$year+1;
             input_path=/storage01/rtladerjr/hourly/${CPYEAR};
             output_path=/atlas_scratch/malindgren/WRF_DATA/${CPYEAR};
-            # ipython /workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/copy_year_dione_to_atlas_scratch.py -- -i $input_path -o $output_path;
+            # ipython ${CPSCRIPTNAME} -- -i $input_path -o $output_path;
             echo $input_path;
             echo $output_path;
             echo 'copied':"$CPYEAR";
@@ -30,8 +33,8 @@ for (( year=2006; year<=2007; year++ ));
         jid01=${jid01##* };
         jid02=$(sbatch ALBEDO_"$year"_gfdl_rcp85.slurm);
         jid02=${jid02##* };
-        # jid03=$(sbatch CANWAT_"$year"_gfdl_rcp85.slurm);
-        # jid03=${jid03##* };
+        jid03=$(sbatch CANWAT_"$year"_gfdl_rcp85.slurm);
+        jid03=${jid03##* };
         # jid04=$(sbatch CLDFRA_"$year"_gfdl_rcp85.slurm);
         # jid04=${jid04##* };
         # jid05=$(sbatch CLDFRA_HIGH_"$year"_gfdl_rcp85.slurm);
@@ -108,7 +111,7 @@ for (( year=2006; year<=2007; year++ ));
         # jid40=${jid40##* };
 
         # jobids="$jid01":"$jid02":"$jid03":"$jid04":"$jid05":"$jid06":"$jid07":"$jid08":"$jid09":"$jid10":"$jid11":"$jid12":"$jid13":"$jid14":"$jid15":"$jid16":"$jid17":"$jid18":"$jid19":"$jid20":"$jid21":"$jid22":"$jid23":"$jid24":"$jid25":"$jid26":"$jid27":"$jid28":"$jid29":"$jid30":"$jid31":"$jid32":"$jid33":"$jid34":"$jid35":"$jid36":"$jid37":"$jid38":"$jid39":"$jid40";
-        jobids="$jid01":"$jid02"
+        jobids="$jid01":"$jid02":"$jid03"
         # echo $jobids;
 
         # remove the year-1 folder
@@ -118,5 +121,4 @@ for (( year=2006; year<=2007; year++ ));
         echo ${depends}
 
         srun -n 1 -p main --dependency=$depends ipython $SCRIPTNAME -- -i $RMDIRNAME;
-
     done;

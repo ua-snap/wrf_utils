@@ -7,7 +7,7 @@ def run( fn,input_path,input_path_dione,year,files_df_fn,variable,output_filenam
             '#SBATCH --account=snap\n' + \
             '#SBATCH --mail-type=FAIL\n' + \
             '#SBATCH --mail-user=malindgren@alaska.edu\n' + \
-            '#SBATCH -p main,viz\n'
+            '#SBATCH -p main\n'
     
     script_name = '/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/stack_hourly_variable_year.py'
     command = ' '.join(['ipython',script_name,'--','-i',input_path,'-id',input_path_dione,'-y',str(year),\

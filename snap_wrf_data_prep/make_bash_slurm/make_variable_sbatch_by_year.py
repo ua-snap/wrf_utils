@@ -32,7 +32,7 @@ def write_batch_winds(fn, variable, output_filename, year):
     "#SBATCH --mail-user=malindgren@alaska.edu\n"+\
     "#SBATCH -p main\n\n"
 
-    args = "SCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/stack_hourly_variable_year.py\n"+\
+    args = "SCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/stack_hourly_variable_year_winds.py\n"+\
             "DIONEPATH=/storage01/rtladerjr/hourly\n"+\
             "INPATH=/atlas_scratch/malindgren/WRF_DATA\n"+\
             "FILES_DF_FN='/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_gfdl_rcp85.csv\n" +\
