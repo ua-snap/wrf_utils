@@ -116,6 +116,6 @@ for (( year=2006; year<200; year++ ));
         RMDIRNAME=/atlas_scratch/malindgren/WRF_DATA/${year};
         depends=afterok:${jobids}
 
-        srun -n 1 -p main --dependency=$depends ipython $SCRIPTNAME -- -i $RMDIRNAME
+        srun -n 1 -p main --dependency $depends ipython $SCRIPTNAME -- -i $RMDIRNAME
 
     done;
