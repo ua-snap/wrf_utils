@@ -8,7 +8,7 @@ input_path=/storage01/rtladerjr/hourly/${FIRSTYEAR}
 
 output_path=/atlas_scratch/malindgren/WRF_DATA/${GROUPNAME}/${FIRSTYEAR}
 CPSCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/copy_year_dione_to_atlas_scratch.py
-# ipython ${CPSCRIPTNAME} -- -i $input_path -o $output_path;
+ipython ${CPSCRIPTNAME} -- -i $input_path -o $output_path;
 echo "copied:${FIRSTYEAR}"
 wait
 
@@ -132,14 +132,14 @@ for (( year=${FIRSTYEAR}; year<=${ENDYEAR}; year++ ));
         let YEARTEST=${FIRSTYEAR}+2;
         if [ ${year} -gt ${YEARTEST} ]
         then
-            SCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/remove_dir_atlas_scratch.py;
+            RMSCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/remove_dir_atlas_scratch.py;
             RMDIRNAME=/atlas_scratch/malindgren/WRF_DATA/${GROUPNAME}/${RMYEAR};
 
-            srun -n 1 -p main --dependency=${depends} ipython ${SCRIPTNAME} -- -i ${RMDIRNAME};
-            echo removed:${RMDIRNAME}
+            srun -n 1 -p main --dependency=${depends} ipython ${RMSCRIPTNAME} -- -i ${RMDIRNAME};
+            echo removed:${RMDIRNAME};
         else
             SCRIPTNAMENOTHING=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/do_nothing_slurm.py;
-            srun -n 1 -p main --dependency=${depends} ipython ${SCRIPTNAMENOTHING}
-            echo waitedfor:${jobids}
+            srun -n 1 -p main --dependency=${depends} ipython ${SCRIPTNAMENOTHING};
+            echo waitedfor:${jobids};
         fi
     done;
