@@ -3,8 +3,8 @@
 # make sure the first year is already moved over before we loop
 # FIRSTYEAR=2006
 # ENDYEAR=2100
-FIRSTYEAR=2008
-ENDYEAR=2008
+FIRSTYEAR=2006
+ENDYEAR=2006
 GROUPNAME=gfdl_rcp85
 input_path=/storage01/rtladerjr/hourly/${FIRSTYEAR}
 
