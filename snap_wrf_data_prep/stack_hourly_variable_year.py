@@ -205,7 +205,7 @@ if __name__ == '__main__':
     # # # # # FOR TESTING
     # input_path_dione = '/storage01/rtladerjr/hourly'
     # # input_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/raw_testing_data/2007'
-    # input_path = '/atlas_scratch/malindgren/WRF_DATA'
+    # input_path = '/atlas_scratch/malindgren/WRF_DATA/gfdl_rcp85'
     # group = 'gfdl_rcp85'
     # group_out_name = 'GFDL-CM3_rcp85'
     # variable = 'PCPT' #'PCPT' # 'SH2O' #  #
@@ -214,7 +214,7 @@ if __name__ == '__main__':
     # # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( variable )
     # # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
     # template_fn = '/atlas_scratch/malindgren/WRF_DATA/ANCILLARY/monthly/monthly_{}-gfdlh.nc'.format( 'PCPT' )
-    # year = 2006
+    # year = 2008
     # output_filename = os.path.join(output_path, variable, '{}_wrf_hourly_{}_{}.nc'.format(variable, group_out_name, year))
     # # # # # END TESTING
 
@@ -228,9 +228,6 @@ if __name__ == '__main__':
 
     # [ TEMPORARY FIX ] fix the filenames in the DF <- this is due to running from /atlas_scratch instead of dione for speed
     df = fix_input_df_pathnames( df, input_path, input_path_dione )
-
-    # # [ TEMPORARY FIX ] only hold onto the year we are processing and see if the accum works...
-    # df = df[ (df.year == year) & (df.folder_year == year) ].reset_index()
 
     # run stacking of variable through time and deal with accumulations (if needed).
     arr = run_year( df, year, variable )
