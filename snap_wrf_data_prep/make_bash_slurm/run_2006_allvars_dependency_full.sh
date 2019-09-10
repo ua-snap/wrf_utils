@@ -10,7 +10,7 @@ ipython ${CPSCRIPTNAME} -- -i $input_path -o $output_path;
 echo "copied:${FIRSTYEAR}"
 wait
 
-for (( year=${FIRSTYEAR}; year<2100; year++ ));
+for (( year=${FIRSTYEAR}; year<=2100; year++ ));
     do     
         if [ $year -lt 2100 ]
         then
