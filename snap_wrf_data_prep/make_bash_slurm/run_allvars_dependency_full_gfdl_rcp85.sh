@@ -8,7 +8,7 @@ input_path=/storage01/rtladerjr/hourly/${FIRSTYEAR}
 
 output_path=/atlas_scratch/malindgren/WRF_DATA/${GROUPNAME}/${FIRSTYEAR}
 CPSCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/copy_year_dione_to_atlas_scratch.py
-# ipython ${CPSCRIPTNAME} -- -i $input_path -o $output_path;
+ipython ${CPSCRIPTNAME} -- -i $input_path -o $output_path;
 echo "copied:${FIRSTYEAR}"
 wait
 
@@ -115,7 +115,7 @@ for (( year=${FIRSTYEAR}; year<${ENDYEAR}; year++ ));
 
         # remove the year-1 folder
         SCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/remove_dir_atlas_scratch.py;
-        RMDIRNAME=/atlas_scratch/malindgren/WRF_DATA/${year};
+        RMDIRNAME=/atlas_scratch/malindgren/WRF_DATA/${GROUPNAME}/${year};
         depends=afterok:${jobids};
 
         srun -n 1 -p main --dependency=$depends ipython $SCRIPTNAME -- -i $RMDIRNAME;
