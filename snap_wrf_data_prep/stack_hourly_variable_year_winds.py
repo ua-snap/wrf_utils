@@ -297,9 +297,9 @@ if __name__ == '__main__':
     # # # # # FOR TESTING
     # input_path_dione = '/storage01/rtladerjr/hourly'
     # # input_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/raw_testing_data/2007'
-    # input_path = '/atlas_scratch/malindgren/WRF_DATA'
     # group = 'gfdl_rcp85'
     # group_out_name = 'GFDL-CM3_rcp85'
+    # input_path = os.path.join('/atlas_scratch/malindgren/WRF_DATA', group)
     # variable = 'U10' # 'PCPT' #
     # files_df_fn = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv'.format( group )
     # output_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/TEST_FINAL'

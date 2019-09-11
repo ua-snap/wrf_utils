@@ -33,9 +33,9 @@ def write_batch_winds(fn, variable, output_filename, year, input_path, dione_pat
     "#SBATCH -p main\n\n"
 
     args = "SCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/stack_hourly_variable_year_winds.py\n"+\
-            "DIONEPATH=\n".format(dione_path)+\
+            "DIONEPATH={}\n".format(dione_path)+\
             "INPATH={}\n".format(input_path)+\
-            "FILES_DF_FN='/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_gfdl_rcp85.csv\n" +\
+            "FILES_DF_FN=/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_gfdl_rcp85.csv\n" +\
             "VARIABLE={}\n".format(variable) +\
             "OUTPUT_FILENAME={}\n".format(output_filename) +\
             "TEMPLATE_FN=/atlas_scratch/malindgren/WRF_DATA/ANCILLARY/monthly/monthly_PCPT-gfdlh.nc\n"+\
