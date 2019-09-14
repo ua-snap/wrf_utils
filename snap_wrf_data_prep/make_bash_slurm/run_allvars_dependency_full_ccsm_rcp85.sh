@@ -14,12 +14,12 @@ wait
 
 for (( year=${FIRSTYEAR}; year<=${ENDYEAR}; year++ ));
     do     
-        if [ $year -lt 2100 ]
+        if [ ${year} -lt 2100 ]
         then
             echo ${year};
             # # copy year+1 folder to the current directory
-            let CPYEAR=$year+1;
-            input_path=/storage01/rtladerjr/hourly/${CPYEAR};
+            let CPYEAR=${year}+1;
+            input_path=/storage01/pbieniek/ccsm/rcp85/hourly/${CPYEAR};
             output_path=/atlas_scratch/malindgren/WRF_DATA/${GROUPNAME}/${CPYEAR};
             ipython ${CPSCRIPTNAME} -- -i ${input_path} -o ${output_path};
             echo ${input_path};
@@ -110,14 +110,36 @@ for (( year=${FIRSTYEAR}; year<=${ENDYEAR}; year++ ));
         jid39=${jid39##* };
         jid40=$(sbatch VEGFRA_${year}_${GROUPNAME}.slurm);
         jid40=${jid40##* };
+        jid41=$(sbatch U_${year}_${GROUPNAME}.slurm);
+        jid41=${jid41##* };
+        jid42=$(sbatch V_${year}_${GROUPNAME}.slurm);
+        jid42=${jid42##* };
+        jid43=$(sbatch U10_${year}_${GROUPNAME}.slurm);
+        jid43=${jid43##* };
+        jid44=$(sbatch V10_${year}_${GROUPNAME}.slurm);
+        jid44=${jid44##* };
+        jid45=$(sbatch UBOT_${year}_${GROUPNAME}.slurm);
+        jid45=${jid45##* };
+        jid46=$(sbatch VBOT_${year}_${GROUPNAME}.slurm);
+        jid46=${jid46##* };            
 
-        jobids="$jid01":"$jid02":"$jid03":"$jid04":"$jid05":"$jid06":"$jid07":"$jid08":"$jid09":"$jid10":"$jid11":"$jid12":"$jid13":"$jid14":"$jid15":"$jid16":"$jid17":"$jid18":"$jid19":"$jid20":"$jid21":"$jid22":"$jid23":"$jid24":"$jid25":"$jid26":"$jid27":"$jid28":"$jid29":"$jid30":"$jid31":"$jid32":"$jid33":"$jid34":"$jid35":"$jid36":"$jid37":"$jid38":"$jid39":"$jid40";
-
-        # remove the year-1 folder
-        SCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/remove_dir_atlas_scratch.py;
-        RMDIRNAME=/atlas_scratch/malindgren/WRF_DATA/${GROUPNAME}/${year};
+        jobids=${jid01}:${jid02}:${jid03}:${jid04}:${jid05}:${jid06}:${jid07}:${jid08}:${jid09}:${jid10}:${jid11}:${jid12}:${jid13}:${jid14}:${jid15}:${jid16}:${jid17}:${jid18}:${jid19}:${jid20}:${jid21}:${jid22}:${jid23}:${jid24}:${jid25}:${jid26}:${jid27}:${jid28}:${jid29}:${jid30}:${jid31}:${jid32}:${jid33}:${jid34}:${jid35}:${jid36}:${jid37}:${jid38}:${jid39}:${jid40}:${jid41}:${jid42}:${jid43}:${jid44}:${jid45}:${jid46};
         depends=afterok:${jobids};
+    
+        # remove the year-2 folder so not until startyear ${+}2
+        # this is due to accumulation vars needing to traverse adjacent years...
+        let RMYEAR=${year}-2;
+        let YEARTEST=${FIRSTYEAR}+2;
+        if [ ${year} -gt ${YEARTEST} ]
+        then
+            RMSCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/remove_dir_atlas_scratch.py;
+            RMDIRNAME=/atlas_scratch/malindgren/WRF_DATA/${GROUPNAME}/${RMYEAR};
 
-        srun -n 1 -p main --dependency=$depends ipython $SCRIPTNAME -- -i $RMDIRNAME;
-        echo 'completed removal of directory'
+            srun -n 1 -p main --dependency=${depends} ipython ${RMSCRIPTNAME} -- -i ${RMDIRNAME};
+            echo removed:${RMDIRNAME};
+        else
+            SCRIPTNAMENOTHING=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/do_nothing_slurm.py;
+            srun -n 1 -p main --dependency=${depends} ipython ${SCRIPTNAMENOTHING};
+            echo "no directory removal";
+        fi
     done;
