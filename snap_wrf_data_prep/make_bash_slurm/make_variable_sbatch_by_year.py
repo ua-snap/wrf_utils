@@ -1,4 +1,4 @@
-def write_batch(fn, variable, output_filename, year, input_path, dione_path):
+def write_batch(fn, variable, output_filename, year, input_path, dione_path,group):
     head = \
     "#!/bin/sh\n"+\
     "#SBATCH --nodes=1\n"+\
@@ -11,7 +11,7 @@ def write_batch(fn, variable, output_filename, year, input_path, dione_path):
     args = "SCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/stack_hourly_variable_year.py\n"+\
             "DIONEPATH={}\n".format(dione_path)+\
             "INPATH={}\n".format(input_path)+\
-            "FILES_DF_FN=/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_gfdl_rcp85.csv\n" +\
+            "FILES_DF_FN=/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv\n".format(group) +\
             "VARIABLE={}\n".format(variable) +\
             "OUTPUT_FILENAME={}\n".format(output_filename) +\
             "TEMPLATE_FN=/atlas_scratch/malindgren/WRF_DATA/ANCILLARY/monthly/monthly_PCPT-gfdlh.nc\n"+\
@@ -22,7 +22,7 @@ def write_batch(fn, variable, output_filename, year, input_path, dione_path):
         f.write( head + '\n' + args + '\n' )
     return fn
 
-def write_batch_winds(fn, variable, output_filename, year, input_path, dione_path):
+def write_batch_winds(fn, variable, output_filename, year, input_path, dione_path,group):
     head = \
     "#!/bin/sh\n"+\
     "#SBATCH --nodes=1\n"+\
@@ -35,7 +35,7 @@ def write_batch_winds(fn, variable, output_filename, year, input_path, dione_pat
     args = "SCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/stack_hourly_variable_year_winds.py\n"+\
             "DIONEPATH={}\n".format(dione_path)+\
             "INPATH={}\n".format(input_path)+\
-            "FILES_DF_FN=/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_gfdl_rcp85.csv\n" +\
+            "FILES_DF_FN=/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf/docs/WRFDS_forecast_time_attr_{}.csv\n".format(group) +\
             "VARIABLE={}\n".format(variable) +\
             "OUTPUT_FILENAME={}\n".format(output_filename) +\
             "TEMPLATE_FN=/atlas_scratch/malindgren/WRF_DATA/ANCILLARY/monthly/monthly_PCPT-gfdlh.nc\n"+\
@@ -85,7 +85,7 @@ if __name__ == '__main__':
                 _ = os.makedirs(dirname)
 
             if variable in ['U','V','U10','V10','UBOT','VBOT']:
-                _ = write_batch_winds(fn, variable, output_filename, year, input_path, dione_path)
+                _ = write_batch_winds(fn, variable, output_filename, year, input_path, dione_path, group)
             else:
-                _ = write_batch(fn, variable, output_filename, year, input_path, dione_path)
+                _ = write_batch(fn, variable, output_filename, year, input_path, dione_path, group)
 
