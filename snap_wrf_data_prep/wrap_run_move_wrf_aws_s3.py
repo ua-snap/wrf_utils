@@ -7,7 +7,7 @@ def run( fn, command, slurm_path, ncpus=32 ):
             '#SBATCH --account=snap\n' + \
             '#SBATCH --mail-type=FAIL\n' + \
             '#SBATCH --mail-user=malindgren@alaska.edu\n' + \
-            '#SBATCH -p main,viz\n'
+            '#SBATCH -p viz\n'
     
     with open( fn, 'w' ) as f:
         f.write( head + '\n' + command + '\n' )
@@ -20,16 +20,18 @@ if __name__ == '__main__':
     import subprocess, os
 
     slurm_path = '/workspace/Shared/Tech_Projects/wrf_data/project_data/aws_move_slurm'
-    # variables = ['t2','pcpt','acsnow','canwat','hfx','qvapor']
-    # variables = ['cldfra_high','cldfra_mid','lwdnb','lwupb','pcpnc']
-    # variables = ['potevp','q2','sh2o','smois','snowc','swdnb','swupb','tbot','tslb']
-    # variables = ['albedo','cldfra','cldfra_low','lh','lwdnbc','lwupbc','pcpc','psfc']
-    # variables = ['qbot','seaice','slp','snow','snowh','swdnbc','swupbc','tsk','vegfra']
-    variables = ['omega','ght','t',] # RUN ALL LAST
+
+    variables = ['tsk', 't2', 'albedo', 'acsnow', 'canwat', 'cldfra', 'cldfra_high', 'cldfra_low', \
+    'cldfra_mid', 'lwupb', 'lwdnbc', 'lwdnb', 'lh', 'hfx', 'ght',\
+    'pcpc', 'potevp', 'psfc', 'lwupbc', 'pcpnc', 'omega', 'seaice', 'slp', 'smois',\
+    'sh2o', 'snowc', 'tbot', 'snowh', 'snow', 'qbot', 'qvapor', 'swupbc', 'swdnbc',\
+    'swdnb', 'swupb', 'vegfra', 'ubot', 'u10', 'u', \
+    'tslb', 'v10', 'vbot', 'q2', 't', 'v',]
     
     for variable in variables:
-        input_dirs = [ '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly_fix/{}'.format( variable ),
-                        '/storage01/malindgren/wrf_ccsm4/hourly_fix/{}'.format( variable ) ]
+        # input_dirs = [ '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly_fix/{}'.format( variable ),
+        #                 '/storage01/malindgren/wrf_ccsm4/hourly_fix/{}'.format( variable ) ]
+        input_dirs = ['/rcs/project_data/wrf_data/hourly_fix/{}'.format(variable)]
 
         for input_dir, group in zip(input_dirs,range(2)):
             if 'wrf_ccsm4' in input_dir:
@@ -41,4 +43,4 @@ if __name__ == '__main__':
                 output_remote_dir = 's3://wrf-ak-ar5/hourly/{}/{}/{}'.format( modname, scenario, variable )
                 command = ' '.join(['aws','s3','cp',input_dir,output_remote_dir,'--recursive','--exclude', '"*"', ' --include', '"*{}*.nc"'.format(model)])
                 fn = os.path.join( slurm_path, '{}_{}_move_s3_aws_{}.slurm'.format(variable, model, group) )
-                run( fn, command, slurm_path, ncpus=32 )
+                run( fn, command, slurm_path, ncpus=10 )

@@ -8,7 +8,7 @@ input_path=/storage01/pbieniek/ccsm/rcp85/hourly/${FIRSTYEAR}
 
 output_path=/atlas_scratch/malindgren/WRF_DATA/${GROUPNAME}/${FIRSTYEAR}
 CPSCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/copy_year_dione_to_atlas_scratch.py
-# ipython ${CPSCRIPTNAME} -- -i $input_path -o $output_path;
+ipython ${CPSCRIPTNAME} -- -i $input_path -o $output_path;
 echo "copied:${FIRSTYEAR}"
 wait
 
