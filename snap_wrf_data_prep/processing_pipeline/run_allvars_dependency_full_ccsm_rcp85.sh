@@ -1,7 +1,8 @@
 #!/bin/sh
 
 # make sure the first year is already moved over before we loop
-FIRSTYEAR=2005
+# FIRSTYEAR=2005
+FIRSTYEAR=2038
 ENDYEAR=2100
 GROUPNAME=ccsm_rcp85
 input_path=/storage01/pbieniek/ccsm/rcp85/hourly/${FIRSTYEAR}
@@ -14,7 +15,7 @@ wait
 
 for (( year=${FIRSTYEAR}; year<=${ENDYEAR}; year++ ));
     do     
-        if [ ${year} -lt 2100 ]
+        if [ ${year} -lt ${ENDYEAR} ]
         then
             echo ${year};
             # # copy year+1 folder to the current directory
