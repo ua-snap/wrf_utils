@@ -77,7 +77,7 @@
             # write the batch file
             for year, variable in itertools.product(years, variables):
                 output_filename = os.path.join(output_path,variable.lower(),'{}_wrf_hourly_{}_{}.nc'.format(variable, group, year))
-                fn = '/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/slurm_scripts/{1}/{0}_{1}_{2}.slurm'.format(variable,year,group)
+                fn = '/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/processing_pipeline/slurm_scripts/{1}/{0}_{1}_{2}.slurm'.format(variable,year,group)
                 print('writing:{}'.format(os.path.basename(fn)))
                 # make sure there are dirs to dump the files
                 dirname = os.path.dirname(fn)

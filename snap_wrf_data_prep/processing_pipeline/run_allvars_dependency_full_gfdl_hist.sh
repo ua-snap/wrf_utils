@@ -7,7 +7,7 @@ GROUPNAME=gfdl_hist
 input_path=/storage01/pbieniek/gfdl/hist/hourly/${FIRSTYEAR}
 
 output_path=/atlas_scratch/malindgren/WRF_DATA/${GROUPNAME}/${FIRSTYEAR}
-CPSCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/copy_year_dione_to_atlas_scratch.py
+CPSCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/processing_pipeline/copy_year_dione_to_atlas_scratch.py
 ipython ${CPSCRIPTNAME} -- -i $input_path -o $output_path;
 echo "copied:${FIRSTYEAR}"
 wait
@@ -28,7 +28,7 @@ for (( year=${FIRSTYEAR}; year<=${ENDYEAR}; year++ ));
         fi
 
         # # move to the proper pre-built .slurm files directory for the given year
-        cd /workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/slurm_scripts/${year};
+        cd /workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/processing_pipeline/slurm_scripts/${year};
 
         jid01=$(sbatch ACSNOW_${year}_${GROUPNAME}.slurm);
         jid01=${jid01##* };
@@ -132,13 +132,13 @@ for (( year=${FIRSTYEAR}; year<=${ENDYEAR}; year++ ));
         let YEARTEST=${FIRSTYEAR}+2;
         if [ ${year} -gt ${YEARTEST} ]
         then
-            RMSCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/remove_dir_atlas_scratch.py;
+            RMSCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/processing_pipeline/remove_dir_atlas_scratch.py;
             RMDIRNAME=/atlas_scratch/malindgren/WRF_DATA/${GROUPNAME}/${RMYEAR};
 
             srun -n 1 -p main --dependency=${depends} ipython ${RMSCRIPTNAME} -- -i ${RMDIRNAME};
             echo removed:${RMDIRNAME};
         else
-            SCRIPTNAMENOTHING=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/do_nothing_slurm.py;
+            SCRIPTNAMENOTHING=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/processing_pipeline/do_nothing_slurm.py;
             srun -n 1 -p main --dependency=${depends} ipython ${SCRIPTNAMENOTHING};
             echo "no directory removal";
         fi
