@@ -28,7 +28,7 @@ if __name__ == '__main__':
     
     # list the files
     files = glob.glob(os.path.join(input_path, '*.nc'))
-    ncpus = 12
+    ncpus = 5
 
     # make sure the output_path is actually there...
     if not os.path.exists(output_path):
