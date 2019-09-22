@@ -1,0 +1,43 @@
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # 
+# # THIS IS HOW I AM DERIVING THE CRS IN PROJ4 FOR THE OUTPUTTING OF THE WRF FILES
+# # THIS IS MOST LIKELY NOT 100% CORRECT, BUT IS REALLY DARN CLOSE.
+# # --> See SALEM source: https://github.com/fmaussion/salem/blob/master/salem/wrftools.py
+# # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+# # LOGIC from the Salem GIS package WRF mod
+# elif map_proj == 'POLAR':
+#     pwrf = '+proj=stere +lat_ts={lat_1} +lat_0=90.0 +lon_0={lon_0} ' \
+#            '+x_0=0 +y_0=0 +a=6370000 +b=6370000'
+
+# # FROM THE NCL DERIVED NETCDF FILES FROM OUTPUT GRIB -- aka PETERS DATA
+# # --> fn: '/storage01/pbieniek/gfdl/hist/hourly/1990/WRFDS_d01.1990-01-01_00.nc'
+# <class 'netCDF4._netCDF4.Variable'>
+# float32 g5_lat_0(g5_x_0, g5_y_1)
+#     La1: 37.233
+#     Lo1: -177.786
+#     Lov: -152.0
+#     Dx: 19655.0
+#     Dy: 19655.0
+#     ProjectionCenter: north
+#     units: degrees_north
+#     GridType: Polar Stereographic Projection Grid
+#     long_name: latitude
+#     corners: [ 37.23300171  37.23600006  65.59623718  65.58805084]
+# unlimited dimensions: 
+# current shape = (262, 262)
+# filling off
+
+# # # AFFINE TRANSFORM FROM RUDI GENS OUTPUTS
+# # --> something still smells not _totally_ right about this
+# Affine(19996.451606182643, 0.0, -2609990.449893133, 0.0, -19996.451606182643, -183320.66272092026)
+
+
+polar_proj = '+proj=stere +lat_ts={} +lat_0=90.0 +lon_0={} +x_0=0 +y_0=0 +a=6370000 +b=6370000'.format( ( 37.233, -177.786 ) )
+
+# try 2
+polar_proj = '+proj=stere +lat_ts={} +lat_0=90.0 +lon_0={} +x_0=0 +y_0=0 +a=6370000 +b=6370000'.format( ( 37.233, -152.0 ) )
+
+

@@ -1,0 +1,31 @@
+NOTES:: working with the output WRF data from PBienik, et al.
+		 These are a simple list of things I have been finding and Q's I have 
+		 about working with these outputs. For SNAP internal use only...
+-------------------------------------------------------------------------------------------------------------------------
+
+1. the mismatch between the variable naming we use in our downscaled data differs with the SI Unit
+	names that are used by the larger modeling groups. -- CF Conventions.
+
+2. the time issue.... Below is from the NetCDF data from ESGF
+```
+    double time(time) ;
+        time:bounds = "time_bnds" ;
+        time:axis = "T" ;
+        time:long_name = "time" ;
+        time:standard_name = "time" ;
+        time:units = "days since 2005-01-01" ;
+        time:calendar = "noleap" ;
+```
+
+3. grid is stored in a Polar Stereographic projection system...  Not sure if we need to change this for these purposes...
+
+4. from [PKaffle]: "Monthly averaged representing current period (2006-2016), near future (2040-2060) and future (2080-2100)"
+ 	- does this mean that he wants 12 files for each of the periods mentioned? As in the average of the monthly averaged 
+ 		months through the series?
+	- or is this JUST the monthly averaged files that match these time intervals... 
+ 	- ** is this to be distributed as NetCDF or as GTiff?  If NetCDF, do we maintain/buildout a way to make it displayable in QGIS as a 
+ 		drag-and-drop -- With my version of QGIS the "NETCDF3_CLASSIC" output option needs be used when outputting from xarray so it wont crash QGIS.
+
+5. Messin' with the hourly data...
+- looks like it is all in single files for a given hour...  This will make aggregation a bit annoying.
+	- DJF's present for both the beginning year and the next year...  ie. JF MAM JJA SON D|JF(next year)
