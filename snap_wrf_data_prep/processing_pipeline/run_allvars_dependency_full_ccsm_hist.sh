@@ -14,7 +14,7 @@ wait
 
 for (( year=${FIRSTYEAR}; year<=${ENDYEAR}; year++ ));
     do     
-        if [ ${year} -lt 2100 ]
+        if [ ${year} -lt ${ENDYEAR} ]
         then
             echo ${year};
             # # copy year+1 folder to the current directory
@@ -134,7 +134,6 @@ for (( year=${FIRSTYEAR}; year<=${ENDYEAR}; year++ ));
         then
             RMSCRIPTNAME=/workspace/UA/malindgren/repos/wrf_utils/snap_wrf_data_prep/make_bash_slurm/remove_dir_atlas_scratch.py;
             RMDIRNAME=/atlas_scratch/malindgren/WRF_DATA/${GROUPNAME}/${RMYEAR};
-
             srun -n 1 -p main --dependency=${depends} ipython ${RMSCRIPTNAME} -- -i ${RMDIRNAME};
             echo removed:${RMDIRNAME};
         else

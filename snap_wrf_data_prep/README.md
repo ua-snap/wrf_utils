@@ -1,3 +1,3 @@
 # wrf_utils
 
-SNAP scripts for working with different wrf outputs for various project needs.
+Scripts for restructuring CASC/SNAP Dynamically Downscaled WRF outputs
