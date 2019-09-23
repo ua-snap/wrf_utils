@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # make sure the first year is already moved over before we loop
-# FIRSTYEAR=2005
-FIRSTYEAR=2038
+FIRSTYEAR=2005
+# FIRSTYEAR=2038
 ENDYEAR=2100
 GROUPNAME=ccsm_rcp85
 input_path=/storage01/pbieniek/ccsm/rcp85/hourly/${FIRSTYEAR}
