@@ -229,7 +229,8 @@ def stack_year_wind_rot( df, year, variable, ancillary_fn, ncores=32 ):
     from functools import partial
             
     f = partial( run_winds, variable=variable, ancillary_fn=ancillary_fn )
-    files = df[ df.year == year ].fn.tolist()
+    # files = df[ df.year == year ].fn.tolist()
+    files = df[ (df.year == year) & (df.month == 1) & (df.day == 1) ].fn.tolist()
 
     pool = mp.Pool( ncores )
     out = pool.map( f, files )
@@ -273,7 +274,6 @@ if __name__ == '__main__':
     from functools import partial
     # import pickle
     import argparse
-    from datetime import datetime
 
     # parse some args
     parser = argparse.ArgumentParser( description='stack the hourly outputs from raw WRF outputs to NetCDF files of hourlies broken up by year.' )
@@ -314,9 +314,6 @@ if __name__ == '__main__':
     # output_filename = os.path.join(output_path, variable, '{}_wrf_hourly_wrf_{}_{}.nc'.format(variable.lower(), group_out_name, year))
     # # # # # END TESTING
 
-    now = datetime.now()
-    current_time = now.strftime("%Y-%m-%d %H:%M:%S")
-    print(f"working on {year} {variable}, {current_time}")
     # wrf output standard vars -- [hardwired] for now
     lon_variable = 'g5_lon_1'
     lat_variable = 'g5_lat_0'
@@ -330,6 +327,7 @@ if __name__ == '__main__':
     
     # run stacking of variable through time and deal with accumulations (if needed).
     arr = run_year( df, year, variable, ancillary_fn )
+    print(arr.shape[0])
     
     # subset the data frame to the desired year -- for naming stuff
     sub_df = df[ (df.year == year) & (df.folder_year == year) ].reset_index()
