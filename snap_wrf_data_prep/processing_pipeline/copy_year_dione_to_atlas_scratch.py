@@ -1,5 +1,5 @@
-def copy_fn( input_fn, output_dir ):
-    return os.system('cp -R {} {}'.format(input_fn, output_dir))
+def copy_fn( input_fn, output_fn ):
+    return os.system('cp {} {}'.format(input_fn, output_fn))
 
 def run( x ):
     return copy_fn( *x )
@@ -8,7 +8,7 @@ if __name__ == '__main__':
     import os, glob
     import multiprocessing as mp
     import argparse
-
+    
     # parse some args
     parser = argparse.ArgumentParser( description='stack the hourly outputs from raw WRF outputs to NetCDF files of hourlies broken up by year.' )
     parser.add_argument( "-i", "--input_path", action='store', dest='input_path', type=str, help="input hourly directory raw directory of files to be stacked for a given year" )
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     # input_path = '/storage01/rtladerjr/hourly/2007'
     # output_path = '/atlas_scratch/malindgren/WRF_DATA/2007'
     # # # # # # # # # # 
-    
+
     # list the files
     files = glob.glob(os.path.join(input_path, '*.nc'))
     ncpus = 5
@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
     # build args for mp
     args = [ (fn, os.path.join(output_path, os.path.basename(fn))) for fn in files ]
-
+    
     # multiprocess
     p = mp.Pool(ncpus)
     out = p.map(run, args)

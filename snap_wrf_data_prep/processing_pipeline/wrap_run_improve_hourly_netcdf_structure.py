@@ -1,67 +1,91 @@
-# wrap wrf variable re-stacker for running on slurm nodes
-def run( fn, command, ncpus=10 ):
-    import os, subprocess
-    ncpus = 64 # to hold the node
-    head = '#!/bin/sh\n' + \
-            '#SBATCH --ntasks={}\n'.format(ncpus) + \
-            '#SBATCH --nodes=1\n' + \
-            '#SBATCH --ntasks-per-node={}\n'.format(ncpus) + \
-            '#SBATCH --account=snap\n' + \
-            '#SBATCH --mail-type=FAIL\n' + \
-            '#SBATCH --mail-user=malindgren@alaska.edu\n' + \
-            '#SBATCH -p viz\n'
+# Wrapper to run the hourly WRF netcdf structure improvement
+# improve the files in $BASE_DIR/hourly/<var>, output them
+# to $BASE_DIR/hourly_fix/<var>
 
-    with open( fn, 'w' ) as f:
-        f.write( head + '\n' + command + '\n' )
-    
-    slurm_path, basename = os.path.split( fn )
-    os.chdir( slurm_path )
-    subprocess.call([ 'sbatch', fn ])
+# designed to be run with:
+# $BASE_DIR=/rcs/project_data/wrf_data/wind-issue/hourly
+
+import argparse
+import os
+import subprocess
+from pathlib import Path
+
+
+def run(fn, command, ncpus=10):
+    ncpus = 32  # to hold the node
+    head = (
+        "#!/bin/sh\n"
+        + "#SBATCH --nodes=1\n"
+        + "#SBATCH --cpus-per-task={}\n".format(ncpus)
+        + "#SBATCH --account=snap\n"
+        + "#SBATCH --mail-type=FAIL\n"
+        + "#SBATCH --mail-user=kmredilla@alaska.edu\n"
+        + "#SBATCH -p main\n"
+    )
+
+    with open(fn, "w") as f:
+        f.write(head + "\n" + command + "\n")
+
+    slurm_path, basename = os.path.split(fn)
+    os.chdir(slurm_path)
+    subprocess.call(["sbatch", fn])
     return 1
 
-if __name__ == '__main__':
-    import subprocess, os
 
-    # # base directory
-    # base_dir = '/rcs/project_data/wrf_data/hourly'
-    # base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_data/hourly'
-    base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
-    # variables = ['acsnow', 'albedo', 'canwat', 'cldfra', 'cldfra_high', 'cldfra_low']
-    # variables = ['cldfra_mid',  'ght', 'hfx', 'lh', 'lwdnb', 'lwdnbc','lwupb',]
-    # variables = ['lwupbc', 'omega', 'pcpc', 'pcpnc', 'potevp','psfc']
-    # variables = ['psfc','seaice', 'sh2o', 'slp', 'smois',]
-    # variables = ['snow', 'snowc', 'snowh','qbot','tbot',]
-    # variables = ['swdnb', 'swdnbc', 'swupb', 'swupbc', ]
-    # variables = [ 'vegfra', 'u10', 'ubot', 'u',]
-    # variables = ['v10', 'vbot','q2']
-    variables = ['omega'] #'t', 'v','tslb','qvapor',  ]
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Improve the stacked hourly WRF data")
+    parser.add_argument(
+        "-v",
+        "--variables",
+        action="store",
+        dest="variables",
+        type=str,
+        help="String of WRF variables to work on separated by spaces",
+    )
+    parser.add_argument(
+        "-m",
+        "--model",
+        action="store",
+        dest="model",
+        type=str,
+        default="all",
+        help="Model to process: either 'era', 'gfdl', or 'ccsm'. Omit to run all models",
+    )
+    args = parser.parse_args()
+    variables = args.variables.split(" ")
+    model = args.model
 
-    slurm_dir = '/rcs/project_data/wrf_data/slurm'
-    if not os.path.exists( slurm_dir ):
-        os.makedirs( slurm_dir )
-    os.chdir( slurm_dir )
+    base_dir = Path(os.getenv("BASE_DIR"))
+    slurm_dir = base_dir.parent.joinpath("slurm")
+    slurm_dir.mkdir(exist_ok=True)
 
     for variable in variables:
-        if variable in ['acsnow','albedo','pcpt','sh2o','smois','swupbc']:
+        if variable in ["acsnow", "albedo", "pcpt", "sh2o", "smois", "swupbc"]:
             ncpus = 5
-        elif variable in ['cldfra']:
+        elif variable in ["cldfra"]:
             ncpus = 3
-        elif variable in ['qvapor','t','ght','omega', 'u', 'v', 'tslb']:
+        elif variable in ["qvapor", "t", "ght", "omega", "u", "v", "tslb"]:
             ncpus = 1
         else:
             ncpus = 10
 
-        command = ' '.join([ 'python', '/workspace/UA/malindgren/repos/wrf_utils/improve_hourly_netcdf_structure.py', '-b', base_dir, '-v', variable, '-n', str(ncpus) ])
-        fn = os.path.join( slurm_dir, '{}_improve_GFDL_hourlies_{}.slurm'.format(variable,'version_1_update') )
-        run( fn, command )
-
-
-
-# # OLD DIRECTORIES BEFORE MOVING TO RCS
-# base_dir = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_new_variables/hourly'
-# base_dir = '/rcs/project_data/wrf_data/hourly'
-# groupname = 'GFDL'
-# base_dir = '/storage01/malindgren/wrf_ccsm4/hourly'
-# base_dir = '/rcs/project_data/wrf_new_variables/hourly/ccsm4'
-# groupname = 'CCSM4'
-# variables = ['tsk','t2','pcpt']
+        command = " ".join(
+            [
+                'eval "$(conda shell.bash hook)"\nconda activate\n',
+                "python",
+                "/workspace/UA/kmredilla/wrf_utils/snap_wrf_data_prep/processing_pipeline/improve_hourly_netcdf_structure.py",
+                "-b",
+                str(base_dir),
+                "-v",
+                variable,
+                "-m",
+                model,
+                "-n",
+                str(ncpus),
+            ]
+        )
+        fn = os.path.join(
+            slurm_dir,
+            "{}_improve_hourlies_{}.slurm".format(variable, "version_1_update"),
+        )
+        run(fn, command)
