@@ -1,13 +1,18 @@
-# Remove stacked files from $SCRATCH_DIR,
-# if present in TARGET_DIR
+# pylint: disable=C0103, W0621
 
-# designed to be run with:
-# $SCRATCH_DIR=/atlas_scratch/kmredilla/WRF/wind-issue/restacked
-# $TARGET_DIR=/rcs/project_data/wrf_data/wind-issue/hourly
+"""Remove stacked files from $SCRATCH_DIR,
+if present in $OUTPUT_DIR/hourly
+
+Usage:
+    pipenv run python snap_wrf_data_prep/pipeline/cleanup_stacked_scratch.py
+
+Notes:
+    Requires $SCRATCH_DIR, OUTPUT_DIR
+    This was necessary at the time of reprocessing the wind data
+    given space constraints on /atlas_scratch
+"""
 
 import os
-import shutil
-import numpy as np
 from pathlib import Path
 
 
@@ -19,14 +24,15 @@ def get_filepaths_to_remove(scratch_dir, target_dir):
 
 
 def remove_file(fp):
-    print(f"{fp} is duplicate, removing.")
+    """Remove the file and print the filepath"""
+    print(f"{fp} is duplicated, removing.")
     rm_result = fp.unlink()
 
     return rm_result
 
 
 def run_move(scratch_fps, target_dir):
-    """Create and run move commands"""
+    """Remove files from scratch_dir if present in target_dir"""
     # filepaths to remove
     scratch_fps = get_filepaths_to_remove(scratch_dir, target_dir)
     # run the move
@@ -37,6 +43,6 @@ def run_move(scratch_fps, target_dir):
 
 if __name__ == "__main__":
     scratch_dir = Path(os.getenv("SCRATCH_DIR"))
-    target_dir = Path(os.getenv("TARGET_DIR"))
+    target_dir = Path(os.getenv("OUTPUT_DIR")).joinpath("hourly")
 
     move_results = run_move(scratch_dir, target_dir)

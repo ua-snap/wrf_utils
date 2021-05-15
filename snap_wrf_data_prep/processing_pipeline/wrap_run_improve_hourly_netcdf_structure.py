@@ -1,6 +1,6 @@
 # Wrapper to run the hourly WRF netcdf structure improvement
-# improve the files in $BASE_DIR/hourly/<var>, output them
-# to $BASE_DIR/hourly_fix/<var>
+# improve the files in $BASE_DIR/<var>, output them
+# to $BASE_DIR/../hourly_fix/<var>
 
 # designed to be run with:
 # $BASE_DIR=/rcs/project_data/wrf_data/wind-issue/hourly
@@ -22,10 +22,10 @@ def run(fn, command, ncpus=10):
         + "#SBATCH --mail-user=kmredilla@alaska.edu\n"
         + "#SBATCH -p main\n"
     )
-
+    
     with open(fn, "w") as f:
         f.write(head + "\n" + command + "\n")
-
+ 
     slurm_path, basename = os.path.split(fn)
     os.chdir(slurm_path)
     subprocess.call(["sbatch", fn])
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         elif variable in ["cldfra"]:
             ncpus = 3
         elif variable in ["qvapor", "t", "ght", "omega", "u", "v", "tslb"]:
-            ncpus = 1
+            ncpus = 2
         else:
             ncpus = 10
 
