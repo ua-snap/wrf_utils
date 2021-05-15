@@ -138,7 +138,7 @@ def flip_data_and_coords(ds, variable=None):
         variable = get_variable_name(ds)
 
     data = np.array(ds[variable])
-    x = ds["lon"].values
+    x =  ds[ 'lon' ].values
     y = np.flipud(ds["lat"].values)
 
     if len(data.shape) == 3:
@@ -179,6 +179,38 @@ def filelister(base_dir, model):
         return files
     else:
         return [fn for fn in files if model in fn]
+    
+    
+def discard_completed_files(base_dir, files, variable):
+    """Discard filenames corresponding to those that have already beed done"""
+    completed_fps = glob.glob(os.path.join(base_dir.replace("hourly", "hourly_fix"), variable, "*"))
+    split_fps = [fp.split("_") for fp in completed_fps]
+    years = [lst[-1].split(".")[0] for lst in split_fps]
+    scenarios = [lst[-2] for lst in split_fps]
+    models = [lst[-3] for lst in split_fps]
+    model_di = {
+        "ERA-Interim": "erain",
+        "GFDL-CM3": "gfdl",
+        "NCAR-CCSM4": "ccsm",
+    }
+    scenarios_di = {
+        "historical": "hist",
+        "rcp85": "rcp85",
+    }
+    
+    for year, scenario, model in zip(years, scenarios, models):
+        completed_fp = os.path.join(
+            base_dir, 
+            variable, 
+            f"{variable.upper()}_wrf_hourly_{model_di[model]}_{scenarios_di[scenario]}_{year}.nc"
+        )
+        if model == "ERA-Interim":
+            # stacked (hourly/) ERA Interim data do not have a scenario in filename
+            completed_fp = completed_fp.replace("_hist_", "_")
+        if completed_fp in files:
+            files.remove(completed_fp)
+    
+    return files
 
 
 def force_update_times_UTC(fn):
@@ -448,6 +480,7 @@ def run(fn, meta):
 
 
 if __name__ == "__main__":
+    import glob
     import numpy as np
     import xarray as xr
     from collections import OrderedDict
@@ -514,6 +547,11 @@ if __name__ == "__main__":
 
     # list the data -- some 4d groups need some special attention...
     files = sorted(list(set(filelister(os.path.join(base_dir, variable), model))))
+    # filter out files that have already been completed
+    files = discard_completed_files(base_dir, files, variable)
+    print("Files being worked on:")
+    for file in files:
+        print(file)
 
     # this file is the RAW output from WRF before Peter performs some cleanup of the data.  This is VERY IMPORTANT for proper file metadata
     wrf_raw_fn = "/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_raw_output_example/wrfout_d01_2025-07-10_00:00:00"

@@ -6,25 +6,33 @@
 # is for correcting the current issues with the
 # mis-rotated wind variables, where the "batch"
 # script failed to complete 
-# (probably caused by failed copy of output WRF file)
+# (potentially caused by failed copy of output WRF file)
 
 # arguments should be pass in the following order
+# year to process
 YEAR=$1
-GROUPDIR=$2
+# path to directory containing annual subdirectories of hourly WRF outputs 
+INPUT_DIR=$2
+# the group name corresponding to the model/scenario, 
+# one of erain, ccsm_hist, ccsm_rcp85, gfdl_hist, gfdl_rcp85 
 GROUPNAME=$3
-# e.g. 2004 gfdl/hist gfdl_hist
-# e.g. 1979 erain erain
-input_path=/storage01/pbieniek/${GROUPDIR}/hourly/${YEAR}
-output_path=/atlas_scratch/kmredilla/WRF/wind-issue/${GROUPNAME}/${YEAR}
-CPSCRIPTNAME=/workspace/UA/kmredilla/wrf_utils/snap_wrf_data_prep/processing_pipeline/copy_year_dione_to_atlas_scratch.py
-eval "$(conda shell.bash hook)"
-conda activate
-python ${CPSCRIPTNAME} -i $input_path -o $output_path;
-echo "copied:${YEAR}"
+
+# example usage:
+# source run_winds_single_year.sh 2010 /storage01/rtladerjr/gfdl/rcp85/hourly gfdl_rcp85
+# source run_winds_single_year.sh 1979 /storage01/rtladerjr/erain erain
+input_path=$GROUPDIR/$YEAR
+output_path=$SCRATCH_DIR/$GROUPNAME/$YEAR
+
+PIPE_DIR=$(dirname $(readlink -f $BASH_SOURCE))
+CPSCRIPTNAME=$PIPE_DIR/copy_year_dione_to_atlas_scratch.py
+
+PIPENV_DIR=$(dirname $PIPE_DIR)
+pipenv run python $CPSCRIPTNAME -i $input_path -o $output_path;
 wait
+echo "copied:${YEAR}"
 
 # # move to the proper pre-built .slurm files directory for the given year
-cd /atlas_scratch/kmredilla/WRF/wind-issue/restacked/slurm_scripts/${YEAR};
+cd $SCRATCH_DIR/slurm_scripts/${YEAR};
 
 jid01=$(sbatch U_${YEAR}_${GROUPNAME}.slurm);
 jid01=${jid01##* };
@@ -43,8 +51,9 @@ jobids=${jid01}:${jid02}:${jid03}:${jid04}:${jid05}:${jid06};
 depends=afterok:${jobids};
 
 # remove the directory after completion
-# RMSCRIPTNAME=/workspace/UA/kmredilla/wrf_utils/snap_wrf_data_prep/processing_pipeline/remove_dir_atlas_scratch.py;
-# RMDIRNAME=/atlas_scratch/kmredilla/WRF/wind-issue/${GROUPNAME}/${YEAR};
+RMSCRIPTNAME=$PIPE_DIR/remove_dir_atlas_scratch.py;
+RMDIRNAME=$SCRATCH_DIR/$GROUPNAME/$YEAR;
 
-# srun -n 1 -p main --dependency=${depends} python ${RMSCRIPTNAME} -i ${RMDIRNAME};
-# echo removed:${RMDIRNAME};
+cd $PIPENV_DIR
+srun -n 1 -p main --dependency=$depends python $RMSCRIPTNAME -i $RMDIRNAME;
+echo removed:$RMDIRNAME;

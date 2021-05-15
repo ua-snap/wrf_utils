@@ -1,17 +1,22 @@
-# Move stacked files from $SCRATCH_DIR,
-# containing the directories named by variable,
-# to $TARGET_DIR
+"""Move stacked files from $SCRATCH_DIR/hourly,
+containing the directories named by variable,
+to $OUTPUT_DIR/hourly
 
-# designed to be run with:
-# $SCRATCH_DIR=/atlas_scratch/kmredilla/WRF/wind-issue/restacked
-# $TARGET_DIR=/rcs/project_data/wrf_data/wind-issue/hourly
+Usage:
+    pipenv run python snap_wrf_data_prep/pipeline/move_stacked_from_scratch.py [-p] [-d] -n <number of CPUs>
+
+Notes:
+    Requires SCRATCH_DIR, OUTPUT_DIR
+    It may be possible that using too many CPUs could cause
+    lockups / race conditions with writing if the -d flag is used.
+"""
 
 import argparse
 import os
 import shutil
-import numpy as np
 from multiprocessing import Pool
 from pathlib import Path
+import numpy as np
 
 
 def get_filepaths_to_move(scratch_dir, target_dir):
@@ -22,7 +27,7 @@ def get_filepaths_to_move(scratch_dir, target_dir):
 
 
 def partition_filepaths(scratch_fps):
-    """Partition filepaths into groups based on parent dir"""
+    """Partition filepaths into groups based on parent dir (i.e., by variable)"""
     subdirs = np.unique([fp.parent.name for fp in scratch_fps])
 
     return [
@@ -123,8 +128,8 @@ if __name__ == "__main__":
     if parallel_vars:
         dangerous_parallel = False
 
-    scratch_dir = Path(os.getenv("SCRATCH_DIR"))
-    target_dir = Path(os.getenv("TARGET_DIR"))
+    scratch_dir = Path(os.getenv("SCRATCH_DIR")).joinpath("hourly")
+    target_dir = Path(os.getenv("OUTPUT_DIR")).joinpath("hourly")
 
     mv_results = run_move(
         scratch_dir, target_dir, parallel_vars, dangerous_parallel, ncpus
