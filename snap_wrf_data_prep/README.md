@@ -20,16 +20,22 @@ The pipeline makes use of the following environmental variables:
     - `NCAR_CCSM4_DIR`: RCP 8.5 NCAR-CCSM4
 * `OUTPUT_DIR`: directory for writing stacked and improved data (`/hourly/` and `/hourly_fix/` are created here)
 
-### Running the pipeline to repair the winds issue
+The pipeline also relies on the following files that should be copied to the proper locations:
 
-**For SNAP purposes only**
+* a template file, preferably a monthly WRF output file, in `$SCRATCH_DIR/`
+* An ancillary WRF file, named `geo_em.d01.nc`, saved in `$BASE_DIR/ancillary_wrf_constants/`
 
-The pipeline was modified during Q1 and Q2 of 2021 to facilitate execution of the processing code on only the variables needed - `u`, `v`, `u10`, `v10`, `ubot`, and `vbot`. 
+The standard order for running the scripts in `pipeline` should be as follows:
 
-The python used to install
+1. `get_date_forecast_time_from_raw_hourly.py`
+2. `make_variable_sbatch_by_year.py`
+3. `run_allvars_dependency_full_<model_scenario>.sh` (order of models/scenarios should not matter)
+4. `move_stacked_from_scratch`
+5. `wrap_run_improve_hourly_netcdf_structure.py`
 
-It was run with the following environmental variable configuration: 
+In case there are remaining files on the scratch space for logistical reasons, `cleanup_stacked_scratch` can be used to clean them up. 
 
-`BASE_DIR=/workspace/Shared/Tech_Projects/wrf_data`
-`SCRATCH_DIR=/atlas_scratch/kmredilla/WRF/wind-issue`
+The `wrap_run_move_aws_s3*.py` scripts can be used to transfer the processed data to an S3 bucket. 
+
+**Note** - there are files here (e.g. `get_date_forecast_time_from_raw_hourly.py`) that have not been brought up to the same standard as others (e.g. `stack_hourly_variable_year.py`, and may need to be modified to function correctly.
 

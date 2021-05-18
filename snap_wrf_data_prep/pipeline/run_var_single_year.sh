@@ -30,6 +30,7 @@ PIPE_DIR=$(dirname $(readlink -f $BASH_SOURCE))
 CPSCRIPTNAME=$PIPE_DIR/copy_year_dione_to_atlas_scratch.py
 
 PIPENV_DIR=$(dirname $PIPE_DIR)
+cd $PIPENV_DIR;
 pipenv run python $CPSCRIPTNAME -i $input_path -o $output_path;
 wait
 echo "copied:${YEAR}"
@@ -39,12 +40,12 @@ cd $SCRATCH_DIR/slurm_scripts/${YEAR};
 source ${VAR}_${YEAR}_${GROUPNAME}.slurm
 
 cd $PIPENV_DIR;
-python ${SCRIPTNAME} -i ${INPATH} -id ${DIONEPATH} -y ${YEAR} -f ${FILES_DF_FN} -v ${VARIABLE} -o ${OUTPUT_FILENAME} -t ${TEMPLATE_FN} -a ${ANCILLARY_FN}
+pipenv run python ${SCRIPTNAME} -i ${INPATH} -id ${DIONEPATH} -y ${YEAR} -f ${FILES_DF_FN} -v ${VARIABLE} -o ${OUTPUT_FILENAME} -t ${TEMPLATE_FN} -a ${ANCILLARY_FN}
 wait
 echo "${VAR} ${YEAR} ${GROUPNAME} stacked."
 
 # remove the directory after completion
-RMSCRIPTNAME=$PIPE_DIR/remove_dir_atlas_scratch.py;
+RMSCRIPTNAME=snap_wrf_data_prep/pipeline/remove_dir_atlas_scratch.py;
 RMDIRNAME=$SCRATCH_DIR/$GROUPNAME/$YEAR;
 
 pipenv run python $RMSCRIPTNAME -i $RMDIRNAME

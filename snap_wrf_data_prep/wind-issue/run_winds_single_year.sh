@@ -19,7 +19,7 @@ GROUPNAME=$3
 
 # example usage:
 # source run_winds_single_year.sh 2010 /storage01/rtladerjr/gfdl/rcp85/hourly gfdl_rcp85
-# source run_winds_single_year.sh 1979 /storage01/rtladerjr/erain erain
+# source run_winds_single_year.sh 1979 /storage01/pbieniek/erain/hourly erain
 input_path=$GROUPDIR/$YEAR
 output_path=$SCRATCH_DIR/$GROUPNAME/$YEAR
 
@@ -27,6 +27,7 @@ PIPE_DIR=$(dirname $(readlink -f $BASH_SOURCE))
 CPSCRIPTNAME=$PIPE_DIR/copy_year_dione_to_atlas_scratch.py
 
 PIPENV_DIR=$(dirname $PIPE_DIR)
+cd $PIPENV_DIR;
 pipenv run python $CPSCRIPTNAME -i $input_path -o $output_path;
 wait
 echo "copied:${YEAR}"
@@ -51,9 +52,9 @@ jobids=${jid01}:${jid02}:${jid03}:${jid04}:${jid05}:${jid06};
 depends=afterok:${jobids};
 
 # remove the directory after completion
-RMSCRIPTNAME=$PIPE_DIR/remove_dir_atlas_scratch.py;
+RMSCRIPTNAME=snap_wrf_data_prep/pipeline/remove_dir_atlas_scratch.py;
 RMDIRNAME=$SCRATCH_DIR/$GROUPNAME/$YEAR;
 
 cd $PIPENV_DIR
-srun -n 1 -p main --dependency=$depends python $RMSCRIPTNAME -i $RMDIRNAME;
+srun -n 1 -p main --dependency=$depends pipenv run python $RMSCRIPTNAME -i $RMDIRNAME;
 echo removed:$RMDIRNAME;

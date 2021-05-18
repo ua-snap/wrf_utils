@@ -7,6 +7,9 @@ name = "pypi"
 xarray = "*"
 rasterio = "*"
 matplotlib = "*"
+pyproj = "*"
+ipykernel = "*"
+netcdf4 = "*"
 
 [dev-packages]
 

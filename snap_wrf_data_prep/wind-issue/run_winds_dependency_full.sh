@@ -7,7 +7,7 @@ output_path=$SCRATCH_DIR/$GROUPNAME/$FIRSTYEAR
 PIPENV_DIR=$(dirname $PIPE_DIR)
 
 # make sure the first year is already moved over before we loop
-cd $PIPENV_DIR
+cd $PIPENV_DIR;
 CPSCRIPTNAME=snap_wrf_data_prep/pipeline/copy_year_dione_to_atlas_scratch.py
 pipenv run python ${CPSCRIPTNAME} -i $input_path -o $output_path;
 wait
@@ -22,7 +22,8 @@ for (( year=${FIRSTYEAR}; year<=${ENDYEAR}; year++ ));
             let CPYEAR=${year}+1;
             input_path=$INPUT_DIR/${CPYEAR};
             output_path=$SCRATCH_DIR/${GROUPNAME}/${CPYEAR};
-            python ${CPSCRIPTNAME} -i ${input_path} -o ${output_path};
+            cd $PIPENV_DIR;
+            pipenv run python ${CPSCRIPTNAME} -i ${input_path} -o ${output_path};
             echo ${input_path};
             echo ${output_path};
             echo 'copied':${CPYEAR};
@@ -54,13 +55,13 @@ for (( year=${FIRSTYEAR}; year<=${ENDYEAR}; year++ ));
         cd $PIPENV_DIR;
         if [ ${year} -gt ${YEARTEST} ]
         then
-            RMSCRIPTNAME=$snap_wrf_data_prep/pipeline/remove_dir_atlas_scratch.py;
+            RMSCRIPTNAME=snap_wrf_data_prep/pipeline/remove_dir_atlas_scratch.py;
             RMDIRNAME=$SCRATCH_DIR/${GROUPNAME}/${RMYEAR};
             srun -n 1 -p main --dependency=${depends} pipenv run python ${RMSCRIPTNAME} -i ${RMDIRNAME};
             wait
             echo removed:${RMDIRNAME};
         else
-            SCRIPTNAMENOTHING=$snap_wrf_data_prep/pipeline/do_nothing_slurm.py;
+            SCRIPTNAMENOTHING=snap_wrf_data_prep/pipeline/do_nothing_slurm.py;
             srun -n 1 -p main --dependency=${depends} pipenv run python ${SCRIPTNAMENOTHING};
             wait
             echo "no directory removal";
