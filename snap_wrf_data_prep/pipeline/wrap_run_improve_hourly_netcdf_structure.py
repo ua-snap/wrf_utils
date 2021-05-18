@@ -1,9 +1,22 @@
+# pylint: disable=C0103, W0621
+
+"""Run the improvement step of the pipeline to
+created copies of the stacked data with user-friendly
+file structure
+
+Usage:
+    pipenv run python snap_wrf_data_prep/pipeline/wrap_run_improve_hourly_netcdf_structure.py -v <variable names> -m <model>
+
+Returns:
+    Improved stacked data written to $OUTPUT_DIR/hourly_fix
+"""
+
 # Wrapper to run the hourly WRF netcdf structure improvement
-# improve the files in $BASE_DIR/<var>, output them
-# to $BASE_DIR/../hourly_fix/<var>
+# improve the files in $OUPUT_DIR/hourly/<var>, output them
+# to $OUTPUT_DIR/../hourly_fix/<var>
 
 # designed to be run with:
-# $BASE_DIR=/rcs/project_data/wrf_data/wind-issue/hourly
+# $OUTPUT_DIR=/rcs/project_data/wrf_data/wind-issue/
 
 import argparse
 import os
@@ -11,21 +24,22 @@ import subprocess
 from pathlib import Path
 
 
-def run(fn, command, ncpus=10):
+def run(fn, command, slurm_email, ncpus=10):
+    """Run the improvement script for a particular variable and model"""
     ncpus = 32  # to hold the node
     head = (
         "#!/bin/sh\n"
         + "#SBATCH --nodes=1\n"
-        + "#SBATCH --cpus-per-task={}\n".format(ncpus)
+        + f"#SBATCH --cpus-per-task={ncpus}\n"
         + "#SBATCH --account=snap\n"
         + "#SBATCH --mail-type=FAIL\n"
-        + "#SBATCH --mail-user=kmredilla@alaska.edu\n"
+        + f"#SBATCH --mail-user={slurm_email}\n"
         + "#SBATCH -p main\n"
     )
-    
+
     with open(fn, "w") as f:
         f.write(head + "\n" + command + "\n")
- 
+
     slurm_path, basename = os.path.split(fn)
     os.chdir(slurm_path)
     subprocess.call(["sbatch", fn])
@@ -55,9 +69,11 @@ if __name__ == "__main__":
     variables = args.variables.split(" ")
     model = args.model
 
-    base_dir = Path(os.getenv("BASE_DIR"))
-    slurm_dir = base_dir.parent.joinpath("slurm")
+    out_dir = Path(os.getenv("OUTPUT_DIR"))
+    slurm_email = os.getenv("SLURM_EMAIL")
+    slurm_dir = out_dir.parent.joinpath("slurm")
     slurm_dir.mkdir(exist_ok=True)
+    pipenv_dir = os.getcwd()
 
     for variable in variables:
         if variable in ["acsnow", "albedo", "pcpt", "sh2o", "smois", "swupbc"]:
@@ -69,23 +85,24 @@ if __name__ == "__main__":
         else:
             ncpus = 10
 
-        command = " ".join(
-            [
-                'eval "$(conda shell.bash hook)"\nconda activate\n',
-                "python",
-                "/workspace/UA/kmredilla/wrf_utils/snap_wrf_data_prep/processing_pipeline/improve_hourly_netcdf_structure.py",
-                "-b",
-                str(base_dir),
-                "-v",
-                variable,
-                "-m",
-                model,
-                "-n",
-                str(ncpus),
-            ]
+        command = (
+            f"cd {pipenv_dir}\n"
+            + " ".join(
+                [
+                    "pipenv run python ",
+                    f"{pipenv_dir}/snap_wrf_data_prep/pipeline/improve_hourly_netcdf_structure.py",
+                    "-b",
+                    str(out_dir.joinpath("hourly")),
+                    "-v",
+                    variable,
+                    "-m",
+                    model,
+                    "-n",
+                    str(ncpus),
+                ]
+            ),
         )
         fn = os.path.join(
-            slurm_dir,
-            "{}_improve_hourlies_{}.slurm".format(variable, "version_1_update"),
+            slurm_dir, f"{variable}_improve_hourlies_version_1_update.slurm"
         )
-        run(fn, command)
+        run(fn, command, slurm_email, ncpus)
