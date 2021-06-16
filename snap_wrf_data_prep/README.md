@@ -33,7 +33,7 @@ The standard order for running the scripts in `pipeline` should be as follows:
 4. `move_stacked_from_scratch.py`
 5. `wrap_run_improve_hourly_netcdf_structure.py`
 
-In case there are remaining files on the scratch space for logistical reasons, `cleanup_stacked_scratch` can be used to clean them up. 
+In case there are remaining files on the scratch space for logistical reasons, `cleanup_stacked_scratch.py` can be used to clean them up. 
 
 The `wrap_run_move_aws_s3*.py` scripts can be used to transfer the processed data to an S3 bucket. 
 
