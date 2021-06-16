@@ -19,6 +19,7 @@ Notes:
 import argparse
 import itertools
 import os
+import numpy as np
 
 
 def write_batch(
@@ -110,57 +111,61 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    valid_variables = [
+        "ACSNOW",
+        "T2",
+        "CANWAT",
+        "CLDFRA",
+        "HFX",
+        "LH",
+        "LWDNB",
+        "LWUPB",
+        "PCPC",
+        "PCPNC",
+        "PCPT",
+        "POTEVP",
+        "QBOT",
+        "Q2",
+        "SNOW",
+        "QVAPOR",
+        "SNOWC",
+        "SNOWH",
+        "SWUPB",
+        "SWDNB",
+        "TSLB",
+        "ALBEDO",
+        "VEGFRA",
+        "CLDFRA_HIGH",
+        "CLDFRA_LOW",
+        "CLDFRA_MID",
+        "LWUPBC",
+        "LWDNBC",
+        "GHT",
+        "OMEGA",
+        "PSFC",
+        "SLP",
+        "SH2O",
+        "SEAICE",
+        "SWUPBC",
+        "SMOIS",
+        "SWDNBC",
+        "TBOT",
+        "TSK",
+        "T",
+        "U",
+        "V",
+        "U10",
+        "V10",
+        "UBOT",
+        "VBOT",
+    ]
+
     if len(args.variables) > 0:
         variables = args.variables.split(" ")
+        if not np.all([var in valid_variables for var in variables]):
+            exit("One or more variable names supplied is incorrect")
     else:
-        variables = [
-            "ACSNOW",
-            "T2",
-            "CANWAT",
-            "CLDFRA",
-            "HFX",
-            "LH",
-            "LWDNB",
-            "LWUPB",
-            "PCPC",
-            "PCPNC",
-            "PCPT",
-            "POTEVP",
-            "QBOT",
-            "Q2",
-            "SNOW",
-            "QVAPOR",
-            "SNOWC",
-            "SNOWH",
-            "SWUPB",
-            "SWDNB",
-            "TSLB",
-            "ALBEDO",
-            "VEGFRA",
-            "CLDFRA_HIGH",
-            "CLDFRA_LOW",
-            "CLDFRA_MID",
-            "LWUPBC",
-            "LWDNBC",
-            "GHT",
-            "OMEGA",
-            "PSFC",
-            "SLP",
-            "SH2O",
-            "SEAICE",
-            "SWUPBC",
-            "SMOIS",
-            "SWDNBC",
-            "TBOT",
-            "TSK",
-            "T",
-            "U",
-            "V",
-            "U10",
-            "V10",
-            "UBOT",
-            "VBOT",
-        ]
+        variables = valid_variables
 
     slurm_email = os.getenv("SLURM_EMAIL")
     base_dir = os.getenv("BASE_DIR")

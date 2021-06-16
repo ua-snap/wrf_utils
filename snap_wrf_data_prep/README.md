@@ -1,8 +1,8 @@
 # SNAP WRF data prep
 
-This subdirectory was created to restructure the raw WRF outputs to improve useability and subsequently place them in an [AWS OpenData S3 bucket](http://wrf-ak-ar5.s3-website-us-east-1.amazonaws.com/) (metadata [here](http://ckan.snap.uaf.edu/dataset/historical-and-projected-dynamically-downscaled-climate-data-for-the-state-of-alaska-and-surrou)).
+This subdirectory was created to restructure the raw WRF outputs to improve usability and subsequently place them in an [AWS OpenData S3 bucket](http://wrf-ak-ar5.s3-website-us-east-1.amazonaws.com/) (metadata [here](http://ckan.snap.uaf.edu/dataset/historical-and-projected-dynamically-downscaled-climate-data-for-the-state-of-alaska-and-surrou)).
 
-Use the scripts contained in this subdirectory and in `pipeline/` to execute the post-processing. 
+Use the scripts contained in this subdirectory and in `pipeline/` to execute the post-processing, following the instructions in the next section. 
 
 ## Running the pipeline
 
@@ -17,7 +17,7 @@ The pipeline makes use of the following environmental variables:
     - `GFDL_HIST_DIR`: Hisotrical GFDL-CM3
     - `CCSM_HIST_DIR`: Historical NCAR-CCSM4
     - `GFDL_RCP85_DIR`: RCP 8.5 GFDL-CM3
-    - `NCAR_CCSM4_DIR`: RCP 8.5 NCAR-CCSM4
+    - `CCSM4_RCP85_DIR`: RCP 8.5 NCAR-CCSM4
 * `OUTPUT_DIR`: directory for writing stacked and improved data (`/hourly/` and `/hourly_fix/` are created here)
 
 The pipeline also relies on the following files that should be copied to the proper locations:
@@ -30,7 +30,7 @@ The standard order for running the scripts in `pipeline` should be as follows:
 1. `get_date_forecast_time_from_raw_hourly.py`
 2. `make_variable_sbatch_by_year.py`
 3. `run_allvars_dependency_full_<model_scenario>.sh` (order of models/scenarios should not matter)
-4. `move_stacked_from_scratch`
+4. `move_stacked_from_scratch.py`
 5. `wrap_run_improve_hourly_netcdf_structure.py`
 
 In case there are remaining files on the scratch space for logistical reasons, `cleanup_stacked_scratch` can be used to clean them up. 
@@ -39,3 +39,8 @@ The `wrap_run_move_aws_s3*.py` scripts can be used to transfer the processed dat
 
 **Note** - there are files here (e.g. `get_date_forecast_time_from_raw_hourly.py`) that have not been brought up to the same standard as others (e.g. `stack_hourly_variable_year.py`, and may need to be modified to function correctly.
 
+## wind-issue
+
+This subdirectory contains some pipeline scripts that have been modified to work on only the wind variables instead of all variables (default config).
+
+To implement, only the step 3. in the above pipeline execution order needs to be substituted for one of the scripts herein, such as `run_winds_dependency_full_erain.sh`.

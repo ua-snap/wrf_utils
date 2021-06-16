@@ -23,7 +23,7 @@ VAR=$4
 # example usage:
 # source run_winds_single_year.sh 2010 /storage01/rtladerjr/gfdl/rcp85/hourly gfdl_rcp85 U10
 # source run_winds_single_year.sh 1979 /storage01/rtladerjr/erain erain VBOT
-input_path=$GROUPDIR/$YEAR
+input_path=$INPUT_DIR/$YEAR
 output_path=$SCRATCH_DIR/$GROUPNAME/$YEAR
 
 PIPE_DIR=$(dirname $(readlink -f $BASH_SOURCE))

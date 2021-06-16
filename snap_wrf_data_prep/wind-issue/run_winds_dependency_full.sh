@@ -30,7 +30,7 @@ for (( year=${FIRSTYEAR}; year<=${ENDYEAR}; year++ ));
         fi
 
         # # move to the proper pre-built .slurm files directory for the given year
-        cd $SCRATCH_DIR/slurm_scripts/$year;
+        cd $SCRATCH_DIR/stacked/slurm_scripts/$year;
 
         jid01=$(sbatch U_${year}_${GROUPNAME}.slurm);
         jid01=${jid01##* };
