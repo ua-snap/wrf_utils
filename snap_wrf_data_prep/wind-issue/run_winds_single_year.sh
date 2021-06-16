@@ -20,20 +20,20 @@ GROUPNAME=$3
 # example usage:
 # source run_winds_single_year.sh 2010 /storage01/rtladerjr/gfdl/rcp85/hourly gfdl_rcp85
 # source run_winds_single_year.sh 1979 /storage01/pbieniek/erain/hourly erain
-input_path=$GROUPDIR/$YEAR
+input_path=$INPUT_DIR/$YEAR
 output_path=$SCRATCH_DIR/$GROUPNAME/$YEAR
 
-PIPE_DIR=$(dirname $(readlink -f $BASH_SOURCE))
+PIPE_DIR=$(dirname $(dirname $(readlink -f $BASH_SOURCE)))/pipeline
 CPSCRIPTNAME=$PIPE_DIR/copy_year_dione_to_atlas_scratch.py
 
-PIPENV_DIR=$(dirname $PIPE_DIR)
+PIPENV_DIR=$(dirname $(dirname $PIPE_DIR))
 cd $PIPENV_DIR;
 pipenv run python $CPSCRIPTNAME -i $input_path -o $output_path;
 wait
 echo "copied:${YEAR}"
 
 # # move to the proper pre-built .slurm files directory for the given year
-cd $SCRATCH_DIR/slurm_scripts/${YEAR};
+cd $SCRATCH_DIR/stacked/slurm_scripts/${YEAR};
 
 jid01=$(sbatch U_${YEAR}_${GROUPNAME}.slurm);
 jid01=${jid01##* };
