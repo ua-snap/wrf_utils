@@ -35,6 +35,7 @@ def run(fn, command, slurm_email, ncpus=10):
         + "#SBATCH --mail-type=FAIL\n"
         + f"#SBATCH --mail-user={slurm_email}\n"
         + "#SBATCH -p main\n"
+        + 'eval "$(conda shell.bash hook)"'
     )
 
     with open(fn, "w") as f:
@@ -89,7 +90,7 @@ if __name__ == "__main__":
             f"cd {pipenv_dir}\n"
             + " ".join(
                 [
-                    "pipenv run python ",
+                    "anaconda-project run python",
                     f"{pipenv_dir}/snap_wrf_data_prep/pipeline/improve_hourly_netcdf_structure.py",
                     "-b",
                     str(out_dir.joinpath("hourly")),
@@ -100,9 +101,10 @@ if __name__ == "__main__":
                     "-n",
                     str(ncpus),
                 ]
-            ),
+            )
         )
         fn = os.path.join(
             slurm_dir, f"{variable}_improve_hourlies_version_1_update.slurm"
         )
+        
         run(fn, command, slurm_email, ncpus)

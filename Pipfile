@@ -8,8 +8,8 @@ xarray = "*"
 rasterio = "*"
 matplotlib = "*"
 pyproj = "*"
-ipykernel = "*"
 netcdf4 = "*"
+ipykernel = "*"
 
 [dev-packages]
 
