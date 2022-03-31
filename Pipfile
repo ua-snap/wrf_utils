@@ -10,6 +10,8 @@ matplotlib = "*"
 pyproj = "*"
 netcdf4 = "*"
 ipykernel = "*"
+requests = "*"
+tqdm = "*"
 
 [dev-packages]
 

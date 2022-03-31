@@ -3,3 +3,5 @@
 
 # anaconda-project env
 envs/
+
+**/__pycache__/
