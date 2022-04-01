@@ -54,11 +54,11 @@ if __name__ == "__main__":
     dst_dir = Path(args.dst_dir)
     ncpus = args.ncpus
 
-    year = src_dir.parent.name
-    print(f"Copying files for {dst_dir.parent.parent.name}, {year} to {dst_dir}", flush=True, end="...")
+    year = src_dir.name
+    print(f"Copying files from {src_dir} to {dst_dir}", flush=True, end="...")
     tic = time.perf_counter()
     
-    fp_pairs = [(fp, dst_dir.joinpath(fp.name)) for fp in src_dir.glob("*.nc")
+    fp_pairs = [(fp, dst_dir.joinpath(fp.name)) for fp in src_dir.glob("*.nc")]
     with Pool(ncpus) as p:
         out = p.starmap(sys_copy, fp_pairs)
 
