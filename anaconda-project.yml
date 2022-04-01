@@ -27,6 +27,12 @@ description: code for working with WRF outputs, including post-processing 20 km 
 # Use `anaconda-project add-command` to add commands.
 #
 commands:
+  restack_20km:
+    unix: restack_20km/restack_20km.ipynb
+    env_spec: default
+  remote_lab:
+    unix: jupyter lab --no-browser --port=8888
+    env_spec: default
 
 #
 # In the variables section, list any environment variables your code depends on.
@@ -54,15 +60,19 @@ downloads: {}
 # Use `anaconda-project add-packages` to add packages.
 #
 packages:
+- python=3.8.3=hcff3b4d_2
 - jupyterlab
-
 - xarray
-- python=3.7
 - rasterio
 - matplotlib
 - pyproj
 - netcdf4
 - tqdm
+- libgdal>=2.1.0
+# issue on dev machine
+- zlib=1.2.11=h7b6447c_3
+- ipywidgets
+
 #
 # In the channels section, list any Conda channel URLs to be searched
 # for packages.
@@ -72,7 +82,9 @@ packages:
 # channels:
 #    - mychannel
 #
-channels: []
+channels:
+- conda-forge
+- default
 
 #
 # In the platforms section, list platforms the project should work on

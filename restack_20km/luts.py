@@ -1,4 +1,4 @@
-"""Lookup tables for stacking the WRF data.
+"""Lookup tables for re-stacking the WRF data.
 
 """
 
