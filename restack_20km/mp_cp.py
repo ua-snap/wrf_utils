@@ -59,6 +59,7 @@ if __name__ == "__main__":
     tic = time.perf_counter()
     
     fp_pairs = [(fp, dst_dir.joinpath(fp.name)) for fp in src_dir.glob("*.nc")]
+    
     with Pool(ncpus) as p:
         out = p.starmap(sys_copy, fp_pairs)
 

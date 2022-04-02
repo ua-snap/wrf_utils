@@ -1,6 +1,8 @@
 """Functions for running the restack_20km pipeline"""
 
+import os
 import subprocess
+import numpy as np
 import xarray as xr
 
 
@@ -30,8 +32,7 @@ def get_wrf_fps(wrf_dir, years):
     """Get all of the hourly WRF output filepaths for given
     wrf directory and years
     
-    wrf_dir (pathlib.PosixPath): path to the directory containing daily WRF files
-        of hourly outputs
+    wrf_dir (pathlib.PosixPath): path to the directory containing hourly WRF files
     years (list): list of years to get filepaths for
     
     Returns:
@@ -48,6 +49,14 @@ def test_file_equivalence(fp1, fp2, heads=False, detail=False):
     """Check that fp1 and fp2 have the same 
     size (and "header" info if heads), 
     return bool (or dict of bools if detail)
+    
+    fp1 (pathlib.PosixPath): path to first file
+    fp2 (pathlib.PosixPath): path to second file to test equivalence
+    head (bool): test that the "headers" of the files are the same
+    detail (bool): return more info on what specfic equivalence tests failed
+    
+    Returns:
+        bool or dict indicating equivalence of files
     """
     if fp1 == fp2:
         raise ValueError("fp1 and fp2 must be different")
@@ -134,9 +143,9 @@ def write_sbatch_copyto_scratch(sbatch_fp, sbatch_out_fp, src_dir, dst_dir, cp_s
     Args:
         sbatch_fp (str/pathlike): path to .slurm script to write sbatch commands to
         sbatch_out_fp (str/pathlike): path to where sbatch stdout should be written
-        src_dir (str/pathlike): path to annual directory containing daily WRF files
-            of hourly outputs to copy
-        dst_dir (str/pathlike): path to annual directory where daily WRF files will
+        src_dir (str/pathlike): path to annual directory containing hourly WRF files
+            to copy
+        dst_dir (str/pathlike): path to annual directory where hourly WRF files will
             be copied
         cp_script (str/path-like): path to the script to be called to run the
             copy for a given subset
@@ -215,3 +224,34 @@ def submit_sbatch(sbatch_fp):
     job_id = out.decode().replace("\n", "").split(" ")[-1]
     
     return job_id
+
+
+def sys_copy(args):
+    """Copy function for running the copy in the pipeline instead of via slurm
+    
+    Args:
+        args (tuple): tuple of args for unpacking for use with multiprocessing.Pool:
+            (src_fp, dst_fp, clobber):
+                src_fp (str): path to file to be copied
+                dst_fp (str): destination path to copy file to
+                clobber (str): one of "filesize", "head", or False, indicating whether to
+                    clobber only after finding that file sizes are different, file headers
+                    are different, or don't clobber, respectively. 
+
+    Returns:
+        output from os.system call to cp utility
+    """
+    src_fp, dst_fp, clobber = args
+    if clobber:
+        if clobber == "filesize":
+            if not test_file_equivalence(src_fp, dst_fp):
+                return os.system(f"cp {src_fp} {dst_fp}")
+            else:
+                return
+        elif clobber == "head":
+            if not test_file_equivalence(src_fp, dst_fp, head=True):
+                return os.system(f"cp {src_fp} {dst_fp}")
+            else:
+                return
+    else:
+        return os.system(f"cp -n {src_fp} {dst_fp}")
