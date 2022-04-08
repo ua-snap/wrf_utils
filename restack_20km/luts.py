@@ -9,19 +9,19 @@ import numpy as np
 # to other useful info.
 groups = {
     "erain_hist": {
-        "years": np.arange(1979, 2018)
+        "years": np.arange(1979, 2019)
     },
     "gfdl_hist": {
-        "years": np.arange(1970, 2006)
+        "years": np.arange(1970, 2007)
     },
     "ccsm_hist": {
-        "years": np.arange(1970, 2005)
+        "years": np.arange(1970, 2006)
     },
     "gfdl_rcp85": {
-        "years": np.arange(2006, 2100)
+        "years": np.arange(2006, 2101)
     },
     "ccsm_rcp85": {
-        "years": np.arange(2005, 2100)
+        "years": np.arange(2005, 2101)
     },
 }
 
