@@ -1,9 +1,15 @@
 """Functions for running the restack_20km pipeline"""
 
 import os
+import shutil
 import subprocess
+from multiprocessing import Pool
 import numpy as np
+import pandas as pd
 import xarray as xr
+
+
+# functions below this point derived from copy-to-scratch step
 
 
 def validate_group(wrf_dir, group):
@@ -81,31 +87,64 @@ def test_file_equivalence(fp1, fp2, heads=False, detail=False):
 
     else:
         return sizes_equal
-    
-    
-def check_raw_scratch(wrf_dir, group, years, raw_scratch_dir):
-    """Check to see the number of requested WRF files in the raw scratch directory"""
-    wrf_fps = get_wrf_fps(wrf_dir, years)
+
+
+def check_raw_scratch_file(wrf_fp, group, raw_scratch_dir):
+    scratch_fp = raw_scratch_dir.joinpath(group, wrf_fp.parent.name, wrf_fp.name)
+    if scratch_fp.exists():
+        if test_file_equivalence(wrf_fp, scratch_fp):
+            return scratch_fp
+        else:
+            return None
+
+
+def check_raw_scratch(wrf_dir, group, years, raw_scratch_dir, ncpus=24):
+    """Check to see the number of requested WRF files in the raw scratch directory """
+    # see if we can pool this?
     existing_scratch_fps = []
-    for fp in wrf_fps:
-        scratch_fp = raw_scratch_dir.joinpath(group, fp.parent.name, fp.name)
-        if scratch_fp.exists():
-            if test_file_equivalence(fp, scratch_fp):
-                existing_scratch_fps.append(scratch_fp)
-    print((
-        f"{len(existing_scratch_fps)} of {len(wrf_fps)} requested "
-        f"WRF output files found in {raw_scratch_dir}."
-    ))
-    
+    for year in years:
+        wrf_fps = get_wrf_fps(wrf_dir, [year])
+        args = [(fp, group, raw_scratch_dir) for fp in wrf_fps]
+        with Pool(ncpus) as pool:
+            existing_scratch_fps.extend(pool.starmap(check_raw_scratch_file, args))
+    # discard Nones
+    existing_scratch_fps = [fp for fp in existing_scratch_fps if fp is not None]
+
+    # get list of filenames existing on scratch
+    if len(existing_scratch_fps) == 0:
+        print("No files from specified years found in scratch_dir")
+    else:
+        existing_scratch_fns = [fp.name for fp in existing_scratch_fps]
+        wrf_year_list = [int(fp.parent.name) for fp in wrf_fps]
+        unique_years_tpl = np.unique(
+            wrf_year_list, return_index=True, return_counts=True
+        )
+        # unique_years and years should be the same
+        assert sorted(unique_years_tpl[0]) == sorted(years)
+
+        # iterate over unique years indices in wrf_fps and ensure all files for that year are present
+        years_on_scratch = []
+        years_not_on_scratch = []
+        for year, i, count in zip(*unique_years_tpl):
+            idx = np.arange(i, i + count)
+            year_on_scratch = np.all(
+                [wrf_fps[j].name in existing_scratch_fns for j in idx]
+            )
+            if year_on_scratch:
+                years_on_scratch.append(year)
+            else:
+                years_not_on_scratch.append(year)
+
+        print(f"Years with all files present on scratch space: {years_on_scratch}")
+        print(f"Years with files missing from scratch space: {years_not_on_scratch}")
+
     return wrf_fps, existing_scratch_fps
 
 
-
-def make_sbatch_head(ncpus, slurm_email, partition, conda_init_script, ap_env):
+def make_sbatch_head(slurm_email, partition, conda_init_script, ap_env):
     """Make a string of SBATCH commands that can be written into a .slurm script
     
     Args:
-        ncpus (int): number of CPUS to use for multiprocessing
         slurm_email (str): email address for slurm failures
         partition (str): name of the partition to use
         conda_init_script (str/path-like): path to a script that contains commands
@@ -114,12 +153,14 @@ def make_sbatch_head(ncpus, slurm_email, partition, conda_init_script, ap_env):
             
     Returns:
         sbatch_head (str): string of SBATCH commands ready to be used as parameter
-            in sbatch-writing functions
+            in sbatch-writing functions. The following gaps are left for filling with .format:
+                - ncpus
+                - output slurm filename
     """
     sbatch_head = (
         "#!/bin/sh\n"
         "#SBATCH --nodes=1\n"
-        f"#SBATCH --cpus-per-task={ncpus}\n"
+        "#SBATCH --cpus-per-task={}\n"
         "#SBATCH --mail-type=FAIL\n"
         f"#SBATCH --mail-user={slurm_email}\n"
         f"#SBATCH -p {partition}\n"
@@ -133,11 +174,13 @@ def make_sbatch_head(ncpus, slurm_email, partition, conda_init_script, ap_env):
         # this manually then run the python command
         f"conda activate {ap_env}\n"
     )
-    
+
     return sbatch_head
 
 
-def write_sbatch_copyto_scratch(sbatch_fp, sbatch_out_fp, src_dir, dst_dir, cp_script, ncpus, sbatch_head):
+def write_sbatch_copyto_scratch(
+    sbatch_fp, sbatch_out_fp, src_dir, dst_dir, cp_script, ncpus, sbatch_head
+):
     """Write an sbatch script for copying WRF outputs to a scratch space
     
     Args:
@@ -157,7 +200,7 @@ def write_sbatch_copyto_scratch(sbatch_fp, sbatch_out_fp, src_dir, dst_dir, cp_s
         None, writes the commands to sbatch_fp
     """
     pycommand = f"python {cp_script} -s {src_dir} -d {dst_dir} -n {ncpus}\n"
-    commands = sbatch_head.format(sbatch_out_fp) + pycommand
+    commands = sbatch_head.format(ncpus, sbatch_out_fp) + pycommand
 
     with open(sbatch_fp, "w") as f:
         f.write(commands)
@@ -165,7 +208,7 @@ def write_sbatch_copyto_scratch(sbatch_fp, sbatch_out_fp, src_dir, dst_dir, cp_s
     return
 
 
-def write_sbatch_restack(sbatch_fp, sbatch_out_fp, restack_script):
+def write_sbatch_restack(sbatch_fp, sbatch_out_fp, restack_script, ncpus, sbatch_head):
     """Write an sbatch script for executing the re-stacking script
     for a given group and variable
     
@@ -174,21 +217,53 @@ def write_sbatch_restack(sbatch_fp, sbatch_out_fp, restack_script):
         sbatch_out_fp (str/pathlike): path to where sbatch stdout should be written
         restack_script (str/path-like): path to the script to be called to run the
             re-stacking
+        ncpus (int): number of CPUS to use for multiprocessing
+        sbatch_head (str): output from make_sbatch_head that generates a suitable
+            set of SBATCH commands with .format brackets for the sbatch output filename
         
     Returns:
         None, writes the commands to sbatch_fp
     """
-    pycommand = (
-        f"python {restack_script} -n {ncpus}\n"
-    )
-    commands = sbatch_head.format(sbatch_out_fp) + pycommand
+    pycommand = f"python {restack_script} -n {ncpus}\n"
+    commands = sbatch_head.format(ncpus, sbatch_out_fp) + pycommand
 
     with open(sbatch_fp, "w") as f:
         f.write(commands)
 
     return
 
+
+def write_sbatch_forecast_times(
+    sbatch_fp, sbatch_out_fp, wrf_scratch_dir, anc_dir, forecast_times_script, ncpus, sbatch_head
+):
+    """Write an sbatch script for executing the script to get the forecast times
+    from hourly WRF files in scratch_dir
+    
+    Args:
+        sbatch_fp (str): path to .slurm script to write sbatch commands to
+        sbatch_out_fp (str): path to where sbatch stdout should be written
+        wrf_scratch_dir (str): path to the directory in scratch_dir containing
+            the hourly WRF output files to get forecast_time attribute from
+        anc_dir (pathlib.PosixPath): path to ancillary dir for writing forecast times table
+        forecast_times_script (str): path to the script to be called to
+            get the date info and forecast times from files
+        ncpus (int): number of CPUS to use for multiprocessing
+        sbatch_head (str): output from make_sbatch_head that generates a suitable
+            set of SBATCH commands with .format brackets for the sbatch output filename
         
+    Returns:
+        None, writes the commands to sbatch_fp
+    """
+    pycommand = f"python {forecast_times_script} -s {wrf_scratch_dir} -a {anc_dir} -n {ncpus}\n"
+    commands = sbatch_head.format(ncpus, sbatch_out_fp) + pycommand
+
+    with open(sbatch_fp, "w") as f:
+        f.write(commands)
+    print(f"Forecast times slurm commands written to {sbatch_fp}")
+
+    return
+
+
 def make_yearly_scratch_dirs(group, years, scratch_dir):
     """Helper function to ensure all of the directories are present in
     scratch_dir for copying files
@@ -207,10 +282,10 @@ def make_yearly_scratch_dirs(group, years, scratch_dir):
         group_dir.joinpath(str(year)).mkdir(exist_ok=True, parents=True)
         for year in years
     ]
-    
+
     return
 
-    
+
 def submit_sbatch(sbatch_fp):
     """Submit a script to slurm via sbatch
     
@@ -222,7 +297,7 @@ def submit_sbatch(sbatch_fp):
     """
     out = subprocess.check_output(["sbatch", str(sbatch_fp)])
     job_id = out.decode().replace("\n", "").split(" ")[-1]
-    
+
     return job_id
 
 
@@ -243,6 +318,8 @@ def sys_copy(args):
     """
     src_fp, dst_fp, clobber = args
     if clobber:
+        if clobber == "all":
+            return os.system(f"cp {src_fp} {dst_fp}")
         if clobber == "filesize":
             if not test_file_equivalence(src_fp, dst_fp):
                 return os.system(f"cp {src_fp} {dst_fp}")
@@ -255,3 +332,63 @@ def sys_copy(args):
                 return
     else:
         return os.system(f"cp -n {src_fp} {dst_fp}")
+
+
+# functions below this line were developed to assist with ensuring hourly WRF files
+#   were properly copied from source directories to scratch space
+
+
+def get_file_size(fp):
+    """Helper function to return a file's size in bytes
+    
+    Args:
+        fp (pathlib.PosixPath): path to file
+    
+    Returns:
+        size of file at fp in bytes (as int)
+    """
+    return fp.stat().st_size
+
+
+def check_scratch_file_sizes(year_scratch_dir, ncpus=8):
+    """Helper function that can be used to check the sizes of hourly WRF files in
+    scratch_dir after batch copying is done. Helpful for finding what files 
+    (if any) did not copy successfully.
+    
+    Args:
+        year_scratch_dir (pathlib.PosixPath): path to the annual directory of
+            hourly WRF files within scratch_dir
+        ncpus (int): number of CPUs to use for Pooling the filesize checking
+        
+    Returns:
+        flag_fps (list): list of filepaths that were flagged as not being one of the
+            common sizes of these hourly WRF files.
+    """
+    fps = np.array(list(year_scratch_dir.glob("*.nc")))
+    # unique file sizes determined from the CCSM historical data:
+    valid_sizes = [35722464, 35722484, 36272728, 36272732, 36272748, 36272752]
+    with Pool(ncpus) as pool:
+        sizes = np.array(pool.map(get_file_size, fps))
+    flag_fps = fps[[size not in valid_sizes for size in sizes]]
+    return flag_fps
+
+
+def recopy_raw_scratch_files(fps, wrf_dir, ncpus=8):
+    """Re-copy the raw scratch files specified.
+    
+    Args:
+        fps (list): list of paths to raw hourly WRF files in
+            raw_scratch_dir that should be re-copied from wrf_dir
+        wrf_dir (pathlib.PosixPath): path to the directory containing
+            the annual subdirectories of hourly WRF outputs
+        ncpus (int): number of CPUs to use for parallel copy
+        
+    Returns:
+        None, re-copies the files
+    """
+    args = [(wrf_dir.joinpath(fp.parent.name, fp.name), fp) for fp in fps]
+    print(args)
+    with Pool(ncpus) as pool:
+        _ = pool.starmap(shutil.copy, args)
+
+    return
