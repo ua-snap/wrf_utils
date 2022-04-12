@@ -208,33 +208,14 @@ def write_sbatch_copyto_scratch(
     return
 
 
-def write_sbatch_restack(sbatch_fp, sbatch_out_fp, restack_script, ncpus, sbatch_head):
-    """Write an sbatch script for executing the re-stacking script
-    for a given group and variable
-    
-    Args:
-        sbatch_fp (str/pathlike): path to .slurm script to write sbatch commands to
-        sbatch_out_fp (str/pathlike): path to where sbatch stdout should be written
-        restack_script (str/path-like): path to the script to be called to run the
-            re-stacking
-        ncpus (int): number of CPUS to use for multiprocessing
-        sbatch_head (str): output from make_sbatch_head that generates a suitable
-            set of SBATCH commands with .format brackets for the sbatch output filename
-        
-    Returns:
-        None, writes the commands to sbatch_fp
-    """
-    pycommand = f"python {restack_script} -n {ncpus}\n"
-    commands = sbatch_head.format(ncpus, sbatch_out_fp) + pycommand
-
-    with open(sbatch_fp, "w") as f:
-        f.write(commands)
-
-    return
-
-
 def write_sbatch_forecast_times(
-    sbatch_fp, sbatch_out_fp, wrf_scratch_dir, anc_dir, forecast_times_script, ncpus, sbatch_head
+    sbatch_fp,
+    sbatch_out_fp,
+    wrf_scratch_dir,
+    anc_dir,
+    forecast_times_script,
+    ncpus,
+    sbatch_head,
 ):
     """Write an sbatch script for executing the script to get the forecast times
     from hourly WRF files in scratch_dir
@@ -254,7 +235,9 @@ def write_sbatch_forecast_times(
     Returns:
         None, writes the commands to sbatch_fp
     """
-    pycommand = f"python {forecast_times_script} -s {wrf_scratch_dir} -a {anc_dir} -n {ncpus}\n"
+    pycommand = (
+        f"python {forecast_times_script} -s {wrf_scratch_dir} -a {anc_dir} -n {ncpus}\n"
+    )
     commands = sbatch_head.format(ncpus, sbatch_out_fp) + pycommand
 
     with open(sbatch_fp, "w") as f:
@@ -264,9 +247,63 @@ def write_sbatch_forecast_times(
     return
 
 
+def write_sbatch_restack(
+    sbatch_fp,
+    sbatch_out_fp,
+    restack_script,
+    template_fp,
+    anc_dir,
+    restacked_dir,
+    group,
+    year,
+    varname,
+    ncpus,
+    sbatch_head,
+):
+    """Write an sbatch script for executing the re-stacking script
+    for a given group and variable
+    
+    Args:
+        sbatch_fp (str/pathlike): path to .slurm script to write sbatch commands to
+        sbatch_out_fp (str/pathlike): path to where sbatch stdout should be written
+        restack_script (str/path-like): path to the script to be called to run the
+            re-stacking
+        template_fp (str/path-like): path to the template monthly WRF file to use for metadata
+        anc_dir (pathlib.PosixPath): path to the ancillary directory that contains the forecast times tables
+        restacked_dir (pathlib.PosixPath): directory to write the re-stacked data to
+        group (str): WRF group to work on
+        year (int): year to work on
+        varname (str): name of the variable to re-stack
+        ncpus (int): number of CPUS to use for multiprocessing
+        sbatch_head (str): output from make_sbatch_head that generates a suitable
+            set of SBATCH commands with .format brackets for the sbatch output filename
+        
+    Returns:
+        None, writes the commands to sbatch_fp
+    """
+    ftimes_fp = anc_dir.joinpath(f"WRFDS_forecast_time_attr_{group}.csv")
+    out_fp = restacked_dir.joinpath(varname.lower(), f"{varname}_wrf_hourly_{group}_{year}.nc")
+    out_fp.parent.mkdir(exist_ok=True)
+    pycommand = (
+        f"python {restack_script} "
+        f"-y {year} "
+        f"-v {varname} "
+        f"-f {ftimes_fp} "
+        f"-t {template_fp} "
+        f"-o {out_fp} "
+        f"-n {ncpus}\n"
+    )
+    commands = sbatch_head.format(ncpus, sbatch_out_fp) + pycommand
+
+    with open(sbatch_fp, "w") as f:
+        f.write(commands)
+
+    return
+
+
 def make_yearly_scratch_dirs(group, years, scratch_dir):
     """Helper function to ensure all of the directories are present in
-    scratch_dir for copying files
+    scratch_dir for copying raw hourly WRF files
     
     Args:
         group (str): name of WRF group for use in directory paths
