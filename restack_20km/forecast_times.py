@@ -39,7 +39,7 @@ def get_date_info(fp):
     day, hour = day_hour.split("_")
     folder_year = fp.parent.name
     date_info = {
-        "fn": fp,
+        "filepath": fp,
         "year": year,
         "folder_year": folder_year,
         "month": month,
@@ -77,16 +77,16 @@ def get_file_attrs(fp):
         fp (str/pathlike): hourly WRF filepath to get attribute and info for
         
     Returns:
-        fn_args (dict): dict of file's date info and forecast_time attribute
+        fp_args (dict): dict of file's date info and forecast_time attribute
     """
     try:
-        fn_args = get_date_info(fp)
-        fn_args.update({"forecast_time": get_forecast_time(fp)})
+        fp_args = get_date_info(fp)
+        fp_args.update({"forecast_time": get_forecast_time(fp)})
     except:
         # if there is an issue... dont fail, do this...
         nodata = -9999
-        fn_args = {
-            "fn": fp,
+        fp_args = {
+            "filepath": fp,
             "year": nodata,
             "folder_year": nodata,
             "month": nodata,
@@ -95,7 +95,7 @@ def get_file_attrs(fp):
             "forecast_time": nodata,
         }
 
-    return fn_args
+    return fp_args
 
 
 if __name__ == "__main__":
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     fp_df = fp_df[fp_df.folder_year == fp_df.year]
     print(f"number of files: {len(fp_df)}")
 
-    args = [fnl["fn"] for group, fnl in fp_df.groupby("year")]
+    args = [df["filepath"] for group, df in fp_df.groupby("year")]
 
     tic = time.perf_counter()
     out = []
