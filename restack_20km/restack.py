@@ -20,8 +20,9 @@ Usage:
 
 import argparse
 import os
-import multiprocessing as mp
-from functools import partial
+import time
+from multiprocessing import Pool
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -59,11 +60,17 @@ def interp_1d_along_axis(y):
     return y
 
 
-def open_ds(fp, variable):
-    """ cleanly read variable/close a single hourly netcdf """
+def open_ds(fp, varname):
+    """Open a file as an xarray dataset and read
+    a supplied variable's data in as an arr
+    
+    Args:
+        fp (path_like): path to the 
+    """
     with xr.open_dataset(fp) as ds:
-        out = np.array(ds[variable].load()).copy()
-    return out
+        arr = ds[varname].values
+
+    return arr
 
 
 # def rolling_window(a, window):
@@ -125,7 +132,7 @@ def restack(fps, varname, ncpus):
         stacked_arr (numpy.ndarray): 3D array of hourly WRF outputs for a
             single variable that have been stacked along the time dimension
     """
-    args = [(fp, variable) for fp in fps]
+    args = [(fp, varname) for fp in fps]
     with Pool(ncpus) as pool:
         stacked_arr = np.array(pool.starmap(open_ds, args))
 
@@ -188,13 +195,6 @@ def restack_accum(ftimes_df, year, varname, ncpus):
     # we need some indexing for slicing the output array to ONLY this current year
     groups_df = pd.concat(groups)  # should be chronological
     (current_year_ind,) = np.where(groups_df["year"] == year)  # along time dimension
-
-    # # process groups and concatenate 3D cubes along time axis chronologically
-    # f = partial(_run_group, variable=variable)
-    # pool = mp.Pool(ncores)
-    # arr = np.concatenate(pool.map(f, groups), axis=0)
-    # pool.close()
-    # pool.join()
     
     # process groups and concatenate 3D cubes along time axis chronologically
     stacked_arrs = [restack(df, varname, ncpus) for df in groups]
@@ -223,11 +223,11 @@ def run_restack(ftimes_df, year, varname, ncpus):
     Returns:
         Re-stacked array!
     """
-
-    ACCUM_VARS = ["ACSNOW", "PCPT", "PCPC", "PCPNC", "POTEVP"]
-
+    # might be ideal to get these into luts.py
+    accum_vars = ["ACSNOW", "PCPT", "PCPC", "PCPNC", "POTEVP"]
+    
     # interpolate accumulation vars at `ind`
-    if variable in ACCUM_VARS:
+    if varname in accum_vars:
         arr = restack_accum(ftimes_df, year, varname)
     else:
         fps = ftimes_df[ftimes_df["year"] == year]["filepath"]
@@ -298,10 +298,12 @@ if __name__ == "__main__":
     lat_variable = "g5_lat_0"
 
     # read in pre-built dataframe with forecast_time as a field
-    ftimes_df = pd.read_csv(ftime_fp)
+    ftimes_df = pd.read_csv(ftimes_fp)
 
     # run stacking of variable through time and deal with accumulations (if needed).
+    tic = time.perf_counter()
     arr = run_restack(ftimes_df, year, varname, ncpus)
+    print(f"Data restacked, time elapsed: {round((time.perf_counter() - tic) / 60, 1)}m")
 
     # subset the data frame to the desired year -- for naming stuff
     ftimes_year_df = ftimes_df[(ftimes_df["year"] == year) & (ftimes_df["folder_year"] == year)].reset_index()
@@ -330,7 +332,7 @@ if __name__ == "__main__":
         # build a new Dataset with the stacked timesteps and
         #   some we extracted from the input Dataset
         ds = xr.Dataset(
-            {variable: (["time", "x", "y"], arr.astype(np.float32))},
+            {varname: (["time", "x", "y"], arr.astype(np.float32))},
             coords={
                 "lon": (["x", "y"], tmp_ds[lon_variable].data),
                 "lat": (["x", "y"], tmp_ds[lat_variable].data),
@@ -341,7 +343,7 @@ if __name__ == "__main__":
 
     elif len(arr.shape) == 4:  # (time,levels, x, y )
         # levelname to use if 4D
-        if variable in ["TSLB", "SMOIS", "SH2O"]:
+        if varname in ["TSLB", "SMOIS", "SH2O"]:
             levelname = "lv_DBLY3"
         else:
             levelname = "lv_ISBL2"
@@ -349,7 +351,7 @@ if __name__ == "__main__":
         # build dataset with levels at each timestep
         sub_ds = xr.open_dataset(ftimes_year_df.iloc[0]["filepath"])
         ds = xr.Dataset(
-            {variable: (["time", levelname, "x", "y"], arr.astype(np.float32))},
+            {varname: (["time", levelname, "x", "y"], arr.astype(np.float32))},
             coords={
                 "lon": (["x", "y"], tmp_ds[lon_variable].data),
                 "lat": (["x", "y"], tmp_ds[lat_variable].data),
@@ -380,6 +382,11 @@ if __name__ == "__main__":
     # remove an existing one since I think that is best practice here (<- original author, untested but leaving for now)
     if out_fp.exists():
         out_fp.unlink()
-
+    
+    tic = time.perf_counter()
     ds.to_netcdf(out_fp)
-    print(f"Restacked data for {varname}, {year} written to {out_fp}")
+
+    print((
+        f"Restacked data for {varname}, {year} written to {out_fp} at {time.ctime()}, "
+        f"time elapsed: {round((time.perf_counter() - tic) / 60, 1)}m"
+    ))
