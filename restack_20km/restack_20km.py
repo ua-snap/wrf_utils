@@ -1,4 +1,10 @@
-"""Functions for running the restack_20km pipeline"""
+"""Functions for running the restack_20km pipeline
+
+Notes
+
+Glossary:
+- path_like: a pathlib.Path object or string that can be interpreted as one.
+"""
 
 import os
 import shutil
@@ -147,9 +153,9 @@ def make_sbatch_head(slurm_email, partition, conda_init_script, ap_env):
     Args:
         slurm_email (str): email address for slurm failures
         partition (str): name of the partition to use
-        conda_init_script (str/path-like): path to a script that contains commands
+        conda_init_script (path_like): path to a script that contains commands
             for initializing the shells on the compute nodes to use conda activate
-        ap_env (str/pathlike): path to the anaconda-project env to activate
+        ap_env (str/path_like): path to the anaconda-project env to activate
             
     Returns:
         sbatch_head (str): string of SBATCH commands ready to be used as parameter
@@ -184,13 +190,13 @@ def write_sbatch_copyto_scratch(
     """Write an sbatch script for copying WRF outputs to a scratch space
     
     Args:
-        sbatch_fp (str/pathlike): path to .slurm script to write sbatch commands to
-        sbatch_out_fp (str/pathlike): path to where sbatch stdout should be written
-        src_dir (str/pathlike): path to annual directory containing hourly WRF files
+        sbatch_fp (path_like): path to .slurm script to write sbatch commands to
+        sbatch_out_fp (path_like): path to where sbatch stdout should be written
+        src_dir (path_like): path to annual directory containing hourly WRF files
             to copy
-        dst_dir (str/pathlike): path to annual directory where hourly WRF files will
+        dst_dir (path_like): path to annual directory where hourly WRF files will
             be copied
-        cp_script (str/path-like): path to the script to be called to run the
+        cp_script (path_like): path to the script to be called to run the
             copy for a given subset
         ncpus (int): number of CPUS to use for multiprocessing
         sbatch_head (str): output from make_sbatch_head that generates a suitable
@@ -259,16 +265,18 @@ def write_sbatch_restack(
     varname,
     ncpus,
     sbatch_head,
+    geogrid_fp=None,
+    accum=False,
 ):
     """Write an sbatch script for executing the re-stacking script
     for a given group and variable
     
     Args:
-        sbatch_fp (str/pathlike): path to .slurm script to write sbatch commands to
-        sbatch_out_fp (str/pathlike): path to where sbatch stdout should be written
-        restack_script (str/path-like): path to the script to be called to run the
+        sbatch_fp (path_like): path to .slurm script to write sbatch commands to
+        sbatch_out_fp (path_like): path to where sbatch stdout should be written
+        restack_script (path_like): path to the script to be called to run the
             re-stacking
-        template_fp (str/path-like): path to the template monthly WRF file to use for metadata
+        template_fp (path_like): path to the template monthly WRF file to use for metadata
         anc_dir (pathlib.PosixPath): path to the ancillary directory that contains the forecast times tables
         restacked_dir (pathlib.PosixPath): directory to write the re-stacked data to
         group (str): WRF group to work on
@@ -293,6 +301,10 @@ def write_sbatch_restack(
         f"-o {out_fp} "
         f"-n {ncpus}\n"
     )
+    if geogrid_fp:
+        pycommand = pycommand.replace("\n", f" -g {geogrid_fp}\n")
+    if accum:
+        pycommand = pycommand.replace("\n", f" --accum\n")
     commands = sbatch_head.format(ncpus, sbatch_out_fp) + pycommand
 
     with open(sbatch_fp, "w") as f:

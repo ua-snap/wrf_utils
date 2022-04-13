@@ -3,19 +3,7 @@
 """Restack the hourly data and diff/interpolate the accumulation variables
 
 Usage:
-    Designed to be called via slurm scripts created by `make_variable_sbatch_by_year.py`
-
-    Example:
-    Use these variables as args:
-    # input_path_dione = '/storage01/rtladerjr/hourly'
-    # input_path = '/rcs/project_data/wrf_data/hourly'
-    # group = 'gfdl_rcp85'
-    # group_out_name = 'GFDL-CM3_rcp85'
-    # variable = 'U10'
-    # year = 2008
-    # files_df_fn = '/rcs/project_data/docs/WRFDS_forecast_time_attr_gfdl_rcp85.csv'
-    # template_fn = '/storage01/pbieniek/gfdl/hist/monthly/monthly_PCPT-gfdlh.nc'.
-    # output_filename = "/atlas_scratch/kmredilla/WRF/wind-issue/restacked/u10/U10_wrf_hourly_gfdl_rcp85_2008.nc"
+    Designed to be called via slurm scripts created by `restack_20km.write_sbatch_restack.py`
 """
 
 import argparse
@@ -28,31 +16,8 @@ import pandas as pd
 import xarray as xr
 
 
-# def nan_helper(y):
-#     """Helper to handle indices and logical indices of NaNs.
-
-#     Args:
-#         y (numpy.ndarray): 1d array with possible NaNs
-        
-#     Returns:
-#         - logical indices of NaNs
-#         - a function, with signature indices= index(logical_indices),
-#           to convert logical indices of NaNs to 'equivalent' indices
-          
-#     Example:
-#         >>> # linear interpolation of NaNs
-#         >>> nans, x= nan_helper(y)
-#         >>> y[nans]= np.interp(x(nans), x(~nans), y[~nans])
-
-#         https://stackoverflow.com/questions/6518811/interpolate-nan-values-in-a-numpy-array
-#     """
-#     return np.isnan(y), lambda z: z.nonzero()[0]
-
-
 def interp_1d_along_axis(y):
     """ interpolate across 1D timeslices of a 3D array. """
-    # nans, x = nan_helper(y)
-    # why do we need that function?
     nans = np.isnan(y)
     x = lambda z: z.nonzero()[0]
     y[nans] = np.interp(x(nans), x(~nans), y[~nans])
@@ -65,59 +30,17 @@ def open_ds(fp, varname):
     a supplied variable's data in as an arr
     
     Args:
-        fp (path_like): path to the 
+        fp (path_like): path to the file to open
+        varname (str): name of dataset variable to read
+        
+    Returns:
+        arr (numpy.ndarray): the data array underlying the variable of interest
     """
     with xr.open_dataset(fp) as ds:
         arr = ds[varname].values
 
     return arr
 
-
-# def rolling_window(a, window):
-#     """ simple 1-D rolling window function """
-#     shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
-#     strides = a.strides + (a.strides[-1],)
-#     return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
-
-
-# def adjacent_files(df):
-#     """ to be performed on the full DataFrame of pre-sorted files. """
-#     # WE LOSE THE FIRST ONE IN THE SERIES...
-#     adj = rolling_window(df["filepath"], window=3).tolist()
-#     last = df.iloc[-2:,]["filepath"].tolist()
-#     first = df.iloc[0, np.where(df.columns == "filepath")[0]].tolist()
-#     # append to end of the list.
-#     adj = [first] + adj + [last]
-
-#     return adj
-
-
-# def get_first_row_grouper(df):
-#     """
-#     after a diff (T - (T-1)) we lose the first hour. in this i grab
-#     all the first layer in all the series, its adjacent files and will use
-#     these with the other interpolation values of forecast time. for
-#     accumulation variables (precip) only
-#     """
-#     years = df[df["year"] > df["year"].min()]["year"].unique()
-#     years = np.sort(years[years != min(years)])
-#     ind = [df[df["year"] == year].index[0] for year in years]
-#     interp_list = [
-#         df.iloc[[i - 1, i, i + 1]]["filepath"].tolist()
-#         if i - 1 > 0
-#         else df.iloc[[i, i + 1]]["filepath"].tolist()
-#         for i in ind
-#     ]
-#     return ind, interp_list
-
-
-# def stack_year(df, year, variable, ncpus=32):
-#     """open and stack a single level dataset """
-#     args = [(fp, variable) for fp in df[df.year == year]["filepath"]]
-#     with Pool(ncpus) as pool:
-#         pool.starmap(open_ds, args)
-
-#     return out
 
 def restack(fps, varname, ncpus):
     """Open list of hourly netCDF files, extract specified variable,
@@ -159,7 +82,18 @@ def diff_stacked(stacked_arr):
 
 
 def restack_accum(ftimes_df, year, varname, ncpus):
-    """Re-stack, diff, interp accumulation variables. """
+    """Re-stack, diff, interpolate accumulation variables.
+    
+    Args:
+        ftimes_df (pandas.DataFrame): Path to the table containing parsed filename
+            and forecast times
+        year (int): year being worked on
+        varname (str): name of variable to extract from hourly WRF files
+        ncpus (int): number of CPUs to use with multiprocessing
+        
+    Returns:
+        arr (numpy.ndarray): 3D array of stacked, diff'd, interpolated accumulation variable data
+    """
     # group the data into forecast_time begin/end groups
     groups = ftimes_df.groupby((ftimes_df["forecast_time"] == 6).cumsum())
     # unpack to get just data frames
@@ -174,15 +108,15 @@ def restack_accum(ftimes_df, year, varname, ncpus):
     # handle beginning and ending years in the series
     # get the forecast_time groups that overlap with our current year
     #   and the adjacent groups for seamless time-series.
-    if df["year"].max() > year > df["year"].min():
+    if ftimes_df["year"].max() > year > ftimes_df["year"].min():
         first_outer_group_idx, last_outer_group_idx = (ind[0] - 1, ind[-1] + 1)
         ind = [first_outer_group_idx] + ind + [last_outer_group_idx]
 
-    elif year == df["year"].min():
+    elif year == ftimes_df["year"].min():
         last_outer_group_idx = ind[-1] + 1
         ind = ind + [last_outer_group_idx]
 
-    elif year == df["year"].max():
+    elif year == ftimes_df["year"].max():
         first_outer_group_idx = ind[0] - 1
         ind = [first_outer_group_idx] + ind
 
@@ -197,7 +131,7 @@ def restack_accum(ftimes_df, year, varname, ncpus):
     (current_year_ind,) = np.where(groups_df["year"] == year)  # along time dimension
     
     # process groups and concatenate 3D cubes along time axis chronologically
-    stacked_arrs = [restack(df, varname, ncpus) for df in groups]
+    stacked_arrs = [restack(df["filepath"], varname, ncpus) for df in groups]
     arr = np.concatenate([diff_stacked(arr) for arr in stacked_arrs])
     # interpolate across the np.nan's brought in with differencing each forecast_time group
     arr = np.apply_along_axis(interp_1d_along_axis, axis=0, arr=arr)
@@ -210,30 +144,85 @@ def restack_accum(ftimes_df, year, varname, ncpus):
     return arr
 
 
-def run_restack(ftimes_df, year, varname, ncpus):
-    """Run the re-stacking for a given year and variable name, handle accumulation
-    variable differently if supplied 
+def rotate_winds_to_earth_coords(fp, varname, geogrid_fp):
+    """
+    rotate the winds data from grid-centric to earth-centric
+    using file metadata that was added by P.Bieniek in the post-processed
+    files given to SNAP to standardize.
     
     Args:
-        ftimes_df (list): list of file paths to extract data from and stack
-        year (int): year to run re-stacking for
-        varname (str): name of variable to exrtact from hourly WRF files
-        ncpus (int): number of CPUs to use with multiprocessing
-    
+        fp (path_like): path to the hourly WRF data to read from and rotate
+        varname (str): name of the wind variable being worked on
+        geogrid_fp (path_like): path to the ancillary WRF geogrid file
+        
     Returns:
-        Re-stacked array!
+        tuple of Uearth (numpy.ndarray), Vearth (numpy.ndarray), both 2D arrays of
+            U and V wind components that have been rotated
+
+    Notes:
+        see http://www2.mmm.ucar.edu/wrf/users/FAQ_files/Miscellaneous.html
+            for information on rotating the wind components from a WRF
+            run.
     """
-    # might be ideal to get these into luts.py
-    accum_vars = ["ACSNOW", "PCPT", "PCPC", "PCPNC", "POTEVP"]
-    
-    # interpolate accumulation vars at `ind`
-    if varname in accum_vars:
-        arr = restack_accum(ftimes_df, year, varname)
+
+    if varname in ["U", "U10", "UBOT"]:
+        Uvar = varname
+        Vvar = varname.replace("U", "V")
     else:
-        fps = ftimes_df[ftimes_df["year"] == year]["filepath"]
-        arr = restack(fps, varname, ncpus)
-    
-    return arr
+        Uvar = varname.replace("V", "U")
+        Vvar = varname
+    # need to read both wind components to correctly rotate
+    with xr.open_dataset(fp) as ds:
+        Ugrid = ds[Uvar].values
+        Vgrid = ds[Vvar].values
+
+    with xr.open_dataset(geogrid_fp) as geo_ds:
+        cosalpha = geo_ds["COSALPHA"].copy(deep=True)
+        sinalpha = geo_ds["SINALPHA"].copy(deep=True)
+
+    if len(Ugrid.shape) == 3:  # deal with levels
+        cosalpha = np.broadcast_to(cosalpha, Ugrid.shape)
+        sinalpha = np.broadcast_to(sinalpha, Ugrid.shape)
+
+    Vearth = (Vgrid * cosalpha) + (Ugrid * sinalpha)
+    Uearth = (Ugrid * cosalpha) - (Vgrid * sinalpha)
+
+    return Uearth, Vearth
+
+
+def run_rotate_winds(fp, varname, geogrid_fp):
+    """Open a single wind data file and run the rotation
+
+    Args:
+        fp (path_like): path to the hourly WRF data to read from and rotate
+        varname (str): name of the wind variable being worked on
+        geogrid_fp (path_like): path to the ancillary WRF geogrid file
+
+    Returns:
+        arr (numpy.ndarray): the rotated wind component array for the supplied
+            wind variable
+        
+    Since both wind components are needed to restack a single wind component, 
+    this is not the most efficient when processing all wind variables,
+    but it makes things a little less complicated.
+    """
+    ue, ve = rotate_winds_to_earth_coords(fp, varname, geogrid_fp)
+
+    if varname in ["U", "U10", "UBOT"]:
+        arr = ue
+    elif varname in ["V", "V10", "VBOT"]:
+        arr = ve
+
+    return np.squeeze(np.array(arr))
+
+
+def restack_winds(fps, varname, geogrid_fp, ncpus):
+    """Run the stacking and rotation using multiple cores"""
+    args = [(fp, varname, geogrid_fp) for fp in fps]
+    with Pool(ncpus) as pool:
+        stacked_arr = np.array(pool.starmap(run_rotate_winds, args))
+
+    return stacked_arr
 
 
 if __name__ == "__main__":
@@ -249,7 +238,6 @@ if __name__ == "__main__":
         "--varname",
         action="store",
         dest="varname",
-        type=str,
         help="WRF variable name (exact, in file)",
     )
     parser.add_argument(
@@ -257,7 +245,6 @@ if __name__ == "__main__":
         "--ftimes_fp",
         action="store",
         dest="ftimes_fp",
-        type=str,
         help="path to the .csv file containing parsed filename and forecast times",
     )
     parser.add_argument(
@@ -265,7 +252,6 @@ if __name__ == "__main__":
         "--template_fp",
         action="store",
         dest="template_fp",
-        type=str,
         help="monthly template file that is used for passing global metadata to output NC files.",
     )
     parser.add_argument(
@@ -273,7 +259,6 @@ if __name__ == "__main__":
         "--out_fp",
         action="store",
         dest="out_fp",
-        type=str,
         help="output file path for the new NetCDF hourly data for the input year",
     )
     parser.add_argument(
@@ -284,6 +269,22 @@ if __name__ == "__main__":
         type=int,
         help="Number of CPUs to use for multiprocessing",
     )
+    parser.add_argument(
+        "-g",
+        "--geogrid_fp",
+        action="store",
+        dest="geogrid_fp",
+        default=None,
+        help="Path to ancillary WRF geogrid file.",
+    )
+    parser.add_argument(
+        "-a",
+        "--accum",
+        action="store_true",
+        dest="accum",
+        default=False,
+        help="Process suppliec variable as an accumulation variable",
+    )
     # parse the args and unpack
     args = parser.parse_args()
     year = args.year
@@ -292,7 +293,13 @@ if __name__ == "__main__":
     template_fp = args.template_fp
     out_fp = Path(args.out_fp)
     ncpus = args.ncpus
-
+    geogrid_fp = args.geogrid_fp
+    accum = args.accum
+    
+    # safety to ensure geogrid filepath, used for wind variables, and accum flag
+    #  for accumulation variables are never both specified
+    assert accum != bool(geogrid_fp)
+    
     # wrf output standard vars -- [hardwired] for now
     lon_variable = "g5_lon_1"
     lat_variable = "g5_lat_0"
@@ -300,9 +307,18 @@ if __name__ == "__main__":
     # read in pre-built dataframe with forecast_time as a field
     ftimes_df = pd.read_csv(ftimes_fp)
 
-    # run stacking of variable through time and deal with accumulations (if needed).
+    # run stacking of variable through time and handle winds or accumulation
+    #  variables as needed
     tic = time.perf_counter()
-    arr = run_restack(ftimes_df, year, varname, ncpus)
+    # interpolate accumulation vars at `ind`
+    if accum:
+        arr = restack_accum(ftimes_df, year, varname, ncpus)
+    else:
+        fps = ftimes_df[ftimes_df["year"] == year]["filepath"]
+        if geogrid_fp:
+            arr = restack_winds(fps, varname, geogrid_fp, ncpus)
+        else:
+            arr = restack(fps, varname, ncpus)
     print(f"Data restacked, time elapsed: {round((time.perf_counter() - tic) / 60, 1)}m")
 
     # subset the data frame to the desired year -- for naming stuff
@@ -334,8 +350,8 @@ if __name__ == "__main__":
         ds = xr.Dataset(
             {varname: (["time", "x", "y"], arr.astype(np.float32))},
             coords={
-                "lon": (["x", "y"], tmp_ds[lon_variable].data),
-                "lat": (["x", "y"], tmp_ds[lat_variable].data),
+                "lon": (["x", "y"], tmp_ds[lon_variable].values),
+                "lat": (["x", "y"], tmp_ds[lat_variable].values),
                 "time": new_dates,
             },
             attrs=global_attrs,
@@ -353,8 +369,8 @@ if __name__ == "__main__":
         ds = xr.Dataset(
             {varname: (["time", levelname, "x", "y"], arr.astype(np.float32))},
             coords={
-                "lon": (["x", "y"], tmp_ds[lon_variable].data),
-                "lat": (["x", "y"], tmp_ds[lat_variable].data),
+                "lon": (["x", "y"], tmp_ds[lon_variable].values),
+                "lat": (["x", "y"], tmp_ds[lat_variable].values),
                 "time": new_dates,
                 levelname: sub_ds[levelname],
             },

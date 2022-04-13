@@ -14,7 +14,7 @@ def get_forecast_time(fp):
     """Get the forecast time attribute for the file
     
     Args:
-        fp (str/pathlike): path to hourly WRF file to get
+        fp (path_like): path to hourly WRF file to get
             forecast_time attribute from
         
     Returns:
@@ -74,7 +74,7 @@ def get_file_attrs(fp):
     attribute from hourly WRF ouput file
     
     Args:
-        fp (str/pathlike): hourly WRF filepath to get attribute and info for
+        fp (path_like): hourly WRF filepath to get attribute and info for
         
     Returns:
         fp_args (dict): dict of file's date info and forecast_time attribute

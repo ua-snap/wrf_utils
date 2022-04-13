@@ -74,3 +74,7 @@ varnames = [
     "UBOT",
     "VBOT",
 ]
+
+wind_varnames = ["U", "U10", "UBOT", "V", "V10", "VBOT"]
+
+accum_varnames = ["ACSNOW", "PCPT", "PCPC", "PCPNC", "POTEVP"]
