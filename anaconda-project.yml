@@ -82,6 +82,7 @@ packages:
 # channels:
 #    - mychannel
 #
+- wrf-python
 channels:
 - conda-forge
 - default
