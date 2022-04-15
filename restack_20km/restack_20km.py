@@ -15,6 +15,31 @@ import pandas as pd
 import xarray as xr
 
 
+def make_variable_lookup(raw_fp):
+    """make a lookup table of variables and some metadata from the RAW WRF files.
+    Used to create luts.var_attrs
+    
+    Args:
+        raw_fp (path_like): path to the raw file to use for getting variable information
+    
+    Returns:
+        dict of attributes
+    """
+    # raw_fp = '/workspace/Shared/Tech_Projects/wrf_data/project_data/wrf_raw_output_example/wrfout_d01_2025-07-10_00:00:00'
+    raw = xr.open_dataset(raw_fp)
+    dat = {
+        i: {"long_name": raw[i].long_name, "units": raw[i].units}
+        for i in raw.variables.mapping.keys()
+    }
+    # update missing variables from the list as we have found them....
+    dat.update(
+        PCPT={"long_name": "Total precipitation", "units": "mm"},
+        QBOT={"long_name": "Specific humidity at lowest model level", "units": "kg/kg"},
+    )
+
+    return dat
+    
+
 # functions below this point derived from copy-to-scratch step
 
 
@@ -257,16 +282,16 @@ def write_sbatch_restack(
     sbatch_fp,
     sbatch_out_fp,
     restack_script,
-    template_fp,
+    luts_fp,
     anc_dir,
     restacked_dir,
     group,
+    fn_str,
     year,
     varname,
     ncpus,
     sbatch_head,
-    geogrid_fp=None,
-    accum=False,
+    geogrid_fp,
 ):
     """Write an sbatch script for executing the re-stacking script
     for a given group and variable
@@ -276,35 +301,34 @@ def write_sbatch_restack(
         sbatch_out_fp (path_like): path to where sbatch stdout should be written
         restack_script (path_like): path to the script to be called to run the
             re-stacking
-        template_fp (path_like): path to the template monthly WRF file to use for metadata
+        luts_fp (path_like): path to the luts.py file for the restack_20km pipeline
         anc_dir (pathlib.PosixPath): path to the ancillary directory that contains the forecast times tables
         restacked_dir (pathlib.PosixPath): directory to write the re-stacked data to
         group (str): WRF group to work on
+        fn_str (str): string name of model / scenario for use in output filename, e.g. "NCAR-CCSM4_historical"
         year (int): year to work on
         varname (str): name of the variable to re-stack
         ncpus (int): number of CPUS to use for multiprocessing
         sbatch_head (str): output from make_sbatch_head that generates a suitable
             set of SBATCH commands with .format brackets for the sbatch output filename
+        geogrid_fp (path_like): path to WRF geogrid file
         
     Returns:
         None, writes the commands to sbatch_fp
     """
     ftimes_fp = anc_dir.joinpath(f"WRFDS_forecast_time_attr_{group}.csv")
-    out_fp = restacked_dir.joinpath(varname.lower(), f"{varname}_wrf_hourly_{group}_{year}.nc")
+    out_fp = restacked_dir.joinpath(varname.lower(), f"{varname.lower()}_hourly_wrf_{fn_str}_{year}.nc")
     out_fp.parent.mkdir(exist_ok=True)
     pycommand = (
         f"python {restack_script} "
         f"-y {year} "
         f"-v {varname} "
         f"-f {ftimes_fp} "
-        f"-t {template_fp} "
         f"-o {out_fp} "
-        f"-n {ncpus}\n"
+        f"-l {luts_fp} "
+        f"-n {ncpus} "
+        f"-g {geogrid_fp}\n"
     )
-    if geogrid_fp:
-        pycommand = pycommand.replace("\n", f" -g {geogrid_fp}\n")
-    if accum:
-        pycommand = pycommand.replace("\n", f" --accum\n")
     commands = sbatch_head.format(ncpus, sbatch_out_fp) + pycommand
 
     with open(sbatch_fp, "w") as f:
