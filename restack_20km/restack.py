@@ -450,7 +450,7 @@ if __name__ == "__main__":
         out_fp.unlink()
 
     tic = time.perf_counter()
-    ds.to_netcdf(out_fp)
+    ds.to_netcdf(out_fp, engine="netcdf4")
     print(
         (
             f"Restacked data for {varname}, {year} written to {out_fp} at {time.ctime()}, "

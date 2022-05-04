@@ -287,14 +287,14 @@ def write_sbatch_restack(
     restacked_dir,
     group,
     fn_str,
-    year,
+    years,
     varname,
     ncpus,
     sbatch_head,
     geogrid_fp,
 ):
     """Write an sbatch script for executing the re-stacking script
-    for a given group and variable
+    for a given group and variable, executes for a given list of years 
     
     Args:
         sbatch_fp (path_like): path to .slurm script to write sbatch commands to
@@ -306,7 +306,7 @@ def write_sbatch_restack(
         restacked_dir (pathlib.PosixPath): directory to write the re-stacked data to
         group (str): WRF group to work on
         fn_str (str): string name of model / scenario for use in output filename, e.g. "NCAR-CCSM4_historical"
-        year (int): year to work on
+        years (list): list of years to work on
         varname (str): name of the variable to re-stack
         ncpus (int): number of CPUS to use for multiprocessing
         sbatch_head (str): output from make_sbatch_head that generates a suitable
@@ -315,21 +315,28 @@ def write_sbatch_restack(
         
     Returns:
         None, writes the commands to sbatch_fp
+        
+    Notes:
+        since these jobs seem to take on the order of 5 minutes or less, seems better to just
+         run through all years once a node is secured for a job, instead of making a single job
+         for every year / variable combination
     """
     ftimes_fp = anc_dir.joinpath(f"WRFDS_forecast_time_attr_{group}.csv")
-    out_fp = restacked_dir.joinpath(varname.lower(), f"{varname.lower()}_hourly_wrf_{fn_str}_{year}.nc")
-    out_fp.parent.mkdir(exist_ok=True)
-    pycommand = (
-        f"python {restack_script} "
-        f"-y {year} "
-        f"-v {varname} "
-        f"-f {ftimes_fp} "
-        f"-o {out_fp} "
-        f"-l {luts_fp} "
-        f"-n {ncpus} "
-        f"-g {geogrid_fp}\n"
-    )
-    commands = sbatch_head.format(ncpus, sbatch_out_fp) + pycommand
+    pycommands = "\n"
+    for year in years:
+        out_fp = restacked_dir.joinpath(varname.lower(), f"{varname.lower()}_hourly_wrf_{fn_str}_{year}.nc")
+        out_fp.parent.mkdir(exist_ok=True)
+        pycommands += (
+            f"python {restack_script} "
+            f"-y {year} "
+            f"-v {varname} "
+            f"-f {ftimes_fp} "
+            f"-o {out_fp} "
+            f"-l {luts_fp} "
+            f"-n {ncpus} "
+            f"-g {geogrid_fp}\n\n"
+        )
+    commands = sbatch_head.format(ncpus, sbatch_out_fp) + pycommands
 
     with open(sbatch_fp, "w") as f:
         f.write(commands)
