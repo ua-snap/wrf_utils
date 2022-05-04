@@ -83,6 +83,7 @@ packages:
 #    - mychannel
 #
 - wrf-python
+- gdal
 channels:
 - conda-forge
 - default
