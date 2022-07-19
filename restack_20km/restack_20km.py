@@ -9,6 +9,7 @@ Glossary:
 import os
 import shutil
 import subprocess
+import time
 from multiprocessing import Pool
 import numpy as np
 import pandas as pd
@@ -69,8 +70,9 @@ def get_wrf_fps(wrf_dir, years):
     """Get all of the hourly WRF output filepaths for given
     wrf directory and years
     
-    wrf_dir (pathlib.PosixPath): path to the directory containing hourly WRF files
-    years (list): list of years to get filepaths for
+    Args:
+        wrf_dir (pathlib.PosixPath): path to the directory containing hourly WRF files
+        years (list): list of years to get filepaths for
     
     Returns:
         wrf_fps (list): list of WRF filepaths
@@ -80,6 +82,55 @@ def get_wrf_fps(wrf_dir, years):
         wrf_fps.extend(wrf_dir.joinpath(str(year)).glob("*.nc"))
 
     return wrf_fps
+
+
+def get_year_file_modes(year_dir):
+    """Helper function to get the file modes to see which ones are staged. 
+    Specifically for use with check_staged
+    """
+    out_str = subprocess.check_output(
+        ["sls", "-D", str(year_dir)], stderr=subprocess.DEVNULL
+    )
+    results = str(out_str)[2:-1].split("\\n\\n")[:-1]
+    
+    modes = []
+    for result in results:
+        fp = result.split(":\\n")[0]
+        mode = result.split("mode: ")[1].split("  links:")[0]
+        modes.append((fp, mode))
+    
+    return modes
+
+
+def check_staged(wrf_dir, years):
+    """Function to confirm that files in a given year or set of years
+    are currently 'staged' and not offline. Returns the list of file
+    paths that are not staged.
+    
+    Args:
+        wrf_dir (pathlib.PosixPath): path to the directory containing hourly WRF files
+        years (list): list of years to get filepaths for
+    
+    Returns:
+        wrf_fps (list): list of WRF filepaths belonging to the supplied wrf_dir and years
+            that are not staged
+    """
+    year_dirs = [wrf_dir.joinpath(str(year)) for year in years]
+    with Pool(20) as pool:
+        out = pool.map(get_year_file_modes, year_dirs)
+        
+        
+    results = [out_tpl for year_modes in out for out_tpl in year_modes]
+    unstaged_fps = [out_tpl[0] for out_tpl in results if out_tpl[1] == "offline"]
+    unstaged_years = list(set([fp.parent for fp in unstaged_fps]))
+    
+    print(f"Requested years: {years}")
+    if len(unstaged_years) == 0:
+        print("All files are staged")
+    else:
+        print(f"Unstaged years: {unstaged_years}")
+    
+    return unstaged_fps
 
 
 def test_file_equivalence(fp1, fp2, heads=False, detail=False):
@@ -130,7 +181,8 @@ def check_raw_scratch_file(wrf_fp, group, raw_scratch_dir):
 
 
 def check_raw_scratch(wrf_dir, group, years, raw_scratch_dir, ncpus=24):
-    """Check to see the number of requested WRF files in the raw scratch directory """
+    """Check to see the number of requested and missing WRF files in the
+    raw scratch directory"""
     # see if we can pool this?
     existing_scratch_fps = []
     for year in years:
