@@ -416,11 +416,11 @@ if __name__ == "__main__":
     if levelname is not None:
         new_levelname = luts.levelnames[levelname]
         dims = ["time", new_levelname, "yc", "xc"]
-        coords_dict[new_levelname] = [
+        coords_dict[new_levelname] = (
             [new_levelname],
             levels,
             luts.var_attrs[levelname],
-        ]
+        )
     else:
         dims = ["time", "yc", "xc"]
 
@@ -431,7 +431,7 @@ if __name__ == "__main__":
     data_dict = {
         # add the data flipped along y axis to match flipped lat/lon arrays
         #  and y-coordinate array
-        new_varname: (dims, np.flip(arr.astype(np.float32), axis=1), local_attrs),
+        new_varname: (dims, np.flip(arr.astype(np.float32), axis=-2), local_attrs),
         # create CRS variable and add info
         crs_varname: ([], np.array(b""), wrf_proj.crs.to_cf()),
     }
