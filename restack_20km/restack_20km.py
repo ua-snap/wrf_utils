@@ -185,8 +185,10 @@ def check_raw_scratch(wrf_dir, group, years, raw_scratch_dir, ncpus=24):
     raw scratch directory"""
     # see if we can pool this?
     existing_scratch_fps = []
+    all_wrf_fps = []
     for year in years:
         wrf_fps = get_wrf_fps(wrf_dir, [year])
+        all_wrf_fps.extend(wrf_fps)
         args = [(fp, group, raw_scratch_dir) for fp in wrf_fps]
         with Pool(ncpus) as pool:
             existing_scratch_fps.extend(pool.starmap(check_raw_scratch_file, args))
@@ -198,28 +200,38 @@ def check_raw_scratch(wrf_dir, group, years, raw_scratch_dir, ncpus=24):
         print("No files from specified years found in scratch_dir")
     else:
         existing_scratch_fns = [fp.name for fp in existing_scratch_fps]
-        wrf_year_list = [int(fp.parent.name) for fp in wrf_fps]
+        existing_scratch_years = [int(fp.parent.name) for fp in existing_scratch_fps]
         unique_years_tpl = np.unique(
-            wrf_year_list, return_index=True, return_counts=True
+            existing_scratch_years, return_index=True, return_counts=True
         )
-        # unique_years and years should be the same
-        assert sorted(unique_years_tpl[0]) == sorted(years)
 
         # iterate over unique years indices in wrf_fps and ensure all files for that year are present
         years_on_scratch = []
-        years_not_on_scratch = []
+        years_missing_files = []
         for year, i, count in zip(*unique_years_tpl):
             idx = np.arange(i, i + count)
             year_on_scratch = np.all(
-                [wrf_fps[j].name in existing_scratch_fns for j in idx]
+                [all_wrf_fps[j].name in existing_scratch_fns for j in idx]
             )
             if year_on_scratch:
                 years_on_scratch.append(year)
             else:
-                years_not_on_scratch.append(year)
+                years_missing_files.append(year)
+        
+        if len(years_missing_files) == 0:
+            print("All years present on scratch space")
+        else:
+            print(f"Years with all files present on scratch space: {years_on_scratch}")
+        
+            # unique_years and years should be the same
+            if sorted(unique_years_tpl[0]) != sorted(years):
+                missing_years = set(years).difference(set(unique_years_tpl[0]))
+                print(f"Years completely missing from scratch: {missing_years}")
+                years_missing_files = set(years_missing_files).difference(
+                    missing_years
+                )
 
-        print(f"Years with all files present on scratch space: {years_on_scratch}")
-        print(f"Years with files missing from scratch space: {years_not_on_scratch}")
+            print(f"Years with files partially missing from scratch space: {years_missing_files}")
 
     return wrf_fps, existing_scratch_fps
 
