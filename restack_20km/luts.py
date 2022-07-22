@@ -9,22 +9,29 @@ groups = {
     "erain_hist": {
         "years": np.arange(1979, 2019),
         "fn_str": "ERA-Interim_historical",
+        # directory is not constant across all groups
+        "directory": "/archive/DYNDOWN/DIONE/pbieniek/erain/hourly",
     },
     "gfdl_hist": {
         "years": np.arange(1970, 2007),
         "fn_str": "GFDL-CM3_historical",
+        "directory": "/archive/DYNDOWN/DIONE/pbieniek/gfdl/hist/hourly",
     },
     "ccsm_hist": {
         "years": np.arange(1970, 2006),
         "fn_str": "NCAR-CCSM4_historical",
+        "directory": "/archive/DYNDOWN/DIONE/pbieniek/ccsm/hist/hourly",
     },
     "gfdl_rcp85": {
         "years": np.arange(2006, 2101),
         "fn_str": "GFDL-CM3_rcp85",
+        # this is the oddball one
+        "directory": "/archive/DYNDOWN/DIONE/rtladerjr/hourly",
     },
     "ccsm_rcp85": {
         "years": np.arange(2005, 2101),
         "fn_str": "NCAR-CCSM4_rcp85",
+        "directory": "/archive/DYNDOWN/DIONE/pbieniek/ccsm/rcp85/hourly",
     },
 }
 
@@ -135,6 +142,10 @@ var_attrs = {
         "long_name": "Liquid volumetric soil moisture (non-frozen)",
         "units": "fraction",
     },
+    "lv_DBLY3": {
+        "long_name": "layer between two depths below land surface",
+        "units": "cm",
+    },
     "lv_DBLY3_l1": {
         "long_name": "layer between two depths below land surface",
         "units": "cm",
@@ -200,4 +211,3 @@ varnames = [
     "VBOT",
 ]
 
-  
