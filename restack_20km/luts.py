@@ -35,6 +35,10 @@ groups = {
     },
 }
 
+group_fn_lu = {
+    groups[key]["fn_str"]: key for key in groups
+}
+
 
 wind_varnames = ["U", "U10", "UBOT", "V", "V10", "VBOT"]
 
@@ -48,6 +52,9 @@ levelnames = {
     "lv_ISBL2": "plev",
     "lv_DBLY3": "depth",
 }
+rev_levelnames = {
+    value: key for key, value in zip(levelnames.keys(), levelnames.values())
+} 
 
 coord_attrs = {
     "xc": {
