@@ -14,6 +14,7 @@ from multiprocessing import Pool
 import numpy as np
 import pandas as pd
 import xarray as xr
+import luts
 
 
 def make_variable_lookup(raw_fp):
@@ -536,3 +537,58 @@ def recopy_raw_scratch_files(fps, wrf_dir, ncpus=8):
         _ = pool.starmap(shutil.copy, args)
 
     return
+
+
+def validate_slice(argv):
+    """Compares the values of restacked data with those in
+    original raw output file for a (random) time slice
+    
+    Args:
+        argv (tuple): argument vector consisting of the following:
+            restack_fp (pathlib.PosixPath): path to file containing
+                restacked data to check
+            raw_scratch_dir (pathlib.PosixPath): path to the scratch directory
+                containing raw output data
+    
+    Returns:
+        dict with keys model, scenario, variable, timestamp, and match
+    """
+    # unpack (for pooling)
+    restack_fp, raw_scratch_dir = argv
+    varname = restack_fp.parent.name
+    with xr.open_dataset(restack_fp) as ds:
+        idx = np.random.randint(ds.time.values.shape[0])
+        check_time = ds.time.values[idx]
+        # check to see if this is a 3D (or more) variable.
+        #  If so, randomly select and index for each extra dimension
+        #  so that we are only comparing a single 2D slice
+        sel_di = {"time": check_time}
+        if len(ds[varname].dims) > 3:
+            # first dim should be time, next will be "level" or equivalent if present
+            d3_name = ds[varname].dims[1]
+            d3_value = np.random.choice(ds[d3_name].values)
+            sel_di.update({d3_name: d3_value})
+        check_arr = ds[varname].sel(sel_di).values
+    
+    year = check_time.astype("datetime64[Y]")
+    wrf_time_str = str(check_time.astype("datetime64[h]")).replace("T", "_")
+    model, scenario = restack_fp.name.split("_")[-3:-1]
+    group = luts.group_fn_lu[f"{model}_{scenario}"]
+    raw_fp = list(raw_scratch_dir.joinpath(f"{group}/{year}").glob(f"*{wrf_time_str}*"))[0]
+    with xr.open_dataset(raw_fp) as ds:
+        if len(sel_di.keys()) > 1:
+            raw_d3_name = luts.rev_levelnames[d3_name]
+            raw_arr = ds[varname.upper()].sel({raw_d3_name: d3_value}).values
+        else:
+            raw_arr = ds[varname.upper()].values
+
+    check = np.all(np.flipud(raw_arr) == check_arr)
+    result = {
+        "model": model,
+        "scenario": scenario,
+        "variable": varname,
+        "timestamp": wrf_time_str,
+        "match": check
+    }
+    
+    return result
