@@ -7,11 +7,11 @@ Usage:
 """
 
 import argparse
-import datetime
 import importlib.util
 import os
 import sys
 import time
+from datetime import datetime
 from multiprocessing import Pool
 from pathlib import Path
 import numpy as np
@@ -375,7 +375,7 @@ if __name__ == "__main__":
     # that would have to be corrected later
     new_dates = pd.DatetimeIndex(
         [
-            datetime.datetime(
+            datetime(
                 *[row[colname] for colname in ["year", "month", "day", "hour"]]
             )
             for i, row in ftimes_year_df.iterrows()
@@ -397,7 +397,19 @@ if __name__ == "__main__":
             levelname = None
 
     global_attrs.update(luts.global_attrs)
+    global_attrs["history"] = (
+        f"creation system: {global_attrs['system']};\n"
+        f"creation date: {global_attrs['creation_date']};\n"
+        f"restack processing system: {' '.join(os.uname())};\n"
+        f"restack date: {time.ctime()} AKST"
+    )
     global_attrs["reference_time"] = str(new_dates[0])
+    del global_attrs["title"]
+    del global_attrs["NCL_Version"]
+    del global_attrs["creation_date"]
+    del global_attrs["system"]
+    del global_attrs["grib_source"]
+    del global_attrs["reference_time"]
 
     x, y = derive_xy(geogrid_fp, global_attrs["proj_parameters"])
     # build dicts for creating xarray dataset:
