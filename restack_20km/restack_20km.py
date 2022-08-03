@@ -539,12 +539,49 @@ def recopy_raw_scratch_files(fps, wrf_dir, ncpus=8):
     return
 
 
-def validate_slice(argv):
-    """Compares the values of restacked data with those in
-    original raw output file for a (random) time slice
+def scrape_meta(ds):
+    """Scrape all metadata from a dataset that should be
+    consistent across output restacked WRF files
     
     Args:
-        argv (tuple): argument vector consisting of the following:
+        ds (xarray.DataSet): open dataset reader for a file to pull
+            metadata from that should be the same across all files
+
+    Returns:
+        dict of file metdata
+    """
+    shared_global_keys = [
+        "creation_date",
+        "NCL_Version",
+        "system",
+        "Conventions",
+        "title",
+        "proj_parameters",
+        "restacked_by",
+        "version",
+    ]
+    meta = {
+        "time": ds["time"].attrs,
+        "lat": ds["lat"].attrs,
+        "lon": ds["lon"].attrs,
+        "xc": ds["xc"].attrs,
+        "xc_shape": ds["xc"].shape,
+        "yc": ds["yc"].attrs,
+        "yc_shape": ds["yc"].shape,
+        "crs": ds["polar_stereographic"].attrs,
+        "global": {key: ds.attrs[key] for key in shared_global_keys},
+    }
+
+    return meta
+
+
+def validate_restacked_file(args):
+    """Compares the values of restacked data with those in
+    original raw output file for a (random) time slice, and collects
+    the file metadata for subsequent validation.
+    
+    Args:
+        args (tuple): argument tuple consisting of the following:
             restack_fp (pathlib.PosixPath): path to file containing
                 restacked data to check
             raw_scratch_dir (pathlib.PosixPath): path to the scratch directory
@@ -554,41 +591,69 @@ def validate_slice(argv):
         dict with keys model, scenario, variable, timestamp, and match
     """
     # unpack (for pooling)
-    restack_fp, raw_scratch_dir = argv
+    restack_fp, raw_scratch_dir = args
     varname = restack_fp.parent.name
+    # only check the actual data if the variable is not a wind or accum variable, 
+    #  because we will expect those to be different
+    check_data = varname.upper() not in luts.accum_varnames + luts.wind_varnames
+        
     with xr.open_dataset(restack_fp) as ds:
-        idx = np.random.randint(ds.time.values.shape[0])
-        check_time = ds.time.values[idx]
-        # check to see if this is a 3D (or more) variable.
-        #  If so, randomly select and index for each extra dimension
-        #  so that we are only comparing a single 2D slice
-        sel_di = {"time": check_time}
-        if len(ds[varname].dims) > 3:
-            # first dim should be time, next will be "level" or equivalent if present
-            d3_name = ds[varname].dims[1]
-            d3_value = np.random.choice(ds[d3_name].values)
-            sel_di.update({d3_name: d3_value})
-        check_arr = ds[varname].sel(sel_di).values
+        # collect metadata that should be consistent between files
+        meta = scrape_meta(ds)
     
-    year = check_time.astype("datetime64[Y]")
-    wrf_time_str = str(check_time.astype("datetime64[h]")).replace("T", "_")
+        if check_data:
+            idx = np.random.randint(ds.time.values.shape[0])
+            check_time = ds.time.values[idx]
+            # check to see if this is a 3D (or more) variable.
+            #  If so, randomly select and index for each extra dimension
+            #  so that we are only comparing a single 2D slice
+            sel_di = {"time": check_time}
+            if len(ds[varname].dims) > 3:
+                # first dim should be time, next will be "level" or equivalent if present
+                d3_name = ds[varname].dims[1]
+                d3_value = np.random.choice(ds[d3_name].values)
+                sel_di.update({d3_name: d3_value})
+            check_arr = ds[varname].sel(sel_di).values
+    
     model, scenario = restack_fp.name.split("_")[-3:-1]
-    group = luts.group_fn_lu[f"{model}_{scenario}"]
-    raw_fp = list(raw_scratch_dir.joinpath(f"{group}/{year}").glob(f"*{wrf_time_str}*"))[0]
-    with xr.open_dataset(raw_fp) as ds:
-        if len(sel_di.keys()) > 1:
-            raw_d3_name = luts.rev_levelnames[d3_name]
-            raw_arr = ds[varname.upper()].sel({raw_d3_name: d3_value}).values
-        else:
-            raw_arr = ds[varname.upper()].values
+    if check_data:
+        year = check_time.astype("datetime64[Y]")
+        wrf_time_str = str(check_time.astype("datetime64[h]")).replace("T", "_")
+        group = luts.group_fn_lu[f"{model}_{scenario}"]
+        raw_fp = list(raw_scratch_dir.joinpath(f"{group}/{year}").glob(f"*{wrf_time_str}*"))[0]
+        with xr.open_dataset(raw_fp) as ds:
+            if len(sel_di.keys()) > 1:
+                raw_d3_name = luts.rev_levelnames[d3_name]
+                raw_arr = ds[varname.upper()].sel({raw_d3_name: d3_value}).values
+            else:
+                raw_arr = ds[varname.upper()].values
 
-    check = np.all(np.flipud(raw_arr) == check_arr)
+        check_result = np.all(np.flipud(raw_arr) == check_arr)
+    else:
+        wrf_time_str = None
+        check_result = None
+
     result = {
         "model": model,
         "scenario": scenario,
         "variable": varname,
         "timestamp": wrf_time_str,
-        "match": check
+        "match": check_result,
+        "meta": meta,
     }
     
     return result
+
+
+def get_year_fn_str(years):
+    """Get a string to be used in filenames from a list of years
+    """
+    if len(years) > 1:
+        if np.all(np.diff(sorted(years)) == 1):
+            year_fn_str = f"{years[0]}-{years[-1]}"
+        else:
+            year_fn_str = " ".join(years)
+    elif len(years) == 1:
+        year_fn_str = years[0]
+        
+    return year_fn_str
