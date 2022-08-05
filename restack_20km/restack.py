@@ -403,13 +403,11 @@ if __name__ == "__main__":
         f"restack processing system: {' '.join(os.uname())};\n"
         f"restack date: {time.ctime()} AKST"
     )
-    global_attrs["reference_time"] = str(new_dates[0])
     del global_attrs["title"]
     del global_attrs["NCL_Version"]
     del global_attrs["creation_date"]
     del global_attrs["system"]
     del global_attrs["grib_source"]
-    del global_attrs["reference_time"]
 
     x, y = derive_xy(geogrid_fp, global_attrs["proj_parameters"])
     # build dicts for creating xarray dataset:
