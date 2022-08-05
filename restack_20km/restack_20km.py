@@ -551,11 +551,6 @@ def scrape_meta(ds):
         dict of file metdata
     """
     shared_global_keys = [
-        "creation_date",
-        "NCL_Version",
-        "system",
-        "Conventions",
-        "title",
         "proj_parameters",
         "restacked_by",
         "version",
@@ -657,3 +652,26 @@ def get_year_fn_str(years):
         year_fn_str = years[0]
         
     return year_fn_str
+
+
+def get_mismatch_params(results_df, query_str):
+    """Function for getting the parameters of files where a mismatch was found
+    Should not occur, was used for troubleshooting. Supply the results dataframe from 
+    combined results of validate_restacked_file, and a query string to susbet the
+    dataframe.
+    
+    Args:
+        results_df (pandas.DataFrame): resulting dataframe from combining output
+            from validate_restacked_file
+        query_str (str): additional query fragment for subsetting dataframe
+    
+    Returns
+        tuple of the form (variable name, timestamp, year, date, hour)
+    """
+    bad_case = results_df.query(f"match == False {query_str}").iloc[0]
+    bad_ts = bad_case["timestamp"]
+    bad_date, bad_hr = bad_ts.split("_")
+    bad_year = bad_ts.split("-")[0]
+    bad_var = bad_case["variable"]
+    
+    return bad_var, bad_ts, bad_year, bad_date, bad_hr
