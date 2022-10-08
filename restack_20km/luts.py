@@ -218,3 +218,31 @@ varnames = [
     "VBOT",
 ]
 
+# for resampling to daily, names of target variable names
+#  and associated WRF variable names
+resample_varnames = {
+    "t2max": {
+        "wrf_varname": "t2",
+        "aggr": "max",
+    },
+    "t2min": {
+        "wrf_varname": "t2",
+        "aggr": "min",
+    },
+    "t2": {
+        "wrf_varname": "t2",
+        "aggr": "mean",
+    },
+    "q2": {
+        "wrf_varname": "q2",
+        "aggr": "mean",
+    },
+    "pcpc": {
+        "wrf_varname": "pcpc",
+        "aggr": "mean",
+    },
+    "pcpt": {
+        "wrf_varname": "pcpt",
+        "aggr": "mean",
+    },
+}
