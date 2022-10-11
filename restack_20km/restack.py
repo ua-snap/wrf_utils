@@ -410,6 +410,7 @@ if __name__ == "__main__":
     del global_attrs["grib_source"]
 
     x, y = derive_xy(geogrid_fp, global_attrs["proj_parameters"])
+    wrf_proj = Proj(global_attrs["proj_parameters"])
     # build dicts for creating xarray dataset:
     coords_dict = {
         # flip the lon and lat arrays to provide more intuitive orientation
@@ -420,6 +421,8 @@ if __name__ == "__main__":
         "xc": (["xc"], x, luts.coord_attrs["xc"]),
         "lon": (["yc", "xc"], np.flipud(lon_arr), luts.coord_attrs["lon"]),
         "lat": (["yc", "xc"], np.flipud(lat_arr), luts.coord_attrs["lat"]),
+        # create CRS variable and add info. This follows the rioxarray format
+        "spatial_ref": ([], np.array(0), wrf_proj.crs.to_cf()),
     }
 
     # handle variables with a 4th dim level
@@ -434,16 +437,12 @@ if __name__ == "__main__":
     else:
         dims = ["time", "yc", "xc"]
 
-    crs_varname = "polar_stereographic"
-    local_attrs["grid_mapping"] = crs_varname
-    wrf_proj = Proj(global_attrs["proj_parameters"])
+    local_attrs["grid_mapping"] = "polar_stereographic"
     new_varname = varname.lower()
     data_dict = {
         # add the data flipped along y axis to match flipped lat/lon arrays
         #  and y-coordinate array
         new_varname: (dims, np.flip(arr.astype(np.float32), axis=-2), local_attrs),
-        # create CRS variable and add info
-        crs_varname: ([], np.array(b""), wrf_proj.crs.to_cf()),
     }
     ds = xr.Dataset(data_dict, coords_dict, global_attrs)
 

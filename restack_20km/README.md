@@ -64,7 +64,9 @@ This variable determines which of the WRF groups is being worked on for a given 
 
 ### Pipeline structure
 
-This pipeline is different from other SNAP pipelines because it applies the same logic (notebooks, scripts) to different subsets of the WRF data, controlled by the `$WRF_GROUP` variable. It consists of the following scripts and notebooks, which should be completed for each WRF group in the order listed:
+This pipeline is different from other SNAP pipelines because it applies the same logic (notebooks, scripts) to different subsets of the WRF data, controlled by the `$WRF_GROUP` variable; and there are multiple steps that dispatch slurm jobs! So, get ready for lots of slurming. This is also partially why the pipeline is broken up into multiple notebooks instead of one single one. 
+
+It consists of the following scripts and notebooks, which should be completed for each WRF group in the order listed:
 
 1. `stage_hourly.py`: Stage the hourly WRF files for copying. Run with
 

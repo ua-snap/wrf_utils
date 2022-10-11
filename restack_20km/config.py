@@ -41,6 +41,13 @@ raw_scratch_dir.mkdir(exist_ok=True)
 # where initially restacked data will be stored on scratch_space
 restack_scratch_dir = scratch_dir.joinpath("restacked")
 restack_scratch_dir.mkdir(exist_ok=True)
+# the following two directories are for the hourly and daily restacked
+#  data on scratch space
+hourly_dir = restack_scratch_dir.joinpath("hourly")
+hourly_dir.mkdir(exist_ok=True)
+daily_dir = restack_scratch_dir.joinpath("daily")
+daily_dir.mkdir(exist_ok=True)
+
 
 # where slurm scripts and output logs will be written
 slurm_dir = base_dir.joinpath("slurm")
