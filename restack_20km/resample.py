@@ -30,14 +30,8 @@ def resample(fp, aggr, varname, out_varname, out_fp):
     with xr.open_dataset(fp) as ds:
         # metric switch -- aggregation
         aggr_str = "1D"
-        if aggr == "mean": 
-            ds_day = ds.resample(time=aggr_str).mean()
-        elif aggr == "min": 
-            ds_day = ds.resample(time=aggr_str).min()
-        elif aggr == "max": 
-            ds_day = ds.resample(time=aggr_str).max()
-        elif aggr == "sum": 
-            ds_day = ds.resample(time=aggr_str).sum()
+        # use string name of aggr that to call the matching method
+        ds_day = getattr(ds.resample(time=aggr_str), aggr)()
 
     ds_day = ds_day.rename({wrf_varname: out_varname})
     ds_day.attrs["history"] += f"\nresample date: {time.ctime()} AKST"
@@ -61,7 +55,11 @@ def resample(fp, aggr, varname, out_varname, out_fp):
         "coordinates",
     ]
     for attr in rm_attrs:
-        del ds_day[out_varname].attrs[attr]
+        try:
+            # some attributes do not apply to all variables etc
+            del ds_day[out_varname].attrs[attr]
+        except KeyError:
+            pass
 
     # set output compression and encoding for serialization
     encoding = ds_day[out_varname].encoding

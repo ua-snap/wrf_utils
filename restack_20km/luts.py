@@ -44,6 +44,9 @@ wind_varnames = ["U", "U10", "UBOT", "V", "V10", "VBOT"]
 
 accum_varnames = ["ACSNOW", "PCPT", "PCPC", "PCPNC", "POTEVP"]
 
+# names of variables that should be resampled to daily
+resample_varnames = ["t2", "t2min", "t2max", "q2", "pcpc", "pcpt"]
+
 lon_variable = "g5_lon_1"
 lat_variable = "g5_lat_0"
 
