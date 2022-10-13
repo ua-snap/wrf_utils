@@ -65,8 +65,7 @@ def validate_group(wrf_dir, group):
 
 
 def get_wrf_fps(wrf_dir, years):
-    """Get all of the hourly WRF output filepaths for given
-    wrf directory and years
+    """Get all of the hourly WRF output filepaths for given wrf directory and years
     
     Args:
         wrf_dir (pathlib.PosixPath): path to the directory containing hourly WRF files
@@ -101,17 +100,14 @@ def get_year_file_modes(year_dir):
 
 
 def check_staged(wrf_dir, years):
-    """Function to confirm that files in a given year or set of years
-    are currently 'staged' and not offline. Returns the list of file
-    paths that are not staged.
+    """Function to confirm that files in a given year or set of years are currently 'staged' and not offline. Returns the list of file paths that are not staged.
     
     Args:
         wrf_dir (pathlib.PosixPath): path to the directory containing hourly WRF files
         years (list): list of years to get filepaths for
     
     Returns:
-        wrf_fps (list): list of WRF filepaths belonging to the supplied wrf_dir and years
-            that are not staged
+        wrf_fps (list): list of WRF filepaths belonging to the supplied wrf_dir and years that are not staged
     """
     year_dirs = [wrf_dir.joinpath(str(year)) for year in years]
     with Pool(20) as pool:
@@ -132,14 +128,13 @@ def check_staged(wrf_dir, years):
 
 
 def test_file_equivalence(fp1, fp2, heads=False, detail=False):
-    """Check that fp1 and fp2 have the same 
-    size (and "header" info if heads), 
-    return bool (or dict of bools if detail)
+    """Check that fp1 and fp2 have the same size (and "header" info if heads), return bool (or dict of bools if detail)
     
-    fp1 (pathlib.PosixPath): path to first file
-    fp2 (pathlib.PosixPath): path to second file to test equivalence
-    head (bool): test that the "headers" of the files are the same
-    detail (bool): return more info on what specfic equivalence tests failed
+    Args:
+        fp1 (pathlib.PosixPath): path to first file
+        fp2 (pathlib.PosixPath): path to second file to test equivalence
+        head (bool): test that the "headers" of the files are the same
+        detail (bool): return more info on what specfic equivalence tests failed
     
     Returns:
         bool or dict indicating equivalence of files
@@ -179,8 +174,8 @@ def check_raw_scratch_file(wrf_fp, group, raw_scratch_dir):
 
 
 def check_raw_scratch(wrf_dir, group, years, raw_scratch_dir, ncpus=24):
-    """Check to see the number of requested and missing WRF files in the
-    raw scratch directory"""
+    """Check to see the number of requested and missing WRF files in the raw scratch directory
+    """
     # see if we can pool this?
     existing_scratch_fps = []
     all_wrf_fps = []
@@ -241,8 +236,7 @@ def make_yearly_scratch_dirs(group, years, scratch_dir):
     Args:
         group (str): name of WRF group for use in directory paths
         years (list): list of years (ints) to create subdirs for
-        scratch_dir (pathlib.PosixPath): path to scratch_dir for making
-            directories in
+        scratch_dir (pathlib.PosixPath): path to scratch_dir for making directories in
             
     Returns:
         None, makes directories if they don't exist
@@ -264,9 +258,7 @@ def sys_copy(args):
             (src_fp, dst_fp, clobber):
                 src_fp (str): path to file to be copied
                 dst_fp (str): destination path to copy file to
-                clobber (str): one of "filesize", "head", or False, indicating whether to
-                    clobber only after finding that file sizes are different, file headers
-                    are different, or don't clobber, respectively. 
+                clobber (str): one of "filesize", "head", or False, indicating whether to clobber only after finding that file sizes are different, file headers are different, or don't clobber, respectively. 
 
     Returns:
         output from os.system call to cp utility
@@ -306,13 +298,10 @@ def get_file_size(fp):
 
 
 def check_scratch_file_sizes(year_scratch_dir, ncpus=8):
-    """Helper function that can be used to check the sizes of hourly WRF files in
-    scratch_dir after batch copying is done. Helpful for finding what files 
-    (if any) did not copy successfully.
+    """Helper function that can be used to check the sizes of hourly WRF files in scratch_dir after batch copying is done. Helpful for finding what files (if any) did not copy successfully.
     
     Args:
-        year_scratch_dir (pathlib.PosixPath): path to the annual directory of
-            hourly WRF files within scratch_dir
+        year_scratch_dir (pathlib.PosixPath): path to the annual directory of hourly WRF files within scratch_dir
         ncpus (int): number of CPUs to use for Pooling the filesize checking
         
     Returns:
@@ -332,10 +321,8 @@ def recopy_raw_scratch_files(fps, wrf_dir, ncpus=8):
     """Re-copy the raw scratch files specified.
     
     Args:
-        fps (list): list of paths to raw hourly WRF files in
-            raw_scratch_dir that should be re-copied from wrf_dir
-        wrf_dir (pathlib.PosixPath): path to the directory containing
-            the annual subdirectories of hourly WRF outputs
+        fps (list): list of paths to raw hourly WRF files in raw_scratch_dir that should be re-copied from wrf_dir
+        wrf_dir (pathlib.PosixPath): path to the directory containing the annual subdirectories of hourly WRF outputs
         ncpus (int): number of CPUs to use for parallel copy
         
     Returns:
@@ -373,7 +360,7 @@ def scrape_meta(ds):
         "xc_shape": ds["xc"].shape,
         "yc": ds["yc"].attrs,
         "yc_shape": ds["yc"].shape,
-        "crs": ds["polar_stereographic"].attrs,
+        "crs": ds["spatial_ref"].attrs,
         "global": {key: ds.attrs[key] for key in shared_global_keys},
     }
 
@@ -381,16 +368,12 @@ def scrape_meta(ds):
 
 
 def validate_restacked_file(args):
-    """Compares the values of restacked data with those in
-    original raw output file for a (random) time slice, and collects
-    the file metadata for subsequent validation.
+    """Compares the values of restacked data with those in original raw output file for a (random) time slice, and collects the file metadata for subsequent validation.
     
     Args:
         args (tuple): argument tuple consisting of the following:
-            restack_fp (pathlib.PosixPath): path to file containing
-                restacked data to check
-            raw_scratch_dir (pathlib.PosixPath): path to the scratch directory
-                containing raw output data
+            restack_fp (pathlib.PosixPath): path to file containing restacked data to check
+            raw_scratch_dir (pathlib.PosixPath): path to the scratch directory containing raw output data
     
     Returns:
         dict with keys model, scenario, variable, timestamp, and match
@@ -447,6 +430,61 @@ def validate_restacked_file(args):
         "meta": meta,
     }
     
+    return result
+
+
+def validate_resampled_file(args):
+    """Compares the values of restacked data with those in original raw output file for a (random) time slice, and collects the file metadata for subsequent validation.
+    
+    Args:
+        args (tuple): argument tuple consisting of the following:
+            daily_fp (pathlib.PosixPath): path to file containing resampled daily data to check
+            hourly_dir (pathlib.PosixPath): path to the scratch directory containing restacked hourly data
+    
+    Returns:
+        dict with keys model, scenario, variable, timestamp, and match
+    """
+    # unpack (for pooling)
+    daily_fp, hourly_dir = args
+    resample_varname = daily_fp.parent.name
+    wrf_varname = luts.resample_varnames[resample_varname]["wrf_varname"]
+    aggr = luts.resample_varnames[resample_varname]["aggr"]
+
+    with xr.open_dataset(daily_fp) as ds:
+        # collect metadata that should be consistent between files
+        meta = scrape_meta(ds)
+        # choose random day and read data
+        idx = np.random.randint(ds.time.values.shape[0])
+        check_time = ds.time.values[idx]
+        # Should not have to worry about another "level" like we do
+        #  with the hourly validation
+        check_arr = ds[varname].sel(sel_di).values
+
+    model, scenario = daily_fp.name.split("_")[-3:-1]
+    year = int(daily_fp.name.split("_")[-1].split(".")[0])
+    hourly_fp = hourly_dir.joinpath(
+        daily_fp.name.replace("daily", "hourly").replace(resample_varname, wrf_varname)
+    )
+
+    # wrf_time_str = str(check_time.astype("datetime64[h]")).replace("T", "_")
+    # group = luts.group_fn_lu[f"{model}_{scenario}"]
+    # raw_fp = list(raw_scratch_dir.joinpath(f"{group}/{year}").glob(f"*{wrf_time_str}*"))[0]
+
+    with xr.open_dataset(hourly_fp) as ds:
+        # evaluate the method stored in aggr across the time dimension
+        hourly_arr = getattr(ds[wrf_varname].sel(time=check_time), aggr)(dim="time")
+
+    check_result = np.all(hourly_arr == check_arr)
+
+    result = {
+        "model": model,
+        "scenario": scenario,
+        "variable": varname,
+        "timestamp": wrf_time_str,
+        "match": check_result,
+        "meta": meta,
+    }
+
     return result
 
 
