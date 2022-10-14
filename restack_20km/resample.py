@@ -40,6 +40,7 @@ def resample(fp, aggr, varname, out_varname, out_fp):
         f"Daily: these data represent {aggr} of hourly data from "
         "wrf dynamical downscaling outputs."
     ))
+    ds_day["time"].attrs = ds["time"].attrs
     # remove some old local attributes
     rm_attrs = [
         "initial_time",

@@ -458,29 +458,32 @@ def validate_resampled_file(args):
         check_time = ds.time.values[idx]
         # Should not have to worry about another "level" like we do
         #  with the hourly validation
-        check_arr = ds[varname].sel(sel_di).values
+        check_arr = ds[resample_varname].sel(time=check_time).values
 
     model, scenario = daily_fp.name.split("_")[-3:-1]
     year = int(daily_fp.name.split("_")[-1].split(".")[0])
     hourly_fp = hourly_dir.joinpath(
+        wrf_varname, 
         daily_fp.name.replace("daily", "hourly").replace(resample_varname, wrf_varname)
     )
 
     # wrf_time_str = str(check_time.astype("datetime64[h]")).replace("T", "_")
     # group = luts.group_fn_lu[f"{model}_{scenario}"]
     # raw_fp = list(raw_scratch_dir.joinpath(f"{group}/{year}").glob(f"*{wrf_time_str}*"))[0]
-
+    
+    # convert timestamp with HMS to only YMD
+    check_time = pd.to_datetime(check_time).strftime('%Y-%m-%d')
     with xr.open_dataset(hourly_fp) as ds:
         # evaluate the method stored in aggr across the time dimension
-        hourly_arr = getattr(ds[wrf_varname].sel(time=check_time), aggr)(dim="time")
+        hourly_arr = getattr(ds[wrf_varname].sel(time=check_time), aggr)(dim="time").values
 
     check_result = np.all(hourly_arr == check_arr)
 
     result = {
         "model": model,
         "scenario": scenario,
-        "variable": varname,
-        "timestamp": wrf_time_str,
+        "variable": resample_varname,
+        "timestamp": check_time,
         "match": check_result,
         "meta": meta,
     }
