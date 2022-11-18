@@ -246,6 +246,6 @@ resample_varnames = {
     },
     "pcpt": {
         "wrf_varname": "pcpt",
-        "aggr": "mean",
+        "aggr": "sum",
     },
 }

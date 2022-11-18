@@ -1,5 +1,3 @@
-# pylint: disable=C0103, W0621
-
 """Restack the hourly data and diff/interpolate the accumulation variables
 
 Usage:
