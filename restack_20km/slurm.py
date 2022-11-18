@@ -215,6 +215,35 @@ def write_sbatch_resample(
 
     return
 
+
+def write_sbatch_copy_restacked(
+    sbatch_fp,
+    sbatch_out_fp,
+    src_dir,
+    dst_dir,
+    sbatch_head,
+):
+    """Write an sbatch script for copying files from a restacked directory to another
+    
+    Args:
+        sbatch_fp (path_like): path to .slurm script to write sbatch commands to
+        sbatch_out_fp (path_like): path to where sbatch stdout should be written
+        src_dir (path_like): path to directory containing files to be copied
+        dst_dir (path_like): destination directory
+        sbatch_head (str): output from make_sbatch_head that generates a suitable set of SBATCH commands with .format brackets for the sbatch output filename
+        
+    Returns:
+        None, writes the commands to sbatch_fp
+    """
+    commands = "\n"
+    commands = sbatch_head.format(1, sbatch_out_fp) + f"\ntime cp {src_dir}/*.nc {dst_dir} "
+
+    with open(sbatch_fp, "w") as f:
+        f.write(commands)
+
+    return
+
+
 def submit_sbatch(sbatch_fp):
     """Submit a script to slurm via sbatch
     
