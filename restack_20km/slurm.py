@@ -216,7 +216,7 @@ def write_sbatch_resample(
     return
 
 
-def write_sbatch_copy_restacked(
+def write_sbatch_rsync(
     sbatch_fp,
     sbatch_out_fp,
     src,
