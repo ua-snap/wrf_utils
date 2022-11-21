@@ -7,11 +7,6 @@ import luts
 import restack_20km as main
 
 
-def rsync(args):
-    src, dst = args
-    os.system(f"rsync -a {src} {dst}")
-
-
 if __name__ == "__main__":
     # set up directories and path variables
     years = luts.groups[group]["years"]
@@ -26,10 +21,19 @@ if __name__ == "__main__":
     slurm_copy_dir = slurm_dir.joinpath("copy_raw")
     slurm_copy_dir.mkdir(exist_ok=True)
     
-    args = [(wrf_dir.joinpath(str(year)), group_dir) for year in years] 
-    with Pool(20) as pool:
-        for _ in tqdm.tqdm(pool.imap_unordered(rsync, args), total=len(args)):
-            pass
-    del pool
+    ncpus = 20
+    clobber = "all"
+    for year in years:
+        src_dir = wrf_dir.joinpath(str(year))
+        dst_dir = group_dir.joinpath(str(year))
+        # set third arg to False for no-clobber
+        args = [(fp, dst_dir.joinpath(fp.name), clobber) for fp in src_dir.glob("*.nc")]
+
+        with Pool(ncpus) as pool:
+            for _ in tqdm.tqdm(
+                pool.imap_unordered(main.sys_copy, args), total=len(args), desc=f"Year: {year}"
+            ):
+                pass
+        del pool
     
     print(f"Done, raw WRF outputs are available in {group_dir}")

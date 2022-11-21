@@ -98,7 +98,14 @@ This will determine the required directories to stage in batch from the `$WRF_GR
 
 **Also note** - Once all files are staged, they will only remain staged for a limited time! So it is best to monitor semi-frequently so that you can execute the next step ASAP after they are ready. 
 
-2. `copy_raw.ipynb`: After staging the files, run this notebook to copy these staged raw outputs to `$SCRATCH_DIR` for processing. You can use the [utils](utils.ipynb) notebook to monitor the progression of copying the files to scratch space.
+2. `copy_raw.py`: After staging the files, run this script to copy these staged raw outputs to `$SCRATCH_DIR` for processing. You can use the [utils](utils.ipynb) notebook to monitor the progression of copying the files to scratch space.
+
+**Note** - This will take a long time. It is not set up as a distributed / slurm step because $ARCHIVE is not mounted on the compute nodes, so it must be done from the login node. Reccommend starting a screen session on the login node and running from there:
+
+```
+python copy_raw.py
+```
+
 3. `restack_20km.ipynb`: Run this notebook only when all files have been copied to `$SCRATCH_DIR`. This notebook will orchestrate the main processing lift of restacking the hourly outputs to have the desired structure, using slurm to distirbute the work. You will need to make sure that the processing jobs have completed before proceeding to the next step. Outputs will be written to `$SCRATCH_DIR`.
 
 **Note** - this step requires an ancillary WRF file to be present. It should  already be present at `/import/SNAP/wrf_data/project_data/wrf_data/ancillary/geo_em.d01.nc`, but this file should also be available at `/import/SNAP/wrf_data/project_data/ancillary_wrf_constants/geo_em.d01.nc` and on other SNAP infrastructure as well.
