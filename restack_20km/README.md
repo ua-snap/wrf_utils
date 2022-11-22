@@ -86,36 +86,24 @@ This pipeline is different from other SNAP pipelines because it applies the same
 
 It consists of the following scripts and notebooks, which should be completed for each WRF group in the following order:
 
-1. `stage_hourly.py`: Stage the hourly WRF files for copying. Run with
+1. `stage_hourly.py`: Stage and copy the hourly WRF files for copying. Run with
 
 ```
-python stage_hourly.py
+python stage_copy_raw.py
 ```
 
-This will determine the required directories to stage in batch from the `$WRF_GROUP` variable. 
+**Note** - This process can take a long time for a single WRF group, so it may be smart to try using a `screen` session (login node) to run it and let it churn for a day or more. The staging process is highly dependent on what else is going on in the $ARCHIVE filesystem.
 
-**Note** - This process can take a very long time for a single WRF group, so it may be smart to try using a `screen` session (login node) to run it and let it churn for a day or more. 
-
-**Also note** - Once all files are staged, they will only remain staged for a limited time! So it is best to monitor semi-frequently so that you can execute the next step ASAP after they are ready. 
-
-2. `copy_raw.py`: After staging the files, run this script to copy these staged raw outputs to `$SCRATCH_DIR` for processing. You can use the [utils](utils.ipynb) notebook to monitor the progression of copying the files to scratch space.
-
-**Note** - This will take a long time. It is not set up as a distributed / slurm step because $ARCHIVE is not mounted on the compute nodes, so it must be done from the login node. Reccommend starting a screen session on the login node and running from there:
-
-```
-python copy_raw.py
-```
-
-3. `restack_20km.ipynb`: Run this notebook only when all files have been copied to `$SCRATCH_DIR`. This notebook will orchestrate the main processing lift of restacking the hourly outputs to have the desired structure, using slurm to distirbute the work. You will need to make sure that the processing jobs have completed before proceeding to the next step. Outputs will be written to `$SCRATCH_DIR`.
+2. `restack_20km.ipynb`: Run this notebook only when all files have been copied to `$SCRATCH_DIR`. This notebook will orchestrate the main processing lift of restacking the hourly outputs to have the desired structure, using slurm to distirbute the work. You will need to make sure that the processing jobs have completed before proceeding to the next step. Outputs will be written to `$SCRATCH_DIR`.
 
 **Note** - this step requires an ancillary WRF file to be present. It should  already be present at `/import/SNAP/wrf_data/project_data/wrf_data/ancillary/geo_em.d01.nc`, but this file should also be available at `/import/SNAP/wrf_data/project_data/ancillary_wrf_constants/geo_em.d01.nc` and on other SNAP infrastructure as well.
 
-4. `resample_daily.ipynb`: When the hourly data have been restacked, run this notebook to resample the hourly data to daily. 
+3. `resample_daily.ipynb`: When the hourly data have been restacked, run this notebook to resample the hourly data to daily. 
 
 **Note** - there are daily WRF data outputs existing, but it is more straightforward to just resample the hourly outputs, for purposes of preserving the new structure. 
 
-5. `qc.ipynb`: Next, use this notebook to quality check the new data.
-6. `prod_comparison.ipynb`: This notebook will compare the newly restacked data with the existing "production" data - i.e., the data that is currently saved to the base directory, `/import/SNAP/wrf_data/project_data/wrf_data/hourly` and `daily/`. Obviously, this should be done before replacing the exisitng production data with the new data. This dataset has been released for multiple years now, so we want to make sure data values are the same. This notebook will simply run a comparison which will produce results that can be viewed next. Simply run the notebook from The following command will run that notebook using the but also create a static html document that can be saved in base_dir as a record of the check.
+4. `qc.ipynb`: Next, use this notebook to quality check the new data.
+5. `prod_comparison.ipynb`: This notebook will compare the newly restacked data with the existing "production" data - i.e., the data that is currently saved to the base directory, `/import/SNAP/wrf_data/project_data/wrf_data/hourly` and `daily/`. Obviously, this should be done before replacing the exisitng production data with the new data. This dataset has been released for multiple years now, so we want to make sure data values are the same. This notebook will simply run a comparison which will produce results that can be viewed next. Simply run the notebook from The following command will run that notebook using the but also create a static html document that can be saved in base_dir as a record of the check.
 
 **Note** - This can take maybe 30 minutes to and hour or more, it seems variable. Start a screen session on a compute node if you would like, and you can use the following command to run the notebook without opening it (again, after setting env vars in the new screen session):
 
@@ -123,9 +111,9 @@ python copy_raw.py
 jupyter nbconvert --to notebook --execute --inplace prod_comparison.ipynb
 ```
 
-7. Ensure that the resulting tables created in step 6 look OK. I.e., make sure that any array or timestamp mismatches are expected. Follow the example in `ancillary/eval_prod_comparison/eval_prod_comparison_ccsm_hist.ipynb` (there may be one for each WRF group by the time you are reading this). 
+6. Ensure that the resulting tables created in step 6 look OK. I.e., make sure that any array or timestamp mismatches are expected. Follow the example in `ancillary/eval_prod_comparison/eval_prod_comparison_ccsm_hist.ipynb` (there may be one for each WRF group by the time you are reading this). 
 
-8. Copy the files to the base directory from scratch space. This command should work for all WRF groups:
+7. Copy the files to the base directory from scratch space. This command should work for all WRF groups:
 
 ```
 # target dir hardcoded as base_dir in config.py

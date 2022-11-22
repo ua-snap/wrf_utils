@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import time
 from multiprocessing import Pool
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -99,6 +100,23 @@ def get_year_file_modes(year_dir):
     return modes
 
 
+def check_year_files_offline(year_dir):
+    """Helper function to see if "offline" is in the output from 'sls -D' for a year's worth of files 
+    """
+    out_str = subprocess.check_output(
+        ["sls", "-D", str(year_dir)], stderr=subprocess.DEVNULL
+    )
+    results = str(out_str)[2:-1].split("\\n\\n")[:-1]
+
+    statuses = []
+    for result in results:
+        fp = result.split(":\\n")[0]
+        offline = "offline" in result
+        statuses.append((fp, offline))
+
+    return statuses
+
+
 def check_staged(wrf_dir, years):
     """Function to confirm that files in a given year or set of years are currently 'staged' and not offline. Returns the list of file paths that are not staged.
     
@@ -109,14 +127,14 @@ def check_staged(wrf_dir, years):
     Returns:
         wrf_fps (list): list of WRF filepaths belonging to the supplied wrf_dir and years that are not staged
     """
+    print("Checking for staged files")
     year_dirs = [wrf_dir.joinpath(str(year)) for year in years]
     with Pool(20) as pool:
-        out = pool.map(get_year_file_modes, year_dirs)
+        out = pool.map(check_year_files_offline, year_dirs)
         
-        
-    results = [out_tpl for year_modes in out for out_tpl in year_modes]
-    unstaged_fps = [out_tpl[0] for out_tpl in results if out_tpl[1] == "offline"]
-    unstaged_years = list(set([fp.parent for fp in unstaged_fps]))
+    results = [out_tpl for year_statuses in out for out_tpl in year_statuses]
+    unstaged_fps = [out_tpl[0] for out_tpl in results if out_tpl[1] == True]
+    unstaged_years = sorted(list(set([int(Path(fp).parent.name) for fp in unstaged_fps])))
     
     print(f"Requested years: {years}")
     if len(unstaged_years) == 0:
@@ -124,7 +142,7 @@ def check_staged(wrf_dir, years):
     else:
         print(f"Unstaged years: {unstaged_years}")
     
-    return unstaged_fps
+    return unstaged_years
 
 
 def test_file_equivalence(fp1, fp2, heads=False, detail=False):
@@ -226,7 +244,7 @@ def check_raw_scratch(wrf_dir, group, years, raw_scratch_dir, ncpus=24):
 
             print(f"Years with files partially missing from scratch space: {years_missing_files}")
 
-    return wrf_fps, existing_scratch_fps
+    return years_missing_files
 
 
 def make_yearly_scratch_dirs(group, years, scratch_dir):
