@@ -23,16 +23,21 @@ if __name__ == "__main__":
     tic = time.perf_counter()
     # run the srage and rsync for all years
     for year in years:
+        # cannot stage the directories in general because there could be other irrelevant large files.
+        #  Stage the netCDFs only.
         stage_dir = wrf_dir.joinpath(str(year))
+        os.chdir(stage_dir)
         print(f"Staging {stage_dir}")
         tic2 = time.perf_counter()
-        # using check output to avoid printing all staging processes
-        out = check_output(["batch_stage", "-r", stage_dir])
+        # using check output to avoid printing all staging processes (one line for each file)
+        out = check_output(["ls WRFDS*.nc", "|", "batch_stage", "-i"])
         print(f"done, files staged in {round((time.perf_counter() - tic2) / 60)}m")
         # run rsync
         print(f"running rsync on {stage_dir}")
         tic2 = time.perf_counter()
-        _ = os.system(f"rsync -a {stage_dir} {dst_dir}")
+        dst_year_dir = dst_dir.joinpath(year)
+        dst_year_dir.mkdir(exist_ok=True)
+        _ = os.system(f"rsync -a WRFDS*.nc {dst_year_dir}")
         print(f"rsync completed in {round((time.perf_counter() - tic2) / 60)}m")
     
     print(f"Files staged and copied in {round((time.perf_counter() - tic) / 60)}m")
