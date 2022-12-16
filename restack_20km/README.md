@@ -66,10 +66,10 @@ This variable determines which of the WRF groups is being worked on for a given 
 
 The pipeline works on a single WRF group at one time given file access constraints. Those 5 groups are various model / scenario combinations, and are defined in the `luts.py` file. You may set the `WRF_GROUP` env var to any of the following values to process the associated dataset:
 
-`ccsm_hist`: NCAR CCSM4 historical
-`ccsm_rcp85`: NCAR CCSM4 RCP 8.5
-`gfdl_hist`: GFDL CM3 historical
-`gfdl_rcp85`: GFDL CM3 RCP 8.5
+`ccsm_hist`: NCAR CCSM4 historical  
+`ccsm_rcp85`: NCAR CCSM4 RCP 8.5  
+`gfdl_hist`: GFDL CM3 historical  
+`gfdl_rcp85`: GFDL CM3 RCP 8.5  
 `erain_hist`: ERA-Interim (historical)
 
 So to work on processing the NCAR CCSM4 historical data, run:
@@ -94,16 +94,25 @@ python stage_copy_raw.py
 
 **Note** - This process can take a long time for a single WRF group, so it may be smart to try using a `screen` session (login node) to run it and let it churn for a day or more. The staging process is highly dependent on what else is going on in the $ARCHIVE filesystem.
 
-2. `restack_20km.ipynb`: Run this notebook only when all files have been copied to `$SCRATCH_DIR`. This notebook will orchestrate the main processing lift of restacking the hourly outputs to have the desired structure, using slurm to distirbute the work. You will need to make sure that the processing jobs have completed before proceeding to the next step. Outputs will be written to `$SCRATCH_DIR`.
+2. `forecast_times.py`: Run this script to create an ancillary table that will be referenced by restacking code. This script accepts the following arguments:
+
+    * `-s`: the directory containing the annual subdirectories of WRF outputs. Use the directory on scratch space if all of the files successfully staged and copied. In case there was not enough room on scratch space to copy the entirety of the WRF group over, use the `--is_archive` switch, and supply the path to the directory on `$ARCHIVE` as long as all files are staged. 
+    * `-n`: number of cores to use for multiprocessing.Pool
+
+```
+python forecast_times.py -s /archive/DYNDOWN/DIONE/pbieniek/ccsm/rcp85/hourly -n 24 --is_archive
+```
+
+3. `restack_20km.ipynb`: Run this notebook only when all files have been copied to `$SCRATCH_DIR`. This notebook will orchestrate the main processing lift of restacking the hourly outputs to have the desired structure, using slurm to distirbute the work. You will need to make sure that the processing jobs have completed before proceeding to the next step. Outputs will be written to `$SCRATCH_DIR`.
 
 **Note** - this step requires an ancillary WRF file to be present. It should  already be present at `/import/SNAP/wrf_data/project_data/wrf_data/ancillary/geo_em.d01.nc`, but this file should also be available at `/import/SNAP/wrf_data/project_data/ancillary_wrf_constants/geo_em.d01.nc` and on other SNAP infrastructure as well.
 
-3. `resample_daily.ipynb`: When the hourly data have been restacked, run this notebook to resample the hourly data to daily. 
+4. `resample_daily.ipynb`: When the hourly data have been restacked, run this notebook to resample the hourly data to daily. 
 
 **Note** - there are daily WRF data outputs existing, but it is more straightforward to just resample the hourly outputs, for purposes of preserving the new structure. 
 
-4. `qc.ipynb`: Next, use this notebook to quality check the new data.
-5. `prod_comparison.ipynb`: This notebook will compare the newly restacked data with the existing "production" data - i.e., the data that is currently saved to the base directory, `/import/SNAP/wrf_data/project_data/wrf_data/hourly` and `daily/`. Obviously, this should be done before replacing the exisitng production data with the new data. This dataset has been released for multiple years now, so we want to make sure data values are the same. This notebook will simply run a comparison which will produce results that can be viewed next. Simply run the notebook from The following command will run that notebook using the but also create a static html document that can be saved in base_dir as a record of the check.
+5. `qc.ipynb`: Next, use this notebook to quality check the new data.
+6. `prod_comparison.ipynb`: This notebook will compare the newly restacked data with the existing "production" data - i.e., the data that is currently saved to the base directory, `/import/SNAP/wrf_data/project_data/wrf_data/hourly` and `daily/`. Obviously, this should be done before replacing the exisitng production data with the new data. This dataset has been released for multiple years now, so we want to make sure data values are the same. This notebook will simply run a comparison which will produce results that can be viewed next. Simply run the notebook from The following command will run that notebook using the but also create a static html document that can be saved in base_dir as a record of the check.
 
 **Note** - This can take maybe 30 minutes to and hour or more, it seems variable. Start a screen session on a compute node if you would like, and you can use the following command to run the notebook without opening it (again, after setting env vars in the new screen session):
 
@@ -111,9 +120,9 @@ python stage_copy_raw.py
 jupyter nbconvert --to notebook --execute --inplace prod_comparison.ipynb
 ```
 
-6. Ensure that the resulting tables created in step 6 look OK. I.e., make sure that any array or timestamp mismatches are expected. Follow the example in `ancillary/eval_prod_comparison/eval_prod_comparison_ccsm_hist.ipynb` (there may be one for each WRF group by the time you are reading this). 
+7. Ensure that the resulting tables created in step 6 look OK. I.e., make sure that any array or timestamp mismatches are expected. Follow the example in `ancillary/eval_prod_comparison/eval_prod_comparison_ccsm_hist.ipynb` (there may be one for each WRF group by the time you are reading this). 
 
-7. Copy the files to the base directory from scratch space. This command should work for all WRF groups:
+8. Copy the files to the base directory from scratch space. This command should work for all WRF groups:
 
 ```
 # target dir hardcoded as base_dir in config.py
@@ -133,7 +142,7 @@ source restack_20km/env_vars.sh
 rsync -a $SCRATCH_DIR/restacked /import/SNAP/wrf_data/project_data/wrf_data
 ```
 
-8. Copy the files to AWS from the base directory.
+9. Copy the files to AWS from the base directory.
 
 TBD.
 

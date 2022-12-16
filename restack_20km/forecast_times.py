@@ -1,5 +1,5 @@
-"""Get date and time information and the forecast_time attribute
-for each hourly WRF file in a given directory
+"""Get date and time information and the forecast_time attribute for each hourly WRF file in a given directory.
+This script has been adapted to allow creation of the table from files on the $ARCHIVE filesystem, in case all of the data for a particular WRF group will not fit on the $CENTER1 (scratch) filesystem.
 """
 
 import argparse
@@ -8,6 +8,8 @@ from multiprocessing import Pool
 from pathlib import Path
 import pandas as pd
 import xarray as xr
+# project
+from config import *
 
 
 def get_forecast_time(fp):
@@ -51,18 +53,16 @@ def get_date_info(fp):
 
 
 def list_files(dirpath):
-    """list the files and split the filenames into their descriptor parts and 
-    return dataframe of elements and filename sorted
-    by:['year', 'month', 'day', 'hour']
+    """list the files and split the filenames into their descriptor parts and return dataframe of elements and filename sorted by:['year', 'month', 'day', 'hour']
     
     Args:
-        dirpath (pathlib.PosixPath): path to the directory containing annual
-            subdirs of hourly WRF outputs
+        dirpath (pathlib.PosixPath): path to the directory containing annual subdirs of hourly WRF outputs
     
     Returns:
         files_df (pandas.DataFrame): dataframe of info derived from all files in dirpath
     """
-    files = [get_date_info(fp) for fp in list(dirpath.glob("*/*.nc"))]
+    # using 'WRFDS' prefix to match standard raw outputs
+    files = [get_date_info(fp) for fp in list(dirpath.glob("*/WRFDS*.nc"))]
     files_df = pd.DataFrame(files)
     files_df = files_df.sort_values(["year", "month", "day", "hour"]).reset_index()
 
@@ -70,8 +70,7 @@ def list_files(dirpath):
 
 
 def get_file_attrs(fp):
-    """Get file file date and time info and the "forecast_time"
-    attribute from hourly WRF ouput file
+    """Get file file date and time info and the "forecast_time" attribute from hourly WRF ouput file
     
     Args:
         fp (path_like): hourly WRF filepath to get attribute and info for
@@ -98,15 +97,34 @@ def get_file_attrs(fp):
     return fp_args
 
 
+def replace_archive_prefix(df, prefix):
+    """In the case that source WRF folder is on $ARCHIVE, replace the filepaths in the output file with what they should be on scratch space
+    
+    Args:
+        df (pandas.DataFrame): Time series attribute table being created
+        prefix (pathlib.PosixPath): path to hourly directory containing annual subdirs on scratch space
+    
+    Returns:
+        df (pandas.DataFrame): Update time series attribute table
+    """
+    def replace(fp, prefix):
+        # join year then filename
+        return prefix.joinpath(fp.parent.name, fp.name)
+    
+    df["filepath"] = df["filepath"].apply(lambda x: replace(x, prefix))
+    
+    return df
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Get forecast times and date info from hourly WRF files in parallel"
     )
     parser.add_argument(
         "-s",
-        "--wrf_scratch_dir",
+        "--wrf_dir",
         action="store",
-        dest="wrf_scratch_dir",
+        dest="wrf_dir",
         type=str,
         default="",
         help=(
@@ -114,14 +132,13 @@ if __name__ == "__main__":
             "WRF output files to get forecast_time attribute from"
         ),
     )
+    # This switch is probably only going to be used when there is not enough space on the scratch filesystem to copy everything off of $ARCHIVE
     parser.add_argument(
-        "-a",
-        "--anc_dir",
-        action="store",
-        dest="anc_dir",
-        type=str,
-        default="",
-        help="Path to ancillary dir for writing the forecast times table",
+        "--is_archive",
+        action="store_true",
+        dest="is_archive",
+        default=False,
+        help="Switch for wrf_dir being on the $ARCHIVE filesystem",
     )
     parser.add_argument(
         "-n",
@@ -132,12 +149,11 @@ if __name__ == "__main__":
         default=1,
         help="Number of CPUs to use for parallel reading of files",
     )
-    args = parser.parse_args()
-    wrf_scratch_dir = Path(args.wrf_scratch_dir)
-    anc_dir = Path(args.anc_dir)
-    ncpus = args.ncpus
+    cl_args = parser.parse_args()
+    wrf_dir = Path(cl_args.wrf_dir)
+    ncpus = cl_args.ncpus
 
-    fp_df = list_files(wrf_scratch_dir)
+    fp_df = list_files(wrf_dir)
     fp_df = fp_df[fp_df.folder_year == fp_df.year]
     print(f"number of files: {len(fp_df)}")
 
@@ -151,6 +167,11 @@ if __name__ == "__main__":
     print(f"Pooling done, time elapsed: {round(time.perf_counter() - tic)}s")
 
     df = pd.DataFrame(out)
-    ftime_fp = anc_dir.joinpath(f"WRFDS_forecast_time_attr_{wrf_scratch_dir.name}.csv")
+    
+    # if wrf_dir is in $ARCHIVE, we want to replace all of the file paths with what the path SHOULD be on scratch space
+    if cl_args.is_archive:
+        replace_archive_prefix(df, hourly_dir.joinpath(group))
+    
+    ftime_fp = anc_dir.joinpath(f"WRFDS_forecast_time_attr_{group}.csv")
     df.to_csv(ftime_fp, index=False)
-    print(f"Forecast times table for {wrf_scratch_dir} written to {ftime_fp}")
+    print(f"Forecast times table for {hourly_dir} written to {ftime_fp}")
