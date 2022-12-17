@@ -48,7 +48,6 @@ hourly_dir.mkdir(exist_ok=True)
 daily_dir = restack_scratch_dir.joinpath("daily")
 daily_dir.mkdir(exist_ok=True)
 
-
 # where slurm scripts and output logs will be written
 slurm_dir = base_dir.joinpath("slurm")
 slurm_dir.mkdir(exist_ok=True)

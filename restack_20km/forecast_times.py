@@ -170,7 +170,7 @@ if __name__ == "__main__":
     
     # if wrf_dir is in $ARCHIVE, we want to replace all of the file paths with what the path SHOULD be on scratch space
     if cl_args.is_archive:
-        replace_archive_prefix(df, hourly_dir.joinpath(group))
+        replace_archive_prefix(df, raw_scratch_dir.joinpath(group))
     
     ftime_fp = anc_dir.joinpath(f"WRFDS_forecast_time_attr_{group}.csv")
     df.to_csv(ftime_fp, index=False)
