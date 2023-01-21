@@ -1,4 +1,4 @@
-"""Resaple hourly file to daily. Reads a file, resamples based on provided aggregation info, writes new daily file.
+"""Resample hourly file to daily. Reads a file, resamples based on provided aggregation info, writes new daily file.
 
 Usage:
     Designed to be called via slurm scripts created by `slurm.write_sbatch_resample.py`
@@ -52,12 +52,11 @@ def resample(fp, aggr, varname, out_varname, out_fp):
         "gds_grid_type",
         "level_indicator",
         "center",
-        "grid_mapping",
         "coordinates",
     ]
     for attr in rm_attrs:
         try:
-            # some attributes do not apply to all variables etc
+            # some attributes do not apply to all variables
             del ds_day[out_varname].attrs[attr]
         except KeyError:
             pass
@@ -84,7 +83,7 @@ if __name__ == '__main__':
         "-d", dest="daily_dir", help="Path to directory to write resampled daily files"
     )
     parser.add_argument(
-        "-y", dest="year_str", help="String for years to process, in '<start year>-<end year>' format"
+        "-y", dest="year_str", help="String for years to process, in '<start year>-<end year>' format, or '_'-separated list of individual years"
     )
     parser.add_argument(
         "-a", dest="aggr", help="Name of aggregation method"
@@ -119,7 +118,12 @@ if __name__ == '__main__':
     ncpus = args.ncpus
     
     # years to work on
-    years = np.arange(int(year_str.split("-")[0]), int(year_str.split("-")[1]) + 1)
+    if "_" in year_str:
+        years = [int(year) for year in year_str.split("_")]
+    elif "-" in year_str:
+        years = np.arange(int(year_str.split("-")[0]), int(year_str.split("-")[1]) + 1)
+    else:
+        years = [int(year_str)]
     
     # output dir is derived from hourly restack dir 
     out_dir = daily_dir.joinpath(out_varname)

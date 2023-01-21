@@ -45,7 +45,7 @@ wind_varnames = ["U", "U10", "UBOT", "V", "V10", "VBOT"]
 accum_varnames = ["ACSNOW", "PCPT", "PCPC", "PCPNC", "POTEVP"]
 
 # names of variables that should be resampled to daily
-resample_varnames = ["t2", "t2min", "t2max", "q2", "pcpc", "pcpt"]
+resample_varnames = ["T2", "T2MIN", "T2MAX", "Q2", "PCPC", "PCPT"]
 
 lon_variable = "g5_lon_1"
 lat_variable = "g5_lat_0"
@@ -224,27 +224,27 @@ varnames = [
 # for resampling to daily, names of target variable names
 #  and associated WRF variable names
 resample_varnames = {
-    "t2max": {
+    "T2MAX": {
         "wrf_varname": "t2",
         "aggr": "max",
     },
-    "t2min": {
+    "T2MIN": {
         "wrf_varname": "t2",
         "aggr": "min",
     },
-    "t2": {
+    "T2": {
         "wrf_varname": "t2",
         "aggr": "mean",
     },
-    "q2": {
+    "Q2": {
         "wrf_varname": "q2",
         "aggr": "mean",
     },
-    "pcpc": {
+    "PCPC": {
         "wrf_varname": "pcpc",
         "aggr": "mean",
     },
-    "pcpt": {
+    "PCPT": {
         "wrf_varname": "pcpt",
         "aggr": "sum",
     },

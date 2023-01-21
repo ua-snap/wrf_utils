@@ -94,6 +94,8 @@ python stage_copy_raw.py
 
 **Note** - This process can take a long time for a single WRF group, so it may be smart to try using a `screen` session (login node) to run it and let it churn for a day or more. The staging process is highly dependent on what else is going on in the $ARCHIVE filesystem.
 
+**Note** - If you are restacking a subset of the WRF group, say years 2034-2063, you will need to have the years on each "side" of the target year range as well, which is required by the accumulation variables (`acsnow`, `pcpnc`, etc.). 
+
 2. `forecast_times.py`: Run this script to create an ancillary table that will be referenced by restacking code. This script accepts the following arguments:
 
     * `-s`: the directory containing the annual subdirectories of WRF outputs. Use the directory on scratch space if all of the files successfully staged and copied. In case there was not enough room on scratch space to copy the entirety of the WRF group over, use the `--is_archive` switch, and supply the path to the directory on `$ARCHIVE` as long as all files are staged. 
@@ -112,7 +114,7 @@ python forecast_times.py -s /archive/DYNDOWN/DIONE/pbieniek/ccsm/rcp85/hourly -n
 **Note** - there are daily WRF data outputs existing, but it is more straightforward to just resample the hourly outputs, for purposes of preserving the new structure. 
 
 5. `qc.ipynb`: Next, use this notebook to quality check the new data.
-6. `prod_comparison.ipynb`: This notebook will compare the newly restacked data with the existing "production" data - i.e., the data that is currently saved to the base directory, `/import/SNAP/wrf_data/project_data/wrf_data/hourly` and `daily/`. Obviously, this should be done before replacing the exisitng production data with the new data. This dataset has been released for multiple years now, so we want to make sure data values are the same. This notebook will simply run a comparison which will produce results that can be viewed next. Simply run the notebook from The following command will run that notebook using the but also create a static html document that can be saved in base_dir as a record of the check.
+6. `prod_comparison.ipynb`: This notebook will compare the newly restacked data with the existing "production" data - i.e., the data that is currently saved to the base directory, `/import/SNAP/wrf_data/project_data/wrf_data/hourly` and `daily/`. Obviously, this should be done before replacing the existing production data with the new data. This dataset has been released for multiple years now, so we want to make sure data values are the same. This notebook will simply run a comparison which will produce results that can be viewed next. Simply run the notebook from The following command will run that notebook using the but also create a static html document that can be saved in base_dir as a record of the check.
 
 **Note** - This can take maybe 30 minutes to and hour or more, it seems variable. Start a screen session on a compute node if you would like, and you can use the following command to run the notebook without opening it (again, after setting env vars in the new screen session):
 

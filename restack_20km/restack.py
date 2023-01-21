@@ -435,7 +435,7 @@ if __name__ == "__main__":
     else:
         dims = ["time", "yc", "xc"]
 
-    local_attrs["grid_mapping"] = "polar_stereographic"
+    local_attrs["grid_mapping"] = "spatial_ref"
     new_varname = varname.lower()
     data_dict = {
         # add the data flipped along y axis to match flipped lat/lon arrays

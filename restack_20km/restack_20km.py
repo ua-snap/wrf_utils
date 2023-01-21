@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import luts
+from config import *
 
 
 def make_variable_lookup(raw_fp):
@@ -465,8 +466,8 @@ def validate_resampled_file(args):
     # unpack (for pooling)
     daily_fp, hourly_dir = args
     resample_varname = daily_fp.parent.name
-    wrf_varname = luts.resample_varnames[resample_varname]["wrf_varname"]
-    aggr = luts.resample_varnames[resample_varname]["aggr"]
+    wrf_varname = luts.resample_varnames[resample_varname.upper()]["wrf_varname"]
+    aggr = luts.resample_varnames[resample_varname.upper()]["aggr"]
 
     with xr.open_dataset(daily_fp) as ds:
         # collect metadata that should be consistent between files
@@ -516,9 +517,9 @@ def get_year_fn_str(years):
         if np.all(np.diff(sorted(years)) == 1):
             year_fn_str = f"{years[0]}-{years[-1]}"
         else:
-            year_fn_str = " ".join(years)
+            year_fn_str = "_".join([str(year) for year in years])
     elif len(years) == 1:
-        year_fn_str = years[0]
+        year_fn_str = str(years[0])
         
     return year_fn_str
 
@@ -544,3 +545,34 @@ def get_mismatch_params(results_df, query_str):
     bad_var = bad_case["variable"]
     
     return bad_var, bad_ts, bad_year, bad_date, bad_hr
+
+
+def user_input_years():
+    """Create an input for the years to be worked on a for a given task. Done because some WRF groups need to be processed by chunks of years because of space constraints on scratch
+    
+    Returns:
+        years (list): list of years to work on, derived from user input srting.
+    """
+    years = [1738]
+    valid_years = f"{luts.groups[group]['years'][0]}-{luts.groups[group]['years'][-1]}"
+    while not all([int(year) in luts.groups[group]["years"] for year in years]):
+        years = input(f"Years, a ' '- separated list of years, or '-'-separated start and end year (e.g. 2005-2010) for a range of years.\nYears must be in {valid_years}. Leave blank for all years:") or luts.groups[group]['years']
+        if (type(years) == str) and (len(years) > 0):
+            if "-" in years:
+                start_year, end_year = years.split("-")
+                years = list(range(int(start_year), int(end_year) + 1))
+            else:
+                years = [int(year) for year in years.split(" ")]
+    print(f"Years selected: {years}")
+    
+    return years
+
+
+def user_input_variables(valid_varnames):
+    varnames = [""]
+    while not all ([varname.upper() in valid_varnames for varname in varnames]):
+        varnames = input("Enter name(s) of WRF variable(s) to restack (leave blank for all):") or valid_varnames
+        if (type(varnames) == str) and (len(varnames) > 0):
+            varnames = [varname.upper() for varname in varnames.split(" ")]
+            
+    return varnames
