@@ -1,22 +1,45 @@
-"""Run a simple quality control check on some restacked (and resampled) outputs"""
+"""Run a simple quality control check on some restacked (and resampled) outputs
 
+Usage:
+    python qc.py -n /import/SNAP/wrf_data/project_data/wrf_data/restacked/
+"""
+
+import argparse
 import time
 from multiprocessing import Pool
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import tqdm
 # project imports
-from config import *
+from config import group, project_dir
 import luts
 import restack_20km as main
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "-n",
+        dest="new_restack_dir",
+        type=str,
+        help="Parent directory of newly restacked outputs to compare with production"
+    )
+    parser.add_argument(
+        "-r",
+        dest="raw_dir",
+        type=str,
+        help="Parent directory of WRF group  containing annual folders of WRF hourly outputs"
+    )
+    args = parser.parse_args()
+    new_restack_dir = Path(args.new_restack_dir)
+    raw_dir = Path(args.raw_dir)
     
     # hourly QC
+    hourly_dir = new_restack_dir.joinpath("hourly")
     group_fn_str = luts.groups[group]["fn_str"]
     all_wrf_fps = list(hourly_dir.glob(f"*/*{group_fn_str}*.nc"))
-    args = [(fp, raw_scratch_dir) for fp in all_wrf_fps]
+    args = [(fp, raw_dir) for fp in all_wrf_fps]
     # set random seed
     np.random.seed(907)
     
@@ -37,6 +60,7 @@ if __name__ == "__main__":
         
         
     # daily QC
+    daily_dir = new_restack_dir.joinpath("daily")
     daily_wrf_fps = list(daily_dir.glob(f"*/*{group_fn_str}*.nc"))
     daily_args = [(fp, hourly_dir) for fp in daily_wrf_fps]
     # set random seed
