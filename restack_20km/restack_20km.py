@@ -427,7 +427,7 @@ def validate_restacked_file(args):
         year = check_time.astype("datetime64[Y]")
         wrf_time_str = str(check_time.astype("datetime64[h]")).replace("T", "_")
         group = luts.group_fn_lu[f"{model}_{scenario}"]
-        raw_fp = list(raw_scratch_dir.joinpath(f"{group}/{year}").glob(f"*{wrf_time_str}*"))[0]
+        raw_fp = list(raw_scratch_dir.joinpath(f"{year}").glob(f"*{wrf_time_str}*"))[0]
         with xr.open_dataset(raw_fp) as ds:
             if len(sel_di.keys()) > 1:
                 raw_d3_name = luts.rev_levelnames[d3_name]

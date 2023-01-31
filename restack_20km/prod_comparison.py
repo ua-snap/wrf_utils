@@ -50,21 +50,33 @@ def compare_scratch(args):
     err = None
     try:
         with xr.open_dataset(restack_prod_fp) as prod_ds:
-            # using this dataset's time values in case times don't match (has happened at least once)
+            # using this dataset's time values in case times don't match
+            # also allows to check that time dimensions are identical
             prod_time = prod_ds["time"].values[idx]
-            prod_arr = prod_ds[varname].sel(time=prod_time).values
+            time_result = prod_time == check_time
+            
+            if time_result:
+                prod_arr = prod_ds[varname].sel(time=prod_time).values
+                # checks to see whether all data values in single time slice match between new file and production
+                arr_result = np.all(prod_arr == check_arr)
+            else:
+                # even if time values don't match, we still want to see whether arrays match at the actual time stamp
+                try:
+                    prod_arr = prod_ds[varname].sel(time=check_time).values
+                    arr_result = np.all(prod_arr == check_arr)
+                except KeyError:
+                    # if that time is not found in the file, then we can't make a useful array comparison
+                    arr_result = None
+                    err = "ArraySelectionError"
 
-            # checks to see whether all data values in single time slice match between new file and production
-            arr_result = np.all(prod_arr == check_arr)
             prod_exists = True
         del prod_ds
-        
     
     except FileNotFoundError:
         # if "production" version does not exist, make a note of it
         arr_result = False
         prod_exists = False
-        prod_time = None
+        time_result = None
         err = "FileNotFoundError"
         
     except RuntimeError:
@@ -73,17 +85,15 @@ def compare_scratch(args):
         # maybe hitting one of the corrupt production files?
         arr_result = False
         prod_exists = True
-        prod_time = None
+        time_result = None
         err = "RuntimeError"
-    
-    # check to see whether time values match (they should)
-    time_result = prod_time == check_time
     
     # wrf_time_str = str(check_time.astype("datetime64[h]")).replace("T", "_")
     model, scenario = new_restack_fp.name.split("_")[-3:-1]
     result = {
         "varname": varname,
         "scratch_filename": new_restack_fp,
+        "prod_filename": restack_prod_fp,
         "prod_exists": prod_exists,
         "timestamp": check_time,
         "arr_result": arr_result,
