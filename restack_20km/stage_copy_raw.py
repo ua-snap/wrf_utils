@@ -21,7 +21,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("-y", dest="year", type=str, help="A ' '-separated list of years, such as '2033 2064'")
     parser.add_argument("-r", dest="year_range", type=str, help="Range of years to stage and copy")
-    parser.add_argument("-s", dest="stage", type=bool, default=False, help="Attempt to stage the directories before copying")
+    parser.add_argument("-s", dest="stage", action="store_true", help="Attempt to stage the directories before copying")
     args = parser.parse_args()
     year = args.year
     year_range = args.year_range
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     tic = time.perf_counter()
     for year in years:
         dst_year_dir = dst_dir.joinpath(str(year))
-        dst_year_dir.mkdir(exist_ok=True)
+        dst_year_dir.mkdir(exist_ok=True, parents=True)
         if len(list(dst_year_dir.glob("WRFDS*.nc"))) > 8700:
             # cheap way to avoid re-staging directories that are (probably) already copied
             # not looking for exact number of expected files for most years because some years are shorter :/
