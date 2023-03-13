@@ -113,7 +113,12 @@ python forecast_times.py -s /archive/DYNDOWN/DIONE/pbieniek/ccsm/rcp85/hourly -n
 
 **Note** - there are daily WRF data outputs existing, but it is more straightforward to just resample the hourly outputs, for purposes of preserving the new structure. 
 
-5. `qc.ipynb`: Next, use this notebook to quality check the new data.
+5. `qc.py`: Next, run this script to quality check the new data. 
+
+```
+python qc.py -n /center1/DYNDOWN/kmredilla/wrf_data/restacked/ -r /path/to/raw/WRF/on/scratch_space
+```
+
 6. `prod_comparison.ipynb`: This notebook will compare the newly restacked data with the existing "production" data - i.e., the data that is currently saved to the base directory, `/import/SNAP/wrf_data/project_data/wrf_data/hourly` and `daily/`. Obviously, this should be done before replacing the existing production data with the new data. This dataset has been released for multiple years now, so we want to make sure data values are the same. This notebook will simply run a comparison which will produce results that can be viewed next. Simply run the notebook from The following command will run that notebook using the but also create a static html document that can be saved in base_dir as a record of the check.
 
 **Note** - This can take maybe 30 minutes to and hour or more, it seems variable. Start a screen session on a compute node if you would like, and you can use the following command to run the notebook without opening it (again, after setting env vars in the new screen session):

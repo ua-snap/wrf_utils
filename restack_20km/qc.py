@@ -1,7 +1,8 @@
 """Run a simple quality control check on some restacked (and resampled) outputs
 
 Usage:
-    python qc.py -n /import/SNAP/wrf_data/project_data/wrf_data/restacked/
+    # e.g. if WRF group is GFDL projected data
+    python qc.py -n /center1/DYNDOWN/kmredilla/wrf_data/restacked/ -r /center1/DYNDOWN/kmredilla/wrf_data/raw/gfdl_rcp85/
 """
 
 import argparse
@@ -29,15 +30,15 @@ if __name__ == "__main__":
         "-r",
         dest="raw_dir",
         type=str,
-        help="Parent directory of WRF group  containing annual folders of WRF hourly outputs"
+        help="Parent directory of WRF group containing annual folders of WRF hourly outputs"
     )
     args = parser.parse_args()
     new_restack_dir = Path(args.new_restack_dir)
     raw_dir = Path(args.raw_dir)
+    group_fn_str = luts.groups[group]["fn_str"]
     
     # hourly QC
     hourly_dir = new_restack_dir.joinpath("hourly")
-    group_fn_str = luts.groups[group]["fn_str"]
     all_wrf_fps = list(hourly_dir.glob(f"*/*{group_fn_str}*.nc"))
     args = [(fp, raw_dir) for fp in all_wrf_fps]
     # set random seed
@@ -57,7 +58,6 @@ if __name__ == "__main__":
         hourly_qc_fp = project_dir.joinpath(f"{group_fn_str}_hourly_qc_results.csv")
         results_df.to_csv(hourly_qc_fp, index=False)
         print(f"Mismatch in hourly data, results written to {hourly_qc_fp}")
-        
         
     # daily QC
     daily_dir = new_restack_dir.joinpath("daily")
@@ -80,3 +80,4 @@ if __name__ == "__main__":
         daily_qc_fp = project_dir.joinpath(f"{group_fn_str}_daily_qc_results.csv")
         daily_results_df.to_csv(daily_qc_fp, index=False)
         print(f"Mismatch in daily data, results written to {daily_qc_fp}")
+        
