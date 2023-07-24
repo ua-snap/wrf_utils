@@ -403,11 +403,11 @@ def validate_restacked_file(args):
     # only check the actual data if the variable is not a wind or accum variable, 
     #  because we will expect those to be different
     check_data = varname.upper() not in luts.accum_varnames + luts.wind_varnames
-        
+
     with xr.open_dataset(restack_fp) as ds:
         # collect metadata that should be consistent between files
         meta = scrape_meta(ds)
-    
+
         if check_data:
             idx = np.random.randint(ds.time.values.shape[0])
             check_time = ds.time.values[idx]
@@ -421,13 +421,17 @@ def validate_restacked_file(args):
                 d3_value = np.random.choice(ds[d3_name].values)
                 sel_di.update({d3_name: d3_value})
             check_arr = ds[varname].sel(sel_di).values
-    
+
     model, scenario = restack_fp.name.split("_")[-3:-1]
     if check_data:
         year = check_time.astype("datetime64[Y]")
         wrf_time_str = str(check_time.astype("datetime64[h]")).replace("T", "_")
         group = luts.group_fn_lu[f"{model}_{scenario}"]
-        raw_fp = list(raw_scratch_dir.joinpath(f"{year}").glob(f"*{wrf_time_str}*"))[0]
+        try:
+            raw_fp = list(raw_scratch_dir.joinpath(f"{year}").glob(f"*{wrf_time_str}*"))[0]
+        except IndexError:
+            print(raw_scratch_dir.joinpath(f"{year}/*{wrf_time_str}*"))
+            exit()
         with xr.open_dataset(raw_fp) as ds:
             if len(sel_di.keys()) > 1:
                 raw_d3_name = luts.rev_levelnames[d3_name]
@@ -448,7 +452,7 @@ def validate_restacked_file(args):
         "match": check_result,
         "meta": meta,
     }
-    
+
     return result
 
 
