@@ -244,6 +244,56 @@ def write_sbatch_rsync(
     return
 
 
+def write_sbatch_copy_aws(
+    sbatch_fp,
+    sbatch_out_fp,
+    s3_command,
+    src_dir,
+    model,
+    aws_dir,
+    ncpus,
+    sbatch_head
+):
+    """Write an sbatch script for copying restacked files to AWS
+    
+    Args:
+        sbatch_fp (path_like): path to .slurm script to write sbatch commands to
+        sbatch_out_fp (path_like): path to where sbatch stdout should be written
+        s3_command (str): S3 comamnd, either 'cp' or 'sync'
+        src_dir (str): path to directory containing files to be copied
+        model (str): name of model to copy as it appears in the filenames
+        aws_dir (str): URL to AWS directory to copy to
+        ncpus (int): number of CPUS to use for multiprocessing
+        sbatch_head (str): output from make_sbatch_head that generates a suitable set of SBATCH commands with .format brackets for the sbatch output filename
+        
+    Returns:
+        None, writes the commands to sbatch_fp
+    """
+    aws_command = "\n" + " ".join(
+        [
+            "aws",
+            "s3",
+            s3_command,
+            str(src_dir),
+            str(aws_dir),
+            "--region",
+            "us-east-1",
+            "--exclude",
+            '"*"',
+            "--include",
+            '"*{}*.nc"'.format(model),
+            "--no-progress",
+        ]
+    )
+    
+    commands = sbatch_head.format(ncpus, sbatch_out_fp) + aws_command
+
+    with open(sbatch_fp, "w") as f:
+        f.write(commands)
+    
+    return
+
+
 def submit_sbatch(sbatch_fp):
     """Submit a script to slurm via sbatch
     
