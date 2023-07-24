@@ -86,7 +86,7 @@ This pipeline is different from other SNAP pipelines because it applies the same
 
 It consists of the following scripts and notebooks, which should be completed for each WRF group in the following order:
 
-1. `stage_hourly.py`: Stage and copy the hourly WRF files for copying. Run with
+1. `stage_copy_raw.py`: Stage and copy the hourly WRF files for copying. Run with
 
 ```
 python stage_copy_raw.py
@@ -107,7 +107,7 @@ python forecast_times.py -s /archive/DYNDOWN/DIONE/pbieniek/ccsm/rcp85/hourly -n
 
 3. `restack_20km.ipynb`: Run this notebook only when all files have been copied to `$SCRATCH_DIR`. This notebook will orchestrate the main processing lift of restacking the hourly outputs to have the desired structure, using slurm to distirbute the work. You will need to make sure that the processing jobs have completed before proceeding to the next step. Outputs will be written to `$SCRATCH_DIR`.
 
-**Note** - this step requires an ancillary WRF file to be present. It should  already be present at `/import/SNAP/wrf_data/project_data/wrf_data/ancillary/geo_em.d01.nc`, but this file should also be available at `/import/SNAP/wrf_data/project_data/ancillary_wrf_constants/geo_em.d01.nc` and on other SNAP infrastructure as well.
+**Note** - this step requires an ancillary WRF geogrid file to be present. It should  already be present at `/import/SNAP/wrf_data/project_data/wrf_data/ancillary/geo_em.d01.nc`, but this file should also be available at `/import/SNAP/wrf_data/project_data/ancillary_wrf_constants/geo_em.d01.nc` and on other SNAP infrastructure as well.
 
 4. `resample_daily.ipynb`: When the hourly data have been restacked, run this notebook to resample the hourly data to daily. 
 
@@ -138,7 +138,7 @@ jupyter nbconvert --to notebook --execute --inplace prod_comparison.ipynb
 rsync -a $SCRATCH_DIR/restacked /import/SNAP/wrf_data/project_data/wrf_data
 ```
 
-**Note** - The target directory here is hardcoded in this project because it is not expected to change. I recommend starting a screen session on the login node or on a compute node for the copy, as it could take a long time. E.g.:
+**Note** - The target directory here is hardcoded in this project, but we were running into troubles copying the final files of this data here, and have since been utilizing the ACDN (/beegfs) for this data. Regardless, I recommend starting a screen session on the login node or on a compute node for the copy, as it could take a long time. E.g.:
 
 ```
 screen srun -p t1small -N 1 --pty /bin/bash
@@ -149,9 +149,9 @@ source restack_20km/env_vars.sh
 rsync -a $SCRATCH_DIR/restacked /import/SNAP/wrf_data/project_data/wrf_data
 ```
 
-9. Copy the files to AWS from the base directory.
+9. Copy the files to AWS from the base directory using the `copy_to_aws.ipynb` notebook. This will make slurm jobs for copying each variable/model combination. 
 
-TBD.
+
 
 ### Jupyter on Chinook
 
