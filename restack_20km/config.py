@@ -13,10 +13,6 @@ try:
     slurm_email = Path(os.getenv("SLURM_EMAIL"))
 except TypeError:
     slurm_email = None
-group = os.getenv("WRF_GROUP")
-# ensure WRF_GROUP is set
-if group == None:
-    raise ValueError("WRF_GROUP env var not defined")
 
 # Hard-coded
 base_dir = Path("/import/SNAP/wrf_data/project_data/wrf_data")
