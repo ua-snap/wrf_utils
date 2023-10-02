@@ -138,7 +138,7 @@ def flip_data_and_coords(ds, variable=None):
         variable = get_variable_name(ds)
 
     data = np.array(ds[variable])
-    x =  ds[ 'lon' ].values
+    x = np.flipud(ds["lon"].values)
     y = np.flipud(ds["lat"].values)
 
     if len(data.shape) == 3:
@@ -179,11 +179,13 @@ def filelister(base_dir, model):
         return files
     else:
         return [fn for fn in files if model in fn]
-    
-    
+
+
 def discard_completed_files(base_dir, files, variable):
     """Discard filenames corresponding to those that have already beed done"""
-    completed_fps = glob.glob(os.path.join(base_dir.replace("hourly", "hourly_fix"), variable, "*"))
+    completed_fps = glob.glob(
+        os.path.join(base_dir.replace("hourly", "hourly_fix"), variable, "*")
+    )
     split_fps = [fp.split("_") for fp in completed_fps]
     years = [lst[-1].split(".")[0] for lst in split_fps]
     scenarios = [lst[-2] for lst in split_fps]
@@ -197,19 +199,19 @@ def discard_completed_files(base_dir, files, variable):
         "historical": "hist",
         "rcp85": "rcp85",
     }
-    
+
     for year, scenario, model in zip(years, scenarios, models):
         completed_fp = os.path.join(
-            base_dir, 
-            variable, 
-            f"{variable.upper()}_wrf_hourly_{model_di[model]}_{scenarios_di[scenario]}_{year}.nc"
+            base_dir,
+            variable,
+            f"{variable.upper()}_wrf_hourly_{model_di[model]}_{scenarios_di[scenario]}_{year}.nc",
         )
         if model == "ERA-Interim":
             # stacked (hourly/) ERA Interim data do not have a scenario in filename
             completed_fp = completed_fp.replace("_hist_", "_")
         if completed_fp in files:
             files.remove(completed_fp)
-    
+
     return files
 
 
@@ -238,18 +240,8 @@ def force_update_times_UTC(fn):
     return fn
 
 
-def run(fn, meta):
-    """ 
-    take a wrf file that has been re-stacked by SNAP, but needs better metadata
-    and build a new output file with that new metadata.
-    
-    fn = [str] the path to the wrf output file (that has been modified by the WRF group here at IARC)
-    meta = [dict] a meta dict of file attributes and coordinates built using the `get_meta_from_wrf` function.
-
-    """
-    print("running: {}".format(fn))
-
-    # make an output name from the input name.
+def get_out_fn(fn):
+    """make an output name from the input name."""
     out_fn = fn.replace("/hourly", "/hourly_fix")
     dirname, basename = os.path.split(out_fn)
     basename, ext = os.path.splitext(basename)
@@ -272,7 +264,7 @@ def run(fn, meta):
         variableA, variableB, group, timestep, model, scenario, year = name_elems
         variable = "_".join([variableA, variableB])
 
-    modelnames = {"gfdl": "GFDL-CM3", "era": "ERA-Interim", "ccsm": "NCAR-CCSM4"}
+    modelnames = {"gfdl": "GFDL-CM3", "era": "ERA-Interim", "ccsm": "NCAR-CCSM4", "ERA-Interim": "ERA"}
     scenarionames = {"rcp85": "rcp85", "hist": "historical", "interim": "historical"}
 
     basename = (
@@ -289,6 +281,21 @@ def run(fn, meta):
         + ext
     )
     out_fn = os.path.join(dirname, basename)
+    
+    return out_fn
+
+
+def run(fn, meta):
+    """ 
+    take a wrf file that has been re-stacked by SNAP, but needs better metadata
+    and build a new output file with that new metadata.
+    
+    fn = [str] the path to the wrf output file (that has been modified by the WRF group here at IARC)
+    meta = [dict] a meta dict of file attributes and coordinates built using the `get_meta_from_wrf` function.
+
+    """
+    print("running: {}".format(fn))
+    out_fn = get_out_fn(fn)
 
     # open the dataset to restructure / improve
     ds = xr.open_dataset(fn).load()
@@ -327,19 +334,21 @@ def run(fn, meta):
     ds.close()
     ds = None
 
-    # # pull out the lat / lons from the input file to toss into the cleaned stacked outputs
-    # lons = ds.lon.data
-    # lats = np.flipud( ds.lat.data ) # so they are north-up! which makes it easier.
+    # pull out the lat / lons from the input file to toss into the cleaned stacked outputs
+    # flip so they are north-up! which makes it easier.
+    data = flipped["data"]
+    lons = flipped["x"]
+    lats = flipped["y"]
 
     if len(flipped["data"].shape) == 3:
         # build a new NetCDF and dump to disk -- with compression
         new_ds = xr.Dataset(
-            {variable.lower(): (["time", "yc", "xc"], flipped["data"])},
+            {variable.lower(): (["time", "yc", "xc"], data)},
             coords={
                 "xc": ("xc", x[0,]),
                 "yc": ("yc", y[:, 0]),
-                # 'lon':(['yc','xc'], lons ),
-                # 'lat':(['yc','xc'], lats ),
+                "lon": (["yc", "xc"], lons),
+                "lat": (["yc", "xc"], lats),
                 "time": time,
             },
         )
@@ -377,8 +386,8 @@ def run(fn, meta):
             coords={
                 "xc": ("xc", x[0,]),
                 "yc": ("yc", y[:, 0]),
-                # 'lon':(['yc','xc'], lons ),
-                # 'lat':(['yc','xc'], lats ),
+                "lon": (["yc", "xc"], lons),
+                "lat": (["yc", "xc"], lats),
                 "time": time,
                 levels_lu[levelname]: levels.values,
             },
@@ -386,70 +395,102 @@ def run(fn, meta):
     else:
         raise BaseException("wrong number of dimensions")
 
-    # update some file attrs...
-    proj4string = "+units=m +proj=stere +lat_ts=64.0 +lon_0=-152.0 +lat_0=90.0 +x_0=0 +y_0=0 +a=6370000 +b=6370000"
+#     # update some file attrs...
+#     proj4string = "+units=m +proj=stere +lat_ts=64.0 +lon_0=-152.0 +lat_0=90.0 +x_0=0 +y_0=0 +a=6370000 +b=6370000"
 
     # native file Attributes
     base_attrs.update(
-        proj_parameters=proj4string,
-        crs_wkt='PROJCS["unnamed",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6370000,0]],PRIMEM["Greenwich",0],\
-                            UNIT["degree",0.0174532925199433]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",64],PARAMETER["central_meridian",-152],\
-                            PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1],\
-                            EXTENSION["PROJ4","+units=m +proj=stere +lat_ts=64.0 +lon_0=-152.0 +lat_0=90.0 +x_0=0 +y_0=0 +a=6370000 +b=6370000 +wktext"]]',
+#         proj_parameters=proj4string,
+#         crs_wkt='PROJCS["unnamed",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6370000,0]],PRIMEM["Greenwich",0],\
+#                             UNIT["degree",0.0174532925199433]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",64],PARAMETER["central_meridian",-152],\
+#                             PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1],\
+#                             EXTENSION["PROJ4","+units=m +proj=stere +lat_ts=64.0 +lon_0=-152.0 +lat_0=90.0 +x_0=0 +y_0=0 +a=6370000 +b=6370000 +wktext"]]',
         restacked_by="Scenarios Network for Alaska + Arctic Planning -- 2018",
         SNAP_VERSION=snap_version,
     )
 
     new_ds.attrs = base_attrs
 
-    # CRS Attributes
-    crs_attrs = OrderedDict(
-        [
-            ("grid_mapping_name", "polar_stereographic"),
-            ("straight_vertical_longitude_from_pole", -152.0),
-            ("latitude_of_projection_origin", 90.0),
-            ("standard_parallel", 64.0),
-            ("false_easting", 0),
-            ("false_northing", 0),
-            (
-                "crs_wkt",
-                'PROJCS["unnamed",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6370000,0]],PRIMEM["Greenwich",0],\
-                                UNIT["degree",0.0174532925199433]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",64],PARAMETER["central_meridian",-152],\
-                                PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1],\
-                                EXTENSION["PROJ4","+units=m +proj=stere +lat_ts=64.0 +lon_0=-152.0 +lat_0=90.0 +x_0=0 +y_0=0 +a=6370000 +b=6370000 +wktext"]]',
-            ),
-            ("proj_parameters", proj4string),
-            ("coordinate_location", "centroid"),
-            ("origin_upperleft_x_corner", meta["origin"][0]),
-            ("origin_upperleft_y_corner", meta["origin"][1]),
-        ]
-    )
+    
+    
+#     crs_attrs = OrderedDict(
+#         [
+#             (
+#                 "crs_wkt",
+#                 'PROJCS["unnamed",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",64],PARAMETER["central_meridian",-152],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]'
+#             ),
+#             # not sure that any of these other attributes need to be
+#             # here to display in popular softwares. 
+#             # Verified with only the WKT attribute in QGIS and Panoply
+#             ("grid_mapping_name", "polar_stereographic"),
+#             ("straight_vertical_longitude_from_pole", -152.0),
+#             ("latitude_of_projection_origin", 90.0),
+#             ("standard_parallel", 64.0),
+#             ("false_easting", 0),
+#             ("false_northing", 0),
+#             ("proj_parameters", proj4string),
+#             ("coordinate_location", "centroid"),
+#             ("origin_upperleft_x_corner", meta["origin"][0]),
+#             ("origin_upperleft_y_corner", meta["origin"][1]),
+#             ("semi_major_axis", 6378137.0),
+#         ]
+#     )
 
-    new_ds["xc"].attrs = crs_attrs
-    new_ds["yc"].attrs = crs_attrs
+    new_ds["xc"].attrs = {
+        "standard_name": "projection_x_coordinate",
+        "units": "m",
+    }
+    new_ds["yc"].attrs = {
+        "standard_name": "projection_y_coordinate",
+        "units": "m",
+    }
 
     # level attrs (if needed / available)
     if level_attrs is not None:
         new_ds[levels_lu[levelname]].attrs = level_attrs
 
-    # # lon/lat attrs
-    # lon_attrs = OrderedDict({'long_name':'Longitude','units':'degrees','grid_notes':'irregular grid representing centroids of locations in Cartesian grid of \
-    #                                                                                     Polar Stereographic in the Geographic WGS84 coordinates. These come directly from WRF.'})
-    # lat_attrs = OrderedDict({'long_name':'Latitude','units':'degrees','grid_notes':'irregular grid representing centroids of locations in Cartesian grid of \
-    #                                                                                     Polar Stereographic in the Geographic WGS84 coordinates. These come directly from WRF.'})
-    # new_ds[ 'lon' ].attrs = lon_attrs
-    # new_ds[ 'lat' ].attrs = lat_attrs
+    # lon/lat attrs
+    lon_attrs = OrderedDict(
+        {
+            "long_name": "Longitude",
+            "units": "degrees",
+            "grid_notes": (
+                "irregular grid representing centroids of locations in Cartesian grid of"
+                "Polar Stereographic in the Geographic WGS84 coordinates. These come directly from WRF."
+            ),
+        }
+    )
+    lat_attrs = OrderedDict(
+        {
+            "long_name": "Latitude",
+            "units": "degrees",
+            "grid_notes": (
+                "irregular grid representing centroids of locations in Cartesian grid of"
+                "Polar Stereographic in the Geographic WGS84 coordinates. These come directly from WRF."
+            )
+        }
+    )
+    new_ds["lon"].attrs = lon_attrs
+    new_ds["lat"].attrs = lat_attrs
 
     # VARIABLE attributes
     var_attrs = OrderedDict()
+    # name of CRS variable
+    crs_varname = "polar_stereographic"
     var_attrs.update(
         long_name=var_attrs_lookup[variable]["long_name"],
         units=var_attrs_lookup[variable]["units"],
         coordinates_="xc yc",
         temporal_resampling="None: these data represent hourly outputs from wrf dynamical downscaling.",
+        grid_mapping=crs_varname,
     )
 
     new_ds[variable.lower()].attrs = var_attrs
+
+    # add the CRS variable using CRS.to_cf() with proj string
+    wrf_crs = CRS.from_proj4(meta["crs"].definition_string())
+    new_ds[crs_varname] = np.array(b"")
+    new_ds[crs_varname].attrs = wrf_crs.to_cf()
 
     # write it back out to disk with compression encoding
     encoding = new_ds[variable.lower()].encoding
@@ -464,7 +505,7 @@ def run(fn, meta):
             os.makedirs(dirname)
     except:
         pass
-
+    
     new_ds.to_netcdf(out_fn, mode="w", format="NETCDF4")
     # cleanup
     new_ds.close()
@@ -481,6 +522,7 @@ def run(fn, meta):
 
 if __name__ == "__main__":
     import glob
+    import time
     import numpy as np
     import xarray as xr
     from collections import OrderedDict
@@ -489,10 +531,11 @@ if __name__ == "__main__":
     from functools import partial
     import multiprocessing as mp
     import argparse
+    from pyproj.crs import CRS
 
     # parse some args
     parser = argparse.ArgumentParser(
-        description="stack the hourly outputs from raw WRF outputs to NetCDF files of hourlies broken up by year."
+        description="Improve the stacked hourly WRF outputs for distribution on AWS."
     )
     parser.add_argument(
         "-b",
@@ -527,6 +570,14 @@ if __name__ == "__main__":
         type=int,
         help="number of cpus to use",
     )
+    parser.add_argument(
+        "-c",
+        "--clobber",
+        action="store_true",
+        dest="clobber",
+        default=False,
+        help="Overwrite existing files with same names",
+    )
 
     # parse the args and unpack
     args = parser.parse_args()
@@ -534,21 +585,29 @@ if __name__ == "__main__":
     ncpus = args.ncpus
     variable = args.variable
     model = args.model
+    clobber = args.clobber
 
     # versioning
     snap_version = "1.0"
 
-    # # # # BEGIN TEST
-    # # # base directory
-    # base_dir = '/rcs/project_data/wrf_data/hourly'
-    # variable = 'omega'
-    # ncpus = 1
-    # # # # END TEST
-
     # list the data -- some 4d groups need some special attention...
     files = sorted(list(set(filelister(os.path.join(base_dir, variable), model))))
     # filter out files that have already been completed
-    files = discard_completed_files(base_dir, files, variable)
+    # files = discard_completed_files(base_dir, files, variable) 
+    
+    # If not clobbering, thin files down to those that have not 
+    # been output recently (within 1 week)
+    if not clobber:
+        run_files = []
+        for file in files:
+            out_fn = get_out_fn(file)
+            if os.path.exists(out_fn):
+                if os.path.getmtime(out_fn) < (time.time() - (60 ** 2 * 24 * 7)):
+                    run_files.append(file)
+            else:
+                run_files.append(file)
+        files = run_files
+    
     print("Files being worked on:")
     for file in files:
         print(file)
@@ -571,8 +630,7 @@ if __name__ == "__main__":
     }
 
     # # run
-    f = partial(run, meta=meta)
-    pool = mp.Pool(ncpus)
-    out = pool.map(f, files)
-    pool.close()
-    pool.join()
+#     f = partial(run, meta=meta)
+#     with mp.Pool(ncpus) as pool:
+# #         out = pool.map(f, [files[0]]) # testing
+#         out = pool.map(f, files)

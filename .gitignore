@@ -1,2 +1,7 @@
 # jupyter notebook files
 .ipynb_checkpoints
+
+# anaconda-project env
+envs/
+
+**/__pycache__/
